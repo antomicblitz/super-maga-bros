@@ -901,10 +901,14 @@ class GameScene extends Phaser.Scene {
         // ─ Enemy animations
         if (enemyExt) {
             for (let t = 0; t < 3; t++) {
-                const animKey = 'enemy' + t + 'Walk';
-                if (!this.anims.exists(animKey)) {
-                    const base = t * 4;
-                    this.anims.create({ key: animKey, frames: this.anims.generateFrameNumbers(ek, { start: base, end: base + 1 }), frameRate: 4, repeat: -1 });
+                const base = t * 4;
+                const walkKey = 'enemy' + t + 'Walk';
+                if (!this.anims.exists(walkKey)) {
+                    this.anims.create({ key: walkKey, frames: this.anims.generateFrameNumbers(ek, { frames: [base, base + 1] }), frameRate: 4, repeat: -1 });
+                }
+                const dieKey = 'enemy' + t + 'Die';
+                if (!this.anims.exists(dieKey)) {
+                    this.anims.create({ key: dieKey, frames: [{ key: ek, frame: base + 3 }], frameRate: 1 });
                 }
             }
         } else {
@@ -1154,7 +1158,6 @@ class GameScene extends Phaser.Scene {
     // ── Enemy helpers ───────────────────────────────────────
     destroyEnemy(enemy) {
         const et = ENEMY_TYPES[enemy.enemyType] || ENEMY_TYPES[0];
-        enemy.destroy();
         this.score += et.score;
         playSound(this, 'snd-stomp', SFX.stomp);
 
@@ -1166,6 +1169,19 @@ class GameScene extends Phaser.Scene {
             targets: popup, y: popup.y - 30, alpha: 0, duration: 600,
             onComplete: () => popup.destroy(),
         });
+
+        // Play death animation if external spritesheet, then destroy
+        const T = window.TEX || {};
+        if (T.enemyExt && this.anims.exists('enemy' + enemy.enemyType + 'Die')) {
+            enemy.play('enemy' + enemy.enemyType + 'Die');
+            enemy.setVelocity(0, 0);
+            enemy.body.enable = false;
+            this.time.delayedCall(400, () => {
+                if (enemy && enemy.active) enemy.destroy();
+            });
+        } else {
+            enemy.destroy();
+        }
     }
 
     hitEnemy(player, enemy) {
@@ -1179,8 +1195,17 @@ class GameScene extends Phaser.Scene {
 
         // Stomp check
         if (player.body.velocity.y > 0 && player.y + player.body.halfHeight < enemy.y) {
-            this.destroyEnemy(enemy);
             player.setVelocityY(-280);
+            // Show stomp frame briefly before death animation
+            const T = window.TEX || {};
+            if (T.enemyExt) {
+                enemy.setFrame(enemy.enemyType * 4 + 2);
+                this.time.delayedCall(100, () => {
+                    if (enemy && enemy.active) this.destroyEnemy(enemy);
+                });
+            } else {
+                this.destroyEnemy(enemy);
+            }
             return;
         }
 
