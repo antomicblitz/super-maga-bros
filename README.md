@@ -1,0 +1,216 @@
+# 🇺🇸 Super MAGA Bros.
+
+> *"Make Platforming Great Again"*
+
+A satirical 2D pixel-art platformer built with Phaser 3. Run, jump, and stomp your way across Mar-a-Lago island in this parody of a classic platformer genre. Collect classified documents, dodge the fake news media, and make it to the finish line — bigly.
+
+**This is a work of political satire and parody. All characters and scenarios are fictional and comedic in nature.**
+
+---
+
+## 🎮 Play
+
+Serve the project locally — no build tools or installation required:
+
+```bash
+# Option 1
+npx serve .
+
+# Option 2
+python3 -m http.server 8080
+```
+
+Then open your browser at `http://localhost:3000` (or `http://localhost:8080`).
+
+> ⚠️ The game **must** be served from a local server. Opening `index.html` directly via `file://` will block asset loading due to browser CORS restrictions.
+
+---
+
+## 🕹️ Controls
+
+| Key | Action |
+|-----|--------|
+| `←` `→` / `A` `D` | Move left / right |
+| `Space` / `W` / `↑` | Jump |
+| `Z` | Fire tweet-blast *(requires Classified Docs power-up)* |
+
+**Pro tips:**
+- Hold jump briefly for a small hop, hold longer for a full jump
+- You have 80ms of "coyote time" — you can still jump just after walking off a ledge
+- Stomp enemies by jumping and landing on top of them
+
+---
+
+## 🌴 Story
+
+The Deep State is everywhere. Journalists lurk on the beach. Scientists roam the resort grounds. Your mission: cross the entire Mar-a-Lago island, stomp the opposition, collect gold stars and power-ups, and reach the finish flag.
+
+---
+
+## 👾 Enemies
+
+| Enemy | Speed | Points | Notes |
+|-------|-------|--------|-------|
+| Journalist | 60px/s | 200 pts | Walks slowly, carries a camera |
+| Scientist | 80px/s | 300 pts | Faster, holds a mysterious flask |
+| Nervous Girl | 100px/s | 150 pts | Quickest enemy, erratic movement |
+
+All enemies can be defeated by **jumping on them** or by a **tweet-blast** projectile.
+
+---
+
+## ⭐ Power-Ups
+
+| Power-Up | Effect | Duration |
+|----------|--------|----------|
+| 🧢 MAGA Hat | Absorbs one hit — lose the hat instead of a life | Until hit |
+| ⬛ Censor Bar | Full invincibility — destroys enemies on contact | 10 seconds |
+| 📁 Classified Docs | Enables Z-key tweet-blast projectile attack | 15 seconds |
+
+Power-ups appear as floating, bobbing items throughout the level. Active power-up and remaining time are shown in the top-left HUD.
+
+---
+
+## 🏆 Scoring
+
+| Action | Points |
+|--------|--------|
+| Collect a gold star | +100 |
+| Stomp a journalist | +200 |
+| Stomp a scientist | +300 |
+| Stomp a nervous girl | +150 |
+| Tweet-blast an enemy | +300 |
+| Reach the finish flag | +1000 |
+| Each star collected at finish | +50 bonus |
+
+---
+
+## 🗂️ Project Structure
+
+```
+super-maga-bros/
+├── index.html              # Entry point (loads Phaser 3 via CDN)
+├── game.js                 # All game logic (~1100 lines, single file)
+├── CLAUDE.md               # AI assistant project guide
+├── Images/                 # Original concept art and reference images
+└── assets/
+    ├── sprites/
+    │   ├── player.png      # 288×48px — 6-frame horizontal strip
+    │   ├── enemies.png     # 192×144px — 4 cols × 3 rows grid
+    │   ├── powerups.png    # 144×48px — 3-frame horizontal strip
+    │   └── background.png  # 800×500px — scrolling level background
+    ├── tiles/
+    │   ├── ground.png      # 32×32px — sandy beach ground tile
+    │   ├── brick.png       # 32×32px — platform tile
+    │   └── qblock.png      # 64×32px — 2-frame question block
+    ├── ui/
+    │   ├── title-screen.png # 800×500px — menu background
+    │   └── hud-icons.png    # 96×32px — life, star, power-up icons
+    └── audio/
+        ├── jump.wav
+        ├── stomp.wav
+        ├── coin.wav
+        ├── die.wav
+        ├── win.wav
+        ├── powerup.wav
+        ├── bgm-game.mp3    # Looping gameplay music
+        └── bgm-menu.mp3    # Looping menu music
+```
+
+---
+
+## 🎨 Asset Specifications
+
+All assets are **drop-in replaceable** — swap the file, the game automatically uses it on next reload. No code changes needed.
+
+### Spritesheets
+
+| File | Total Size | Frame Size | Frame Count | Layout |
+|------|-----------|------------|-------------|--------|
+| `player.png` | 288×48px | 48×48px | 6 | Horizontal strip |
+| `enemies.png` | 192×144px | 48×48px | 12 (4×3) | Grid |
+| `powerups.png` | 144×48px | 48×48px | 3 | Horizontal strip |
+
+**Player frame order:** `0=idle` `1=run1` `2=run2` `3=run3` `4=jump` `5=hurt`
+
+**Enemy grid layout:**
+```
+Row 0: Journalist  → [walk1] [walk2] [stomp] [dead]
+Row 1: Scientist   → [walk1] [walk2] [stomp] [dead]
+Row 2: Girl        → [walk1] [walk2] [stomp] [dead]
+```
+
+**Power-up frame order:** `0=MAGA Hat` `1=Censor Bar` `2=Classified Docs`
+
+### Audio
+
+| File | Format | Max Duration |
+|------|--------|-------------|
+| SFX files | WAV, 44.1kHz mono | < 0.5s each |
+| `bgm-game.mp3` | MP3, 128kbps stereo | 60–90s loop |
+| `bgm-menu.mp3` | MP3, 128kbps stereo | 30s loop |
+
+---
+
+## 🔧 Tech Stack
+
+- **[Phaser 3.60](https://phaser.io)** — HTML5 game framework (loaded via CDN)
+- **Vanilla JavaScript** — ES6 classes, no TypeScript
+- **Web Audio API** — procedural SFX fallback when audio files are missing
+- **No build tools** — no npm, no webpack, no bundler
+
+---
+
+## 🧠 Scene Flow
+
+```
+PreloadScene  →  BootScene  →  MenuScene  →  GameScene
+(load assets)    (fallback      (title        (gameplay,
+                  textures)      screen)        HUD, logic)
+```
+
+The game uses a **graceful fallback system**: if any external asset file is missing or empty (e.g. placeholder), the engine automatically falls back to procedurally generated pixel art. This means the game is always playable, even without final artwork.
+
+---
+
+## 🚧 Roadmap
+
+- [ ] Animated enemy death frames (currently instant destroy)
+- [ ] Additional level worlds (Washington DC, Trump Tower)
+- [ ] Mobile touch controls
+- [ ] High score leaderboard
+- [ ] Boss fight: The Deep State
+- [ ] Additional power-up: Gold Bar (score multiplier)
+- [ ] Sound effects and background music (final versions)
+- [ ] Moving platform: golf cart
+- [ ] Animated water / hazard zones
+
+---
+
+## 🛠️ Development with Claude Code
+
+This project is optimized for development with [Claude Code](https://docs.anthropic.com/en/docs/claude-code). See `CLAUDE.md` for the full project guide including asset specs, design rules, and coding conventions.
+
+```bash
+# Install Claude Code
+npm install -g @anthropic-ai/claude-code
+
+# Launch in project directory
+claude
+```
+
+---
+
+## ⚖️ Disclaimer
+
+Super MAGA Bros. is a **satirical parody** game created for comedic and commentary purposes. It is protected under fair use principles applicable to political satire and parody. All characters are fictional caricatures. The game does not represent the views or endorsements of any real individuals or organizations.
+
+---
+
+## 📄 License
+
+MIT License — free to use, modify, and distribute with attribution.
+
+---
+
+*Built with Phaser 3 · Pixel art generated with AI · Satire protected by the First Amendment* 🦅
