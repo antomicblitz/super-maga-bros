@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super MAGA Bros.</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+        canvas {
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            border: 3px solid #FFD700;
+            border-radius: 4px;
+        }
+        #loading-msg {
+            text-align: center;
+            position: absolute;
+        }
+        #loading-msg h2 { color: #FFD700; margin-bottom: 12px; }
+        #loading-msg code { background: #222; padding: 4px 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div id="loading-msg">
+        <h2>Loading Super MAGA Bros...</h2>
+        <p>If this message doesn't disappear, serve the folder locally:</p>
+        <p style="margin-top:8px"><code>npx serve .</code></p>
+    </div>
+    <script>
+        window.addEventListener('error', function(e) {
+            if (e.target && e.target.tagName === 'SCRIPT') {
+                document.getElementById('loading-msg').innerHTML =
+                    '<h2 style="color:#CC2222">Failed to load Phaser.js</h2>' +
+                    '<p>Check your internet connection, or serve locally:</p>' +
+                    '<p style="margin-top:8px"><code>npx serve .</code></p>';
+            }
+        }, true);
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+    <script>
+        // Hide loading message once Phaser is ready
+        if (typeof Phaser !== 'undefined') {
+            document.getElementById('loading-msg').style.display = 'none';
+        }
+    </script>
+    <script src="game.js"></script>
+</body>
+</html>
