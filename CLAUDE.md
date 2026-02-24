@@ -69,7 +69,10 @@ GW=800, GH=500, TILE=32, WORLD_W=6400, WORLD_H=600, GROUND_Y=468
 
 ## Power-Up Types
 0 = MAGA Hat      — absorbs 1 hit, duration: permanent until hit
-1 = Censor Bar    — full invincibility, duration: 10 seconds
+1 = Censor Bar    — full invincibility, duration: 10 seconds,
+                     visual: black rectangle overlays player entirely,
+                     audio: pauses bgm, plays bgm-censor.mp3 if available,
+                     restores bgm on expiry
 2 = Classified Docs — enables Z-key tweet-blast projectile, duration: 15 seconds
 
 ## Controls

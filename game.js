@@ -618,6 +618,7 @@ class PreloadScene extends Phaser.Scene {
         try { this.load.audio('snd-powerup', 'assets/audio/powerup.wav'); } catch(e) {}
         try { this.load.audio('bgm',         'assets/audio/bgm-game.mp3'); } catch(e) {}
         try { this.load.audio('bgmMenu',     'assets/audio/bgm-menu.mp3'); } catch(e) {}
+        try { this.load.audio('bgm-censor',  'assets/audio/bgm-censor.mp3'); } catch(e) {}
     }
 
     create() {
@@ -633,6 +634,7 @@ class PreloadScene extends Phaser.Scene {
             menuBg:   this.textures.exists('menuBg'),
             hud:      this.textures.exists('hudIcons'),
             audio:    this.cache.audio.has('snd-jump'),
+            censorBgm: this.cache.audio.has('bgm-censor'),
         };
         this.scene.start('Boot');
     }
@@ -904,6 +906,11 @@ class GameScene extends Phaser.Scene {
         this.player.setBounce(0);
         this.player.setDepth(5);
 
+        // ─ Censor bar overlay (hidden until Censor Bar power-up collected)
+        this.censorBar = this.add.rectangle(0, 0, 52, 52, 0x000000)
+            .setDepth(6)
+            .setVisible(false);
+
         // ─ Player animations (only create once — anims are global)
         if (!this.anims.exists('idle')) {
             this.anims.create({ key: 'idle', frames: [{ key: pk, frame: 0 }], frameRate: 1 });
@@ -1063,6 +1070,11 @@ class GameScene extends Phaser.Scene {
         this.farHills.tilePositionX = camX * 0.15;
         this.nearHills.tilePositionX = camX * 0.35;
 
+        // ─ Censor bar follows player
+        if (this.censorBar && this.censorBar.visible) {
+            this.censorBar.setPosition(this.player.x, this.player.y);
+        }
+
         // ─ Death by falling
         if (p.y > GH + 80) {
             this.playerDie();
@@ -1073,7 +1085,15 @@ class GameScene extends Phaser.Scene {
             this.powerTimer -= dt;
             if (this.powerTimer <= 0) {
                 this.powerTimer = 0;
-                if (this.playerPower === 1) this.invincible = false;
+                if (this.playerPower === 1) {
+                    this.invincible = false;
+                    this.censorBar.setVisible(false);
+                    if (this.censorMusic) {
+                        this.censorMusic.stop();
+                        this.censorMusic = null;
+                    }
+                    if (this.bgm) this.bgm.resume();
+                }
                 this.playerPower = -1;
                 p.clearTint();
             }
@@ -1132,7 +1152,15 @@ class GameScene extends Phaser.Scene {
             // Censor Bar: 10s invincibility
             this.invincible = true;
             this.powerTimer = pt.duration;
-            player.setTint(0x88FFFF);
+            this.censorBar.setVisible(true);
+            // Swap music to censor track
+            if (this.bgm) {
+                this.bgm.pause();
+            }
+            if (this.cache.audio.has('bgm-censor')) {
+                this.censorMusic = this.sound.add('bgm-censor', { loop: true, volume: 0.4 });
+                this.censorMusic.play();
+            }
         } else if (type === 2) {
             // Classified Docs: 15s tweet-blast
             this.invincible = false;
@@ -1261,9 +1289,14 @@ class GameScene extends Phaser.Scene {
     // ── Death & Game Over ───────────────────────────────────
     playerDie() {
         if (this.dead) return;
+        if (this.censorBar) this.censorBar.setVisible(false);
         this.dead = true;
         this.lives--;
         playSound(this, 'snd-die', SFX.die);
+        if (this.censorMusic) {
+            this.censorMusic.stop();
+            this.censorMusic = null;
+        }
         if (this.bgm) this.bgm.stop();
 
         const p = this.player;
@@ -1365,6 +1398,10 @@ class GameScene extends Phaser.Scene {
                 this.scene.start('Menu');
             });
         });
+    }
+
+    shutdown() {
+        if (this.censorBar) this.censorBar.setVisible(false);
     }
 }
 
