@@ -1,3 +1,5 @@
+<img width="256" height="256" alt="Game-cover" src="https://github.com/user-attachments/assets/bc2917ab-0fdb-4ea6-95f2-b811ed099cdd" />
+
 # 🇺🇸 Super MAGA Bros.
 
 > *"Make Platforming Great Again"*
