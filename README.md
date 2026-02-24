@@ -6,8 +6,6 @@
 
 A satirical 2D pixel-art platformer built with Phaser 3. Run, jump, and stomp your way across Mar-a-Lago island in this parody of a classic platformer genre. Collect classified documents, dodge the fake news media, and make it to the finish line — bigly.
 
-**This is a work of political satire and parody. All characters and scenarios are fictional and comedic in nature.**
-
 ---
 
 ## 🎮 Play
@@ -45,7 +43,7 @@ Then open your browser at `http://localhost:3000` (or `http://localhost:8080`).
 
 ## 🌴 Story
 
-The Deep State is everywhere. Journalists lurk on the beach. Scientists roam the resort grounds. Your mission: cross the entire Mar-a-Lago island, stomp the opposition, collect gold stars and power-ups, and reach the finish flag.
+The Deep State is everywhere. Journalists lurk on the beach. Scientists roam the resort grounds. Your mission: cross the entire Mar-a-Lago island, stomp the opposition, collect crap and power-ups like classified documents and redacted files, and reach the finish flag.
 
 ---
 
@@ -205,7 +203,7 @@ claude
 
 ## ⚖️ Disclaimer
 
-Super MAGA Bros. is a **satirical parody** game created for comedic and commentary purposes. It is protected under fair use principles applicable to political satire and parody. All characters are fictional caricatures. The game does not represent the views or endorsements of any real individuals or organizations.
+Super MAGA Bros. is a **satirical parody** game created for comedic and commentary purposes. It is protected under fair use principles applicable to political satire and parody. All characters are fictional caricatures. In case it's not obvious, this game is satire and does not support Trump.
 
 ---
 
@@ -215,4 +213,4 @@ MIT License — free to use, modify, and distribute with attribution.
 
 ---
 
-*Built with Phaser 3 · Pixel art generated with AI · Satire protected by the First Amendment* 🦅
+*Built with Phaser 3 · Pixel art generated with AI 🦅
