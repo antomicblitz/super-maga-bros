@@ -69,7 +69,7 @@ const SFX = {
 
 // ── Audio helper (tries external asset, falls back to Web Audio) ─
 function playSound(scene, key, fallbackFn) {
-    if (window.ASSETS_LOADED && window.ASSETS_LOADED.audio && scene.cache.audio.has(key)) {
+    if (scene.cache.audio.has(key)) {
         try { scene.sound.play(key); return; } catch (e) { /* fall through */ }
     }
     if (fallbackFn) fallbackFn();
