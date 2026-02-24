@@ -42,7 +42,7 @@ Then open your browser at `http://localhost:3000` (or `http://localhost:8080`).
 
 ## 🌴 Story
 
-The Deep State is everywhere. Journalists lurk on the beach. Scientists roam the resort grounds. Your mission: cross the entire Mar-a-Lago island, stomp the opposition, collect crap and power-ups like classified documents and redacted files, and reach the finish flag.
+The Deep State is everywhere. Journalists lurk on the beach. Scientists roam the resort grounds. Your mission: cross the entire Mar-a-Lago island, stomp the opposition, collect power-ups like classified documents, MAGA hats, and censor bars, and reach the finish flag.
 
 ---
 
