@@ -1339,14 +1339,14 @@ class GameScene extends Phaser.Scene {
         p.body.setAllowGravity(false);
         p.setVelocity(0, -300);
 
-        this.time.delayedCall(200, () => {
+        this.time.delayedCall(2000, () => {
             p.clearTint();
             p.play('dead');
             p.body.setAllowGravity(true);
             p.setVelocity(0, 0);
         });
 
-        this.time.delayedCall(1500, () => {
+        this.time.delayedCall(3500, () => {
             if (this.lives > 0) {
                 this.scene.restart({ lives: this.lives, score: this.score, starsCollected: this.starsCollected });
             } else {
