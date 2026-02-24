@@ -755,17 +755,33 @@ class MenuScene extends Phaser.Scene {
         // Menu background music
         if (this.cache.audio.has('bgmMenu')) {
             this.menuMusic = this.sound.add('bgmMenu', { loop: true, volume: 0.3 });
-            this.menuMusic.play();
+            if (!this.sound.locked) {
+                this.menuMusic.play();
+            }
         }
 
         // Start listener — any key, click, or tap
-        const startGame = () => {
-            if (this.menuMusic) this.menuMusic.stop();
-            this.cameras.main.fadeOut(300, 0, 0, 0);
-            this.time.delayedCall(300, () => this.scene.start('Game'));
+        // If audio was locked, the first press unlocks audio & starts music;
+        // the second press actually starts the game.
+        let needsUnlock = this.sound.locked;
+        const self = this;
+        const handler = () => {
+            if (needsUnlock) {
+                needsUnlock = false;
+                if (self.menuMusic && !self.menuMusic.isPlaying) {
+                    self.menuMusic.play();
+                }
+                // Re-register for the real start
+                self.input.keyboard.once('keydown', handler);
+                self.input.once('pointerdown', handler);
+                return;
+            }
+            if (self.menuMusic) self.menuMusic.stop();
+            self.cameras.main.fadeOut(300, 0, 0, 0);
+            self.time.delayedCall(300, () => self.scene.start('Game'));
         };
-        this.input.keyboard.once('keydown', startGame);
-        this.input.once('pointerdown', startGame);
+        this.input.keyboard.once('keydown', handler);
+        this.input.once('pointerdown', handler);
     }
 }
 
