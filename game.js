@@ -701,7 +701,8 @@ class MenuScene extends Phaser.Scene {
         const T = window.TEX || {};
 
         // Background: use menuBg if available, otherwise procedural
-        if (T.menuBg) {
+        const hasMenuBg = !!T.menuBg;
+        if (hasMenuBg) {
             this.add.image(GW/2, GH/2, T.menuBg).setDisplaySize(GW, GH);
         } else {
             this.add.image(GW/2, GH/2, T.sky || 'sky');
@@ -710,52 +711,53 @@ class MenuScene extends Phaser.Scene {
             for (let x = 0; x < GW; x += TILE) {
                 this.add.image(x + TILE/2, GH - TILE/2, T.ground || 'ground');
             }
+
+            // Title shadow
+            this.add.text(GW/2 + 3, 83, 'SUPER MAGA BROS.', {
+                fontSize: '48px', fontFamily: 'Arial Black, Impact, sans-serif',
+                fontStyle: 'bold', color: '#000000',
+            }).setOrigin(0.5);
+
+            // Title text
+            this.add.text(GW/2, 80, 'SUPER MAGA BROS.', {
+                fontSize: '48px', fontFamily: 'Arial Black, Impact, sans-serif',
+                fontStyle: 'bold', color: C.gold,
+                stroke: C.capRed, strokeThickness: 5,
+            }).setOrigin(0.5);
+
+            // Subtitle
+            this.add.text(GW/2, 130, 'MAKE PLATFORMING GREAT AGAIN', {
+                fontSize: '14px', fontFamily: 'Arial, sans-serif',
+                fontStyle: 'bold', color: C.white,
+            }).setOrigin(0.5);
+
+            // Player character in center
+            const pk = T.player || 'player';
+            const p = this.add.sprite(GW/2, GH - TILE - 24, pk, 0).setScale(2.5);
+            this.tweens.add({
+                targets: p, y: p.y - 8, duration: 800,
+                yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+            });
+
+            // Stars decoration
+            const starL = this.add.image(GW/2 - 180, 80, 'star').setScale(1.5);
+            const starR = this.add.image(GW/2 + 180, 80, 'star').setScale(1.5);
+            this.tweens.add({ targets: [starL, starR], angle: 360, duration: 3000, repeat: -1 });
         }
 
-        // Title shadow
-        this.add.text(GW/2 + 3, 83, 'SUPER MAGA BROS.', {
-            fontSize: '48px', fontFamily: 'Arial Black, Impact, sans-serif',
-            fontStyle: 'bold', color: '#000000',
-        }).setOrigin(0.5);
+        // Instructions (only when no menuBg, since the image has its own text)
+        if (!hasMenuBg) {
+            const inst = this.add.text(GW/2, GH - 100, 'PRESS  SPACE  TO  START', {
+                fontSize: '22px', fontFamily: 'Arial Black, Impact, sans-serif',
+                color: C.white, stroke: C.navy, strokeThickness: 3,
+            }).setOrigin(0.5);
+            this.tweens.add({ targets: inst, alpha: 0.2, duration: 600, yoyo: true, repeat: -1 });
 
-        // Title text
-        this.add.text(GW/2, 80, 'SUPER MAGA BROS.', {
-            fontSize: '48px', fontFamily: 'Arial Black, Impact, sans-serif',
-            fontStyle: 'bold', color: C.gold,
-            stroke: C.capRed, strokeThickness: 5,
-        }).setOrigin(0.5);
-
-        // Subtitle
-        this.add.text(GW/2, 130, 'MAKE PLATFORMING GREAT AGAIN', {
-            fontSize: '14px', fontFamily: 'Arial, sans-serif',
-            fontStyle: 'bold', color: C.white,
-        }).setOrigin(0.5);
-
-        // Player character in center
-        const pk = T.player || 'player';
-        const p = this.add.sprite(GW/2, GH - TILE - 24, pk, 0).setScale(2.5);
-        this.tweens.add({
-            targets: p, y: p.y - 8, duration: 800,
-            yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
-        });
-
-        // Stars decoration
-        const starL = this.add.image(GW/2 - 180, 80, 'star').setScale(1.5);
-        const starR = this.add.image(GW/2 + 180, 80, 'star').setScale(1.5);
-        this.tweens.add({ targets: [starL, starR], angle: 360, duration: 3000, repeat: -1 });
-
-        // Instructions
-        const inst = this.add.text(GW/2, GH - 100, 'PRESS  SPACE  TO  START', {
-            fontSize: '22px', fontFamily: 'Arial Black, Impact, sans-serif',
-            color: C.white, stroke: C.navy, strokeThickness: 3,
-        }).setOrigin(0.5);
-        this.tweens.add({ targets: inst, alpha: 0.2, duration: 600, yoyo: true, repeat: -1 });
-
-        // Controls info
-        this.add.text(GW/2, GH - 60, 'Arrow Keys / WASD to Move   SPACE to Jump   Z to Fire', {
-            fontSize: '12px', fontFamily: 'Arial, sans-serif',
-            color: '#AACCEE',
-        }).setOrigin(0.5);
+            this.add.text(GW/2, GH - 60, 'Arrow Keys / WASD to Move   SPACE to Jump   Z to Fire', {
+                fontSize: '12px', fontFamily: 'Arial, sans-serif',
+                color: '#AACCEE',
+            }).setOrigin(0.5);
+        }
 
         // Menu background music
         if (window.ASSETS_LOADED && window.ASSETS_LOADED.audio && this.cache.audio.has('bgmMenu')) {
