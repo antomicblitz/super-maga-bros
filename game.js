@@ -753,7 +753,7 @@ class MenuScene extends Phaser.Scene {
         this.tweens.add({ targets: inst, alpha: 0.2, duration: 600, yoyo: true, repeat: -1 });
 
         // Menu background music
-        if (window.ASSETS_LOADED && window.ASSETS_LOADED.audio && this.cache.audio.has('bgmMenu')) {
+        if (this.cache.audio.has('bgmMenu')) {
             this.menuMusic = this.sound.add('bgmMenu', { loop: true, volume: 0.3 });
             this.menuMusic.play();
         }
@@ -968,7 +968,7 @@ class GameScene extends Phaser.Scene {
 
         // ─ Background music
         this.bgm = null;
-        if (window.ASSETS_LOADED && window.ASSETS_LOADED.audio && this.cache.audio.has('bgm')) {
+        if (this.cache.audio.has('bgm')) {
             this.bgm = this.sound.add('bgm', { loop: true, volume: 0.3 });
             this.bgm.play();
         }
