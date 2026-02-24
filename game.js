@@ -894,8 +894,10 @@ class GameScene extends Phaser.Scene {
         // ─ Player animations (only create once — anims are global)
         if (!this.anims.exists('idle')) {
             this.anims.create({ key: 'idle', frames: [{ key: pk, frame: 0 }], frameRate: 1 });
-            this.anims.create({ key: 'run', frames: this.anims.generateFrameNumbers(pk, { start: 1, end: 3 }), frameRate: 10, repeat: -1 });
-            this.anims.create({ key: 'jump', frames: [{ key: pk, frame: 4 }], frameRate: 1 });
+            this.anims.create({ key: 'run', frames: this.anims.generateFrameNumbers(pk, { frames: [1, 2] }), frameRate: 8, repeat: -1 });
+            this.anims.create({ key: 'jump', frames: [{ key: pk, frame: 3 }], frameRate: 1 });
+            this.anims.create({ key: 'hurt', frames: [{ key: pk, frame: 4 }], frameRate: 1 });
+            this.anims.create({ key: 'dead', frames: [{ key: pk, frame: 5 }], frameRate: 1 });
         }
 
         // ─ Enemy animations
@@ -1214,12 +1216,14 @@ class GameScene extends Phaser.Scene {
             this.hasHat = false;
             this.playerPower = -1;
             player.clearTint();
-            player.setTint(0xFFFFFF);
-            this.time.delayedCall(100, () => { if (!this.dead) player.clearTint(); });
+            player.play('hurt');
             playSound(this, 'snd-stomp', SFX.stomp);
             const dir = player.x < enemy.x ? -1 : 1;
             player.setVelocityX(dir * 200);
             player.setVelocityY(-200);
+            this.time.delayedCall(300, () => {
+                if (!this.dead) player.play('idle');
+            });
             return;
         }
 
@@ -1250,11 +1254,13 @@ class GameScene extends Phaser.Scene {
         if (this.bgm) this.bgm.stop();
 
         const p = this.player;
-        p.setTint(0xff0000);
+        p.play('hurt');
         p.body.setAllowGravity(false);
         p.setVelocity(0, -300);
 
         this.time.delayedCall(200, () => {
+            p.clearTint();
+            p.play('dead');
             p.body.setAllowGravity(true);
             p.setVelocity(0, 0);
         });
