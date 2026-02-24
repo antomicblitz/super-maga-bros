@@ -29,6 +29,18 @@ const C = {
     flagRed:   '#CC0000', flagWhite:'#FFFFFF', poleBrown:'#8B7355',
 };
 
+// ── Enemy & Power-Up type tables ─────────────────────────────
+const ENEMY_TYPES = [
+    { name: 'journalist', speed: 60,  score: 200, tint: 0x4488FF },
+    { name: 'scientist',  speed: 80,  score: 300, tint: null },
+    { name: 'girl',       speed: 100, score: 150, tint: 0xFF88CC },
+];
+const POWER_TYPES = [
+    { name: 'MAGA Hat',        duration: Infinity },
+    { name: 'Censor Bar',      duration: 10 },
+    { name: 'Classified Docs', duration: 15 },
+];
+
 // ── Tiny SFX via Web Audio ──────────────────────────────────
 let audioCtx;
 function sfx(freq, freq2, dur, type, vol) {
@@ -47,12 +59,21 @@ const SFX = {
     jump()  { sfx(250, 500, 0.15, 'square', 0.12); },
     coin()  { sfx(880, 1200, 0.08, 'square', 0.10); sfx(1200, 1400, 0.08, 'square', 0.10); },
     stomp() { sfx(200, 80, 0.12, 'triangle', 0.15); },
-    die()   { sfx(400, 100, 0.4, 'sawtooth', 0.12); },
-    win()   { sfx(523, 523, 0.12, 'square', 0.10);
+    die()     { sfx(400, 100, 0.4, 'sawtooth', 0.12); },
+    powerup() { sfx(523, 1047, 0.2, 'square', 0.12); setTimeout(() => sfx(784, 1568, 0.15, 'square', 0.10), 100); },
+    win()     { sfx(523, 523, 0.12, 'square', 0.10);
               setTimeout(() => sfx(659, 659, 0.12, 'square', 0.10), 130);
               setTimeout(() => sfx(784, 784, 0.12, 'square', 0.10), 260);
               setTimeout(() => sfx(1047, 1047, 0.25, 'square', 0.12), 400); },
 };
+
+// ── Audio helper (tries external asset, falls back to Web Audio) ─
+function playSound(scene, key, fallbackFn) {
+    if (window.ASSETS_LOADED && window.ASSETS_LOADED.audio && scene.cache.audio.has(key)) {
+        try { scene.sound.play(key); return; } catch (e) { /* fall through */ }
+    }
+    if (fallbackFn) fallbackFn();
+}
 
 // ── Canvas helpers ──────────────────────────────────────────
 function mkCanvas(w, h) {
@@ -396,6 +417,42 @@ function genCap() {
     return cv;
 }
 
+// ── Power-up procedural sprites ─────────────────────────────
+function genPowerup0() { return genCap(); }
+
+function genPowerup1() {
+    const cv = mkCanvas(32, 16), ctx = cv.getContext('2d'), s = PX;
+    rect(ctx, 0, 0, 16, 8, s, '#111111');
+    rect(ctx, 1, 1, 14, 6, s, '#222222');
+    rect(ctx, 3, 3, 2, 2, s, '#666666');
+    rect(ctx, 7, 3, 2, 2, s, '#666666');
+    rect(ctx, 11,3, 2, 2, s, '#666666');
+    return cv;
+}
+
+function genPowerup2() {
+    const cv = mkCanvas(28, 24), ctx = cv.getContext('2d'), s = PX;
+    rect(ctx, 0, 2, 14, 10, s, '#C4A052');
+    rect(ctx, 0, 1, 6, 1, s, '#C4A052');
+    rect(ctx, 0, 2, 14, 1, s, '#DAB866');
+    rect(ctx, 3, 5, 8, 4, s, '#CC2222');
+    rect(ctx, 4, 6, 6, 2, s, '#FF3333');
+    return cv;
+}
+
+function genTweet() {
+    const cv = mkCanvas(16, 12), ctx = cv.getContext('2d');
+    ctx.fillStyle = '#1DA1F2';
+    ctx.fillRect(2, 2, 10, 7);
+    ctx.fillRect(0, 4, 14, 4);
+    ctx.fillStyle = '#0D8DDB';
+    ctx.fillRect(1, 3, 4, 3);
+    ctx.fillStyle = '#FFFFFF'; ctx.fillRect(9, 3, 2, 2);
+    ctx.fillStyle = '#000000'; ctx.fillRect(10, 3, 1, 1);
+    ctx.fillStyle = '#FFAA00'; ctx.fillRect(12, 5, 3, 2);
+    return cv;
+}
+
 // ── Level Data ───────────────────────────────────���──────────
 const LEVEL = {
     // Ground segments [startTileX, endTileX]
@@ -488,53 +545,149 @@ const LEVEL = {
         [5440,304],[5472,304],[5504,304],
         [5696,336],[5728,336],
     ],
-    // Enemies [pixelX, patrolLeft, patrolRight]
+    // Enemies [pixelX, patrolLeft, patrolRight, type]
+    // type: 0=journalist, 1=scientist, 2=girl
     enemies: [
-        [520, 440, 720],
-        [960, 960, 1100],
-        [1400, 1280, 1520],
-        [1800, 1760, 1920],
-        [2100, 1952, 2240],
-        [2500, 2368, 2624],
-        [2900, 2720, 3000],
-        [3300, 3200, 3420],
-        [3700, 3550, 3800],
-        [4100, 4000, 4200],
-        [4500, 4416, 4600],
-        [4900, 4800, 5000],
-        [5300, 5200, 5400],
-        [5700, 5600, 5800],
+        [520, 440, 720, 0],
+        [960, 960, 1100, 1],
+        [1400, 1280, 1520, 0],
+        [1800, 1760, 1920, 2],
+        [2100, 1952, 2240, 1],
+        [2500, 2368, 2624, 0],
+        [2900, 2720, 3000, 2],
+        [3300, 3200, 3420, 1],
+        [3700, 3550, 3800, 0],
+        [4100, 4000, 4200, 2],
+        [4500, 4416, 4600, 1],
+        [4900, 4800, 5000, 0],
+        [5300, 5200, 5400, 2],
+        [5700, 5600, 5800, 1],
+    ],
+    // Power-ups [pixelX, pixelY, type]
+    // type: 0=MAGA Hat, 1=Censor Bar, 2=Classified Docs
+    powerups: [
+        [700,  336, 0],
+        [1536, 272, 1],
+        [2304, 208, 2],
+        [3456, 272, 0],
+        [4512, 272, 1],
+        [5472, 272, 2],
     ],
     flagX: 6100,
 };
+
+// ── PRELOAD SCENE ────────────────────────────────────────────
+class PreloadScene extends Phaser.Scene {
+    constructor() { super('Preload'); }
+
+    preload() {
+        // Progress bar
+        this.add.rectangle(400, 250, 804, 24, 0x333333);
+        const bar = this.add.rectangle(400, 250, 0, 20, 0xFFD700).setOrigin(0.5);
+        this.add.text(400, 220, 'LOADING...', {
+            fontSize: '16px', fontFamily: 'Arial Black', color: '#FFD700'
+        }).setOrigin(0.5);
+        this.load.on('progress', v => { bar.width = 800 * v; });
+
+        // Silently skip missing/corrupt placeholders
+        this.load.on('loaderror', (file) => { console.warn('Asset skipped:', file.key); });
+
+        // Sprites
+        try { this.load.spritesheet('player-ext', 'assets/sprites/player.png', { frameWidth: 48, frameHeight: 48 }); } catch(e) {}
+        try { this.load.spritesheet('enemies-ext', 'assets/sprites/enemies.png', { frameWidth: 48, frameHeight: 48 }); } catch(e) {}
+        try { this.load.spritesheet('powerups-ext', 'assets/sprites/powerups.png', { frameWidth: 48, frameHeight: 48 }); } catch(e) {}
+
+        // Tiles
+        try { this.load.image('ground-ext', 'assets/tiles/ground.png'); } catch(e) {}
+        try { this.load.image('brick-ext',  'assets/tiles/brick.png'); } catch(e) {}
+        try { this.load.spritesheet('qblock-ext', 'assets/tiles/qblock.png', { frameWidth: 32, frameHeight: 32 }); } catch(e) {}
+
+        // Backgrounds
+        try { this.load.image('sky-ext', 'assets/sprites/background.png'); } catch(e) {}
+        try { this.load.image('menuBg',  'assets/ui/title-screen.png'); } catch(e) {}
+
+        // HUD
+        try { this.load.spritesheet('hudIcons', 'assets/ui/hud-icons.png', { frameWidth: 32, frameHeight: 32 }); } catch(e) {}
+
+        // Audio
+        try { this.load.audio('snd-jump',    'assets/audio/jump.wav'); } catch(e) {}
+        try { this.load.audio('snd-stomp',   'assets/audio/stomp.wav'); } catch(e) {}
+        try { this.load.audio('snd-coin',    'assets/audio/coin.wav'); } catch(e) {}
+        try { this.load.audio('snd-die',     'assets/audio/die.wav'); } catch(e) {}
+        try { this.load.audio('snd-win',     'assets/audio/win.wav'); } catch(e) {}
+        try { this.load.audio('snd-powerup', 'assets/audio/powerup.wav'); } catch(e) {}
+        try { this.load.audio('bgm',         'assets/audio/bgm-game.mp3'); } catch(e) {}
+        try { this.load.audio('bgmMenu',     'assets/audio/bgm-menu.mp3'); } catch(e) {}
+    }
+
+    create() {
+        // Mark which external assets loaded successfully
+        window.ASSETS_LOADED = {
+            player:   this.textures.exists('player-ext'),
+            enemies:  this.textures.exists('enemies-ext'),
+            powerups: this.textures.exists('powerups-ext'),
+            ground:   this.textures.exists('ground-ext'),
+            brick:    this.textures.exists('brick-ext'),
+            qblock:   this.textures.exists('qblock-ext'),
+            sky:      this.textures.exists('sky-ext'),
+            menuBg:   this.textures.exists('menuBg'),
+            hud:      this.textures.exists('hudIcons'),
+            audio:    this.cache.audio.has('snd-jump'),
+        };
+        this.scene.start('Boot');
+    }
+}
 
 // ── BOOT SCENE ──────────────────────────────────────────────
 class BootScene extends Phaser.Scene {
     constructor() { super('Boot'); }
 
     create() {
-        // Register textures directly from canvases (works without a server)
+        const AL = window.ASSETS_LOADED || {};
 
-        // Player spritesheet: 5 frames of 32×48
-        const pTex = this.textures.addCanvas('player', genPlayer());
-        for (let i = 0; i < 5; i++) pTex.add(i, 0, i * 32, 0, 32, 48);
+        // Only generate procedural textures when external assets didn't load
+        if (!AL.player) {
+            const pTex = this.textures.addCanvas('player', genPlayer());
+            for (let i = 0; i < 5; i++) pTex.add(i, 0, i * 32, 0, 32, 48);
+        }
+        if (!AL.enemies) {
+            const eTex = this.textures.addCanvas('enemy', genEnemy());
+            for (let i = 0; i < 2; i++) eTex.add(i, 0, i * 28, 0, 28, 28);
+        }
+        if (!AL.ground)  this.textures.addCanvas('ground', genGround());
+        if (!AL.brick)   this.textures.addCanvas('brick', genBrick());
+        if (!AL.qblock)  this.textures.addCanvas('qblock', genQBlock());
+        if (!AL.sky)     this.textures.addCanvas('sky', genSkyBg());
 
-        // Enemy spritesheet: 2 frames of 28×28
-        const eTex = this.textures.addCanvas('enemy', genEnemy());
-        for (let i = 0; i < 2; i++) eTex.add(i, 0, i * 28, 0, 28, 28);
-
-        // Single-frame textures
-        this.textures.addCanvas('ground', genGround());
-        this.textures.addCanvas('brick', genBrick());
-        this.textures.addCanvas('qblock', genQBlock());
+        // Always generate (no external equivalent)
         this.textures.addCanvas('star', genStar());
         this.textures.addCanvas('dollar', genDollar());
         this.textures.addCanvas('flag', genFlag());
-        this.textures.addCanvas('sky', genSkyBg());
         this.textures.addCanvas('hillsFar', genHillsFar());
         this.textures.addCanvas('hillsNear', genHillsNear());
         this.textures.addCanvas('sparkle', genSparkle());
         this.textures.addCanvas('cap', genCap());
+        this.textures.addCanvas('tweet', genTweet());
+
+        // Power-up procedural fallbacks
+        if (!AL.powerups) {
+            this.textures.addCanvas('powerup0', genPowerup0());
+            this.textures.addCanvas('powerup1', genPowerup1());
+            this.textures.addCanvas('powerup2', genPowerup2());
+        }
+
+        // Texture key alias map: canonical → actual loaded key
+        window.TEX = {
+            player:   AL.player  ? 'player-ext'  : 'player',
+            enemy:    AL.enemies ? 'enemies-ext'  : 'enemy',
+            ground:   AL.ground  ? 'ground-ext'   : 'ground',
+            brick:    AL.brick   ? 'brick-ext'    : 'brick',
+            qblock:   AL.qblock  ? 'qblock-ext'   : 'qblock',
+            sky:      AL.sky     ? 'sky-ext'       : 'sky',
+            menuBg:   AL.menuBg  ? 'menuBg'       : null,
+            enemyExt:  !!AL.enemies,
+            powerExt:  !!AL.powerups,
+        };
 
         this.scene.start('Menu');
     }
@@ -545,16 +698,18 @@ class MenuScene extends Phaser.Scene {
     constructor() { super('Menu'); }
 
     create() {
-        // Sky background
-        this.add.image(GW/2, GH/2, 'sky');
+        const T = window.TEX || {};
 
-        // Hills
-        this.add.image(GW/2, GH - 80, 'hillsFar');
-        this.add.image(GW/2, GH - 40, 'hillsNear');
-
-        // Ground strip
-        for (let x = 0; x < GW; x += TILE) {
-            this.add.image(x + TILE/2, GH - TILE/2, 'ground');
+        // Background: use menuBg if available, otherwise procedural
+        if (T.menuBg) {
+            this.add.image(GW/2, GH/2, T.menuBg).setDisplaySize(GW, GH);
+        } else {
+            this.add.image(GW/2, GH/2, T.sky || 'sky');
+            this.add.image(GW/2, GH - 80, 'hillsFar');
+            this.add.image(GW/2, GH - 40, 'hillsNear');
+            for (let x = 0; x < GW; x += TILE) {
+                this.add.image(x + TILE/2, GH - TILE/2, T.ground || 'ground');
+            }
         }
 
         // Title shadow
@@ -577,7 +732,8 @@ class MenuScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         // Player character in center
-        const p = this.add.sprite(GW/2, GH - TILE - 24, 'player', 0).setScale(2.5);
+        const pk = T.player || 'player';
+        const p = this.add.sprite(GW/2, GH - TILE - 24, pk, 0).setScale(2.5);
         this.tweens.add({
             targets: p, y: p.y - 8, duration: 800,
             yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
@@ -596,13 +752,20 @@ class MenuScene extends Phaser.Scene {
         this.tweens.add({ targets: inst, alpha: 0.2, duration: 600, yoyo: true, repeat: -1 });
 
         // Controls info
-        this.add.text(GW/2, GH - 60, 'Arrow Keys / WASD to Move     SPACE to Jump', {
+        this.add.text(GW/2, GH - 60, 'Arrow Keys / WASD to Move   SPACE to Jump   Z to Fire', {
             fontSize: '12px', fontFamily: 'Arial, sans-serif',
             color: '#AACCEE',
         }).setOrigin(0.5);
 
+        // Menu background music
+        if (window.ASSETS_LOADED && window.ASSETS_LOADED.audio && this.cache.audio.has('bgmMenu')) {
+            this.menuMusic = this.sound.add('bgmMenu', { loop: true, volume: 0.3 });
+            this.menuMusic.play();
+        }
+
         // Start listener
         this.input.keyboard.once('keydown-SPACE', () => {
+            if (this.menuMusic) this.menuMusic.stop();
             this.cameras.main.fadeOut(300, 0, 0, 0);
             this.time.delayedCall(300, () => this.scene.start('Game'));
         });
@@ -614,19 +777,25 @@ class GameScene extends Phaser.Scene {
     constructor() { super('Game'); }
 
     init(data) {
-        // Persist lives and score across restarts (deaths)
         this.score = data.score || 0;
         this.lives = data.lives !== undefined ? data.lives : 3;
         this.starsCollected = data.starsCollected || 0;
+        // Power-up state resets on death
+        this.playerPower = -1;
+        this.powerTimer = 0;
+        this.invincible = false;
+        this.hasHat = false;
     }
 
     create() {
         this.totalStars = LEVEL.stars.length;
         this.dead = false;
         this.won = false;
+        const T = window.TEX || {};
 
         // ─ Background layers (parallax)
-        this.skyImg = this.add.tileSprite(0, 0, GW, GH, 'sky').setOrigin(0).setScrollFactor(0).setDepth(-10);
+        const skyKey = T.sky || 'sky';
+        this.skyImg = this.add.tileSprite(0, 0, GW, GH, skyKey).setOrigin(0).setScrollFactor(0).setDepth(-10);
         this.farHills = this.add.tileSprite(0, GH - 180, GW, 200, 'hillsFar').setOrigin(0).setScrollFactor(0).setDepth(-9);
         this.nearHills = this.add.tileSprite(0, GH - 140, GW, 160, 'hillsNear').setOrigin(0).setScrollFactor(0).setDepth(-8);
 
@@ -634,20 +803,20 @@ class GameScene extends Phaser.Scene {
         this.physics.world.setBounds(0, 0, WORLD_W, WORLD_H);
 
         // ─ Static groups
+        const gndKey = T.ground || 'ground';
+        const brkKey = T.brick || 'brick';
         this.groundGroup = this.physics.add.staticGroup();
         this.platformGroup = this.physics.add.staticGroup();
 
-        // Build ground
         LEVEL.ground.forEach(([s, e]) => {
             for (let tx = s; tx <= e; tx++) {
-                this.groundGroup.create(tx * TILE + TILE/2, GROUND_Y + TILE/2, 'ground');
+                this.groundGroup.create(tx * TILE + TILE/2, GROUND_Y + TILE/2, gndKey);
             }
         });
 
-        // Build platforms
         LEVEL.platforms.forEach(([tx, py, w]) => {
             for (let i = 0; i < w; i++) {
-                this.platformGroup.create(tx * TILE + i * TILE + TILE/2, py + TILE/2, 'brick');
+                this.platformGroup.create(tx * TILE + i * TILE + TILE/2, py + TILE/2, brkKey);
             }
         });
 
@@ -656,25 +825,57 @@ class GameScene extends Phaser.Scene {
         LEVEL.stars.forEach(([sx, sy], idx) => {
             const star = this.starsGroup.create(sx, sy, 'star');
             star.setCircle(10, 2, 2);
-            // Gentle bob
             this.tweens.add({
                 targets: star, y: sy - 6, duration: 800 + (idx % 5) * 100,
                 yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
             });
         });
 
-        // ─ Enemies
+        // ─ Enemies (3 types)
+        const ek = T.enemy || 'enemy';
+        const enemyExt = T.enemyExt;
         this.enemyGroup = this.physics.add.group();
-        LEVEL.enemies.forEach(([ex, eL, eR]) => {
-            const e = this.enemyGroup.create(ex, GROUND_Y - 14, 'enemy', 0);
+
+        LEVEL.enemies.forEach(([ex, eL, eR, type]) => {
+            const et = ENEMY_TYPES[type] || ENEMY_TYPES[0];
+            let e;
+            if (enemyExt) {
+                e = this.enemyGroup.create(ex, GROUND_Y - 24, ek, type * 4);
+            } else {
+                e = this.enemyGroup.create(ex, GROUND_Y - 14, ek, 0);
+                if (et.tint) e.setTint(et.tint);
+            }
             e.setSize(24, 24).setOffset(2, 4);
             e.setBounce(0);
             e.setCollideWorldBounds(false);
-            e.setVelocityX(-60);
+            e.setVelocityX(-et.speed);
             e.patrolL = eL;
             e.patrolR = eR;
+            e.patrolSpeed = et.speed;
+            e.enemyType = type;
             e.body.setAllowGravity(true);
         });
+
+        // ─ Power-ups
+        const powerExt = T.powerExt;
+        this.powerupGroup = this.physics.add.group({ allowGravity: false });
+
+        LEVEL.powerups.forEach(([pux, puy, type]) => {
+            let pu;
+            if (powerExt) {
+                pu = this.powerupGroup.create(pux, puy, 'powerups-ext', type);
+            } else {
+                pu = this.powerupGroup.create(pux, puy, 'powerup' + type);
+            }
+            pu.powerType = type;
+            this.tweens.add({
+                targets: pu, y: puy - 8, duration: 1000,
+                yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+            });
+        });
+
+        // ─ Tweet blast group
+        this.tweetGroup = this.physics.add.group({ allowGravity: false });
 
         // ─ Flag
         this.flag = this.physics.add.sprite(LEVEL.flagX, GROUND_Y - 80, 'flag');
@@ -683,20 +884,38 @@ class GameScene extends Phaser.Scene {
         this.flag.setSize(48, 140).setOffset(0, 10);
 
         // ─ Player
-        this.player = this.physics.add.sprite(80, GROUND_Y - 48, 'player', 0);
+        const pk = T.player || 'player';
+        this.player = this.physics.add.sprite(80, GROUND_Y - 48, pk, 0);
         this.player.setSize(20, 40).setOffset(6, 8);
         this.player.setCollideWorldBounds(false);
         this.player.setBounce(0);
         this.player.setDepth(5);
 
-        // Player animations (only create once — anims are global)
+        // ─ Player animations (only create once — anims are global)
         if (!this.anims.exists('idle')) {
-            this.anims.create({ key: 'idle', frames: [{ key: 'player', frame: 0 }], frameRate: 1 });
-            this.anims.create({ key: 'run', frames: this.anims.generateFrameNumbers('player', { start: 1, end: 3 }), frameRate: 10, repeat: -1 });
-            this.anims.create({ key: 'jump', frames: [{ key: 'player', frame: 4 }], frameRate: 1 });
-            this.anims.create({ key: 'enemyWalk', frames: this.anims.generateFrameNumbers('enemy', { start: 0, end: 1 }), frameRate: 4, repeat: -1 });
+            this.anims.create({ key: 'idle', frames: [{ key: pk, frame: 0 }], frameRate: 1 });
+            this.anims.create({ key: 'run', frames: this.anims.generateFrameNumbers(pk, { start: 1, end: 3 }), frameRate: 10, repeat: -1 });
+            this.anims.create({ key: 'jump', frames: [{ key: pk, frame: 4 }], frameRate: 1 });
         }
-        this.enemyGroup.children.iterate(e => { if (e) e.play('enemyWalk'); });
+
+        // ─ Enemy animations
+        if (enemyExt) {
+            for (let t = 0; t < 3; t++) {
+                const animKey = 'enemy' + t + 'Walk';
+                if (!this.anims.exists(animKey)) {
+                    const base = t * 4;
+                    this.anims.create({ key: animKey, frames: this.anims.generateFrameNumbers(ek, { start: base, end: base + 1 }), frameRate: 4, repeat: -1 });
+                }
+            }
+        } else {
+            if (!this.anims.exists('enemyWalk')) {
+                this.anims.create({ key: 'enemyWalk', frames: this.anims.generateFrameNumbers(ek, { start: 0, end: 1 }), frameRate: 4, repeat: -1 });
+            }
+        }
+        this.enemyGroup.children.iterate(e => {
+            if (!e) return;
+            e.play(enemyExt ? ('enemy' + e.enemyType + 'Walk') : 'enemyWalk');
+        });
 
         // ─ Colliders
         this.physics.add.collider(this.player, this.groundGroup);
@@ -704,16 +923,13 @@ class GameScene extends Phaser.Scene {
         this.physics.add.collider(this.enemyGroup, this.groundGroup);
         this.physics.add.collider(this.enemyGroup, this.platformGroup);
 
-        // Star overlap
         this.physics.add.overlap(this.player, this.starsGroup, this.collectStar, null, this);
-
-        // Enemy overlap
         this.physics.add.overlap(this.player, this.enemyGroup, this.hitEnemy, null, this);
-
-        // Flag overlap
         this.physics.add.overlap(this.player, this.flag, this.reachFlag, null, this);
+        this.physics.add.overlap(this.player, this.powerupGroup, this.collectPowerUp, null, this);
+        this.physics.add.overlap(this.tweetGroup, this.enemyGroup, this.tweetHitEnemy, null, this);
 
-        // ─ Particle emitter for star collect
+        // ─ Particle emitter
         this.sparkleEmitter = this.add.particles(0, 0, 'sparkle', {
             speed: { min: 50, max: 150 },
             angle: { min: 0, max: 360 },
@@ -733,35 +949,44 @@ class GameScene extends Phaser.Scene {
         this.cursors = this.input.keyboard.createCursorKeys();
         this.wasd = this.input.keyboard.addKeys({ up: 'W', down: 'S', left: 'A', right: 'D' });
         this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        this.zKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
 
-        // ─ HUD (fixed to camera)
+        // ─ HUD
         const hudStyle = { fontSize: '18px', fontFamily: 'Arial Black, Impact, sans-serif', color: C.white, stroke: '#000', strokeThickness: 3 };
         this.scoreText = this.add.text(16, 12, 'SCORE: 0', hudStyle).setScrollFactor(0).setDepth(100);
         this.livesText = this.add.text(GW - 16, 12, 'LIVES: 3', hudStyle).setOrigin(1, 0).setScrollFactor(0).setDepth(100);
         this.starsText = this.add.text(GW / 2, 12, 'STARS: 0/' + this.totalStars, { ...hudStyle, color: C.gold }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(100);
+        this.powerText = this.add.text(16, 36, '', { ...hudStyle, fontSize: '14px', color: '#88FF88' }).setScrollFactor(0).setDepth(100);
 
         // Coyote time tracking
         this.coyoteTimer = 0;
         this.jumpBufferTimer = 0;
         this.wasOnGround = false;
+
+        // ─ Background music
+        this.bgm = null;
+        if (window.ASSETS_LOADED && window.ASSETS_LOADED.audio && this.cache.audio.has('bgm')) {
+            this.bgm = this.sound.add('bgm', { loop: true, volume: 0.3 });
+            this.bgm.play();
+        }
     }
 
-    update(time, delta) {
+    update(_time, delta) {
         if (this.dead || this.won) return;
 
         const p = this.player;
         const onGround = p.body.touching.down || p.body.blocked.down;
         const dt = delta / 1000;
 
-        // ─ Coyote time (can still jump briefly after leaving platform)
+        // ─ Coyote time
         if (onGround) {
-            this.coyoteTimer = 0.08; // 80ms
+            this.coyoteTimer = 0.08;
             this.wasOnGround = true;
         } else {
             this.coyoteTimer -= dt;
         }
 
-        // ─ Jump buffer (press jump slightly before landing)
+        // ─ Jump buffer
         const jumpPressed = Phaser.Input.Keyboard.JustDown(this.spaceKey) ||
                            Phaser.Input.Keyboard.JustDown(this.cursors.up) ||
                            Phaser.Input.Keyboard.JustDown(this.wasd.up);
@@ -777,7 +1002,7 @@ class GameScene extends Phaser.Scene {
             p.setVelocityX(speed);
             p.setFlipX(false);
         } else {
-            p.setVelocityX(p.body.velocity.x * 0.8); // Friction
+            p.setVelocityX(p.body.velocity.x * 0.8);
             if (Math.abs(p.body.velocity.x) < 10) p.setVelocityX(0);
         }
 
@@ -787,10 +1012,10 @@ class GameScene extends Phaser.Scene {
             p.setVelocityY(-430);
             this.coyoteTimer = 0;
             this.jumpBufferTimer = 0;
-            SFX.jump();
+            playSound(this, 'snd-jump', SFX.jump);
         }
 
-        // Variable jump height (release to cut short)
+        // Variable jump height
         const jumpHeld = this.spaceKey.isDown || this.cursors.up.isDown || this.wasd.up.isDown;
         if (!jumpHeld && p.body.velocity.y < -150) {
             p.setVelocityY(p.body.velocity.y * 0.6);
@@ -805,17 +1030,16 @@ class GameScene extends Phaser.Scene {
             p.play('idle', true);
         }
 
-        // ─ Enemy patrol & cleanup
+        // ─ Enemy patrol
         this.enemyGroup.children.iterate(e => {
             if (!e || !e.active) return;
-            // Destroy enemies that fall off the world
             if (e.y > GH + 100) { e.destroy(); return; }
-            if (e.x <= e.patrolL) e.setVelocityX(60);
-            if (e.x >= e.patrolR) e.setVelocityX(-60);
+            if (e.x <= e.patrolL) e.setVelocityX(e.patrolSpeed);
+            if (e.x >= e.patrolR) e.setVelocityX(-e.patrolSpeed);
             e.setFlipX(e.body.velocity.x > 0);
         });
 
-        // ─ Parallax background scroll
+        // ─ Parallax
         const camX = this.cameras.main.scrollX;
         this.farHills.tilePositionX = camX * 0.15;
         this.nearHills.tilePositionX = camX * 0.35;
@@ -825,21 +1049,42 @@ class GameScene extends Phaser.Scene {
             this.playerDie();
         }
 
+        // ─ Power-up timer countdown
+        if (this.playerPower >= 0 && this.powerTimer > 0) {
+            this.powerTimer -= dt;
+            if (this.powerTimer <= 0) {
+                this.powerTimer = 0;
+                if (this.playerPower === 1) this.invincible = false;
+                this.playerPower = -1;
+                p.clearTint();
+            }
+        }
+
+        // ─ Z key: fire tweet-blast
+        if (Phaser.Input.Keyboard.JustDown(this.zKey) && this.playerPower === 2) {
+            this.fireTweetBlast();
+        }
+
+        // ─ Clean up off-screen tweets
+        this.tweetGroup.children.iterate(t => {
+            if (t && (t.x < camX - 100 || t.x > camX + GW + 100)) t.destroy();
+        });
+
         // ─ Update HUD
         this.scoreText.setText('SCORE: ' + this.score);
         this.livesText.setText('LIVES: ' + this.lives);
         this.starsText.setText('STARS: ' + this.starsCollected + '/' + this.totalStars);
+        this.updatePowerHUD();
     }
 
-    collectStar(player, star) {
-        // Sparkle effect
+    // ── Collectibles ────────────────────────────────────────
+    collectStar(_player, star) {
         this.sparkleEmitter.emitParticleAt(star.x, star.y, 8);
         star.destroy();
         this.score += 100;
         this.starsCollected++;
-        SFX.coin();
+        playSound(this, 'snd-coin', SFX.coin);
 
-        // Brief score popup
         const popup = this.add.text(star.x, star.y, '+100', {
             fontSize: '14px', fontFamily: 'Arial', fontStyle: 'bold',
             color: C.gold, stroke: '#000', strokeThickness: 2,
@@ -850,37 +1095,134 @@ class GameScene extends Phaser.Scene {
         });
     }
 
+    collectPowerUp(player, powerup) {
+        const type = powerup.powerType;
+        this.sparkleEmitter.emitParticleAt(powerup.x, powerup.y, 6);
+        powerup.destroy();
+        playSound(this, 'snd-powerup', SFX.powerup);
+
+        this.playerPower = type;
+        const pt = POWER_TYPES[type];
+
+        if (type === 0) {
+            // MAGA Hat: permanent until hit
+            this.hasHat = true;
+            this.powerTimer = 0;
+            player.setTint(0xFFDD44);
+        } else if (type === 1) {
+            // Censor Bar: 10s invincibility
+            this.invincible = true;
+            this.powerTimer = pt.duration;
+            player.setTint(0x88FFFF);
+        } else if (type === 2) {
+            // Classified Docs: 15s tweet-blast
+            this.invincible = false;
+            this.powerTimer = pt.duration;
+            player.setTint(0xFF8844);
+        }
+
+        const popup = this.add.text(powerup.x, powerup.y, pt.name + '!', {
+            fontSize: '12px', fontFamily: 'Arial Black', fontStyle: 'bold',
+            color: '#88FF88', stroke: '#000', strokeThickness: 2,
+        }).setOrigin(0.5).setDepth(50);
+        this.tweens.add({
+            targets: popup, y: popup.y - 30, alpha: 0, duration: 800,
+            onComplete: () => popup.destroy(),
+        });
+    }
+
+    // ── Tweet blast ─────────────────────────────────────────
+    fireTweetBlast() {
+        const p = this.player;
+        const dir = p.flipX ? -1 : 1;
+        const tweet = this.tweetGroup.create(p.x + dir * 20, p.y, 'tweet');
+        tweet.setVelocityX(dir * 400);
+        tweet.setFlipX(dir < 0);
+        tweet.body.setAllowGravity(false);
+        playSound(this, 'snd-jump', SFX.jump);
+
+        this.time.delayedCall(2000, () => {
+            if (tweet && tweet.active) tweet.destroy();
+        });
+    }
+
+    tweetHitEnemy(tweet, enemy) {
+        if (tweet && tweet.active) tweet.destroy();
+        if (enemy && enemy.active) this.destroyEnemy(enemy);
+    }
+
+    // ── Enemy helpers ───────────────────────────────────────
+    destroyEnemy(enemy) {
+        const et = ENEMY_TYPES[enemy.enemyType] || ENEMY_TYPES[0];
+        enemy.destroy();
+        this.score += et.score;
+        playSound(this, 'snd-stomp', SFX.stomp);
+
+        const popup = this.add.text(enemy.x, enemy.y, '+' + et.score, {
+            fontSize: '14px', fontFamily: 'Arial', fontStyle: 'bold',
+            color: '#FF6666', stroke: '#000', strokeThickness: 2,
+        }).setOrigin(0.5).setDepth(50);
+        this.tweens.add({
+            targets: popup, y: popup.y - 30, alpha: 0, duration: 600,
+            onComplete: () => popup.destroy(),
+        });
+    }
+
     hitEnemy(player, enemy) {
         if (this.dead || this.won) return;
 
-        // Check if player is falling on top of enemy (stomp)
-        if (player.body.velocity.y > 0 && player.y + player.body.halfHeight < enemy.y) {
-            // Stomp the enemy!
-            enemy.destroy();
-            player.setVelocityY(-280); // Bounce up
-            this.score += 200;
-            SFX.stomp();
+        // Invincible: destroy on contact
+        if (this.invincible) {
+            this.destroyEnemy(enemy);
+            return;
+        }
 
-            // Score popup
-            const popup = this.add.text(enemy.x, enemy.y, '+200', {
-                fontSize: '14px', fontFamily: 'Arial', fontStyle: 'bold',
-                color: '#FF6666', stroke: '#000', strokeThickness: 2,
-            }).setOrigin(0.5).setDepth(50);
-            this.tweens.add({
-                targets: popup, y: popup.y - 30, alpha: 0, duration: 600,
-                onComplete: () => popup.destroy(),
-            });
+        // Stomp check
+        if (player.body.velocity.y > 0 && player.y + player.body.halfHeight < enemy.y) {
+            this.destroyEnemy(enemy);
+            player.setVelocityY(-280);
+            return;
+        }
+
+        // MAGA Hat absorbs one hit
+        if (this.hasHat) {
+            this.hasHat = false;
+            this.playerPower = -1;
+            player.clearTint();
+            player.setTint(0xFFFFFF);
+            this.time.delayedCall(100, () => { if (!this.dead) player.clearTint(); });
+            playSound(this, 'snd-stomp', SFX.stomp);
+            const dir = player.x < enemy.x ? -1 : 1;
+            player.setVelocityX(dir * 200);
+            player.setVelocityY(-200);
+            return;
+        }
+
+        // Player dies
+        this.playerDie();
+    }
+
+    // ── Power-up HUD ────────────────────────────────────────
+    updatePowerHUD() {
+        if (this.playerPower < 0) {
+            this.powerText.setText('');
         } else {
-            // Player gets hit
-            this.playerDie();
+            const pt = POWER_TYPES[this.playerPower];
+            let text = pt.name;
+            if (this.powerTimer > 0) {
+                text += ' ' + Math.ceil(this.powerTimer) + 's';
+            }
+            this.powerText.setText(text);
         }
     }
 
+    // ── Death & Game Over ───────────────────────────────────
     playerDie() {
         if (this.dead) return;
         this.dead = true;
         this.lives--;
-        SFX.die();
+        playSound(this, 'snd-die', SFX.die);
+        if (this.bgm) this.bgm.stop();
 
         const p = this.player;
         p.setTint(0xff0000);
@@ -929,19 +1271,19 @@ class GameScene extends Phaser.Scene {
         });
     }
 
-    reachFlag(player, flag) {
+    // ── Victory ─────────────────────────────────────────────
+    reachFlag(player, _flag) {
         if (this.won) return;
         this.won = true;
-        SFX.win();
+        playSound(this, 'snd-win', SFX.win);
+        if (this.bgm) this.bgm.stop();
 
-        // Score bonus
         this.score += 1000 + this.starsCollected * 50;
 
         player.setVelocity(0, 0);
         player.body.setAllowGravity(false);
         player.play('idle');
 
-        // Slide down flagpole
         this.tweens.add({
             targets: player, y: GROUND_Y - 24, duration: 800, ease: 'Sine.easeIn',
             onComplete: () => this.showVictory(),
@@ -996,7 +1338,7 @@ const config = {
             debug: false,
         },
     },
-    scene: [BootScene, MenuScene, GameScene],
+    scene: [PreloadScene, BootScene, MenuScene, GameScene],
     scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
