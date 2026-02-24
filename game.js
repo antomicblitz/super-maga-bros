@@ -745,19 +745,12 @@ class MenuScene extends Phaser.Scene {
             this.tweens.add({ targets: [starL, starR], angle: 360, duration: 3000, repeat: -1 });
         }
 
-        // Instructions (only when no menuBg, since the image has its own text)
-        if (!hasMenuBg) {
-            const inst = this.add.text(GW/2, GH - 100, 'PRESS  SPACE  TO  START', {
-                fontSize: '22px', fontFamily: 'Arial Black, Impact, sans-serif',
-                color: C.white, stroke: C.navy, strokeThickness: 3,
-            }).setOrigin(0.5);
-            this.tweens.add({ targets: inst, alpha: 0.2, duration: 600, yoyo: true, repeat: -1 });
-
-            this.add.text(GW/2, GH - 60, 'Arrow Keys / WASD to Move   SPACE to Jump   Z to Fire', {
-                fontSize: '12px', fontFamily: 'Arial, sans-serif',
-                color: '#AACCEE',
-            }).setOrigin(0.5);
-        }
+        // "Press any button" prompt (always shown)
+        const inst = this.add.text(GW/2, GH - 80, 'PRESS ANY BUTTON TO PLAY', {
+            fontSize: '22px', fontFamily: 'Arial Black, Impact, sans-serif',
+            color: C.white, stroke: C.navy, strokeThickness: 3,
+        }).setOrigin(0.5);
+        this.tweens.add({ targets: inst, alpha: 0.2, duration: 600, yoyo: true, repeat: -1 });
 
         // Menu background music
         if (window.ASSETS_LOADED && window.ASSETS_LOADED.audio && this.cache.audio.has('bgmMenu')) {
@@ -765,12 +758,14 @@ class MenuScene extends Phaser.Scene {
             this.menuMusic.play();
         }
 
-        // Start listener
-        this.input.keyboard.once('keydown-SPACE', () => {
+        // Start listener — any key, click, or tap
+        const startGame = () => {
             if (this.menuMusic) this.menuMusic.stop();
             this.cameras.main.fadeOut(300, 0, 0, 0);
             this.time.delayedCall(300, () => this.scene.start('Game'));
-        });
+        };
+        this.input.keyboard.once('keydown', startGame);
+        this.input.once('pointerdown', startGame);
     }
 }
 
