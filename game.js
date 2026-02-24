@@ -596,6 +596,7 @@ class PreloadScene extends Phaser.Scene {
         try { this.load.spritesheet('player-ext', 'assets/sprites/player.png', { frameWidth: 48, frameHeight: 48 }); } catch(e) {}
         try { this.load.spritesheet('enemies-ext', 'assets/sprites/enemies.png', { frameWidth: 48, frameHeight: 48 }); } catch(e) {}
         try { this.load.spritesheet('powerups-ext', 'assets/sprites/powerups.png', { frameWidth: 48, frameHeight: 48 }); } catch(e) {}
+        try { this.load.image('player-tweet', 'assets/sprites/player-tweet.png'); } catch(e) {}
 
         // Tiles
         try { this.load.image('ground-ext', 'assets/tiles/ground.png'); } catch(e) {}
@@ -633,6 +634,7 @@ class PreloadScene extends Phaser.Scene {
             sky:      this.textures.exists('sky-ext'),
             menuBg:   this.textures.exists('menuBg'),
             hud:      this.textures.exists('hudIcons'),
+            playerTweet: this.textures.exists('player-tweet'),
             audio:    this.cache.audio.has('snd-jump'),
             censorBgm: this.cache.audio.has('bgm-censor'),
         };
@@ -800,6 +802,7 @@ class GameScene extends Phaser.Scene {
         this.powerTimer = 0;
         this.invincible = false;
         this.hasHat = false;
+        this.tweetCooldown = false;
     }
 
     create() {
@@ -1180,6 +1183,10 @@ class GameScene extends Phaser.Scene {
 
     // ── Tweet blast ─────────────────────────────────────────
     fireTweetBlast() {
+        if (this.tweetCooldown) return;
+        this.tweetCooldown = true;
+        this.time.delayedCall(700, () => { this.tweetCooldown = false; });
+
         const p = this.player;
         const dir = p.flipX ? -1 : 1;
         const tweet = this.tweetGroup.create(p.x + dir * 20, p.y, 'tweet');
@@ -1187,6 +1194,34 @@ class GameScene extends Phaser.Scene {
         tweet.setFlipX(dir < 0);
         tweet.body.setAllowGravity(false);
         playSound(this, 'snd-jump', SFX.jump);
+
+        // Switch to tweet pose
+        if (window.ASSETS_LOADED && window.ASSETS_LOADED.playerTweet) {
+            p.setTexture('player-tweet');
+            p.setDisplaySize(48, 48);
+        } else {
+            p.play('jump');
+        }
+
+        // Revert back after 600ms
+        this.time.delayedCall(600, () => {
+            if (this.dead || this.won) return;
+            const T = window.TEX || {};
+            p.setTexture(T.player || 'player');
+            p.setDisplaySize(48, 48);
+            p.play('idle');
+        });
+
+        // Screen flash
+        const flash = this.add.rectangle(
+            GW / 2, GH / 2, GW, GH, 0xFFFFFF, 0.3
+        ).setScrollFactor(0).setDepth(50);
+        this.tweens.add({
+            targets: flash,
+            alpha: 0,
+            duration: 150,
+            onComplete: () => flash.destroy()
+        });
 
         this.time.delayedCall(2000, () => {
             if (tweet && tweet.active) tweet.destroy();

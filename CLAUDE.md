@@ -78,7 +78,9 @@ GW=800, GH=500, TILE=32, WORLD_W=6400, WORLD_H=600, GROUND_Y=468
 ## Controls
 Arrow keys / WASD = move
 Space / W / Up = jump
-Z = fire tweet-blast (only when Classified Docs power-up is active)
+Z = fire tweet-blast (Classified Docs power-up active) —
+    player switches to phone-raise pose for 600ms,
+    white screen flash, 700ms cooldown between blasts
 
 ## Key Design Rules
 - ALWAYS keep Web Audio API SFX functions as fallback (never delete SFX object)
