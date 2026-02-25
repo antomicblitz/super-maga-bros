@@ -703,54 +703,56 @@ class MenuScene extends Phaser.Scene {
 
     create() {
         const T = window.TEX || {};
+        const sw = this.scale.width;
+        const sh = this.scale.height;
 
         // Background: use menuBg if available, otherwise procedural
         const hasMenuBg = !!T.menuBg;
         if (hasMenuBg) {
-            this.add.image(GW/2, GH/2, T.menuBg).setDisplaySize(GW, GH);
+            this.add.image(sw/2, sh/2, T.menuBg).setDisplaySize(sw, sh);
         } else {
-            this.add.image(GW/2, GH/2, T.sky || 'sky');
-            this.add.image(GW/2, GH - 80, 'hillsFar');
-            this.add.image(GW/2, GH - 40, 'hillsNear');
-            for (let x = 0; x < GW; x += TILE) {
-                this.add.image(x + TILE/2, GH - TILE/2, T.ground || 'ground');
+            this.add.image(sw/2, sh/2, T.sky || 'sky');
+            this.add.image(sw/2, sh - 80, 'hillsFar');
+            this.add.image(sw/2, sh - 40, 'hillsNear');
+            for (let x = 0; x < sw; x += TILE) {
+                this.add.image(x + TILE/2, sh - TILE/2, T.ground || 'ground');
             }
 
             // Title shadow
-            this.add.text(GW/2 + 3, 83, 'SUPER MAGA BROS.', {
+            this.add.text(sw/2 + 3, 83, 'SUPER MAGA BROS.', {
                 fontSize: '48px', fontFamily: 'Arial Black, Impact, sans-serif',
                 fontStyle: 'bold', color: '#000000',
             }).setOrigin(0.5);
 
             // Title text
-            this.add.text(GW/2, 80, 'SUPER MAGA BROS.', {
+            this.add.text(sw/2, 80, 'SUPER MAGA BROS.', {
                 fontSize: '48px', fontFamily: 'Arial Black, Impact, sans-serif',
                 fontStyle: 'bold', color: C.gold,
                 stroke: C.capRed, strokeThickness: 5,
             }).setOrigin(0.5);
 
             // Subtitle
-            this.add.text(GW/2, 130, 'MAKE PLATFORMING GREAT AGAIN', {
+            this.add.text(sw/2, 130, 'MAKE PLATFORMING GREAT AGAIN', {
                 fontSize: '14px', fontFamily: 'Arial, sans-serif',
                 fontStyle: 'bold', color: C.white,
             }).setOrigin(0.5);
 
             // Player character in center
             const pk = T.player || 'player';
-            const p = this.add.sprite(GW/2, GH - TILE - 24, pk, 0).setScale(2.5);
+            const p = this.add.sprite(sw/2, sh - TILE - 24, pk, 0).setScale(2.5);
             this.tweens.add({
                 targets: p, y: p.y - 8, duration: 800,
                 yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
             });
 
             // Stars decoration
-            const starL = this.add.image(GW/2 - 180, 80, 'star').setScale(1.5);
-            const starR = this.add.image(GW/2 + 180, 80, 'star').setScale(1.5);
+            const starL = this.add.image(sw/2 - 180, 80, 'star').setScale(1.5);
+            const starR = this.add.image(sw/2 + 180, 80, 'star').setScale(1.5);
             this.tweens.add({ targets: [starL, starR], angle: 360, duration: 3000, repeat: -1 });
         }
 
         // "Press any button" prompt (always shown)
-        const inst = this.add.text(GW/2, GH - 80, 'PRESS ANY BUTTON TO PLAY', {
+        const inst = this.add.text(sw/2, sh - 80, 'PRESS ANY BUTTON TO PLAY', {
             fontSize: '22px', fontFamily: 'Arial Black, Impact, sans-serif',
             color: C.white, stroke: C.navy, strokeThickness: 3,
         }).setOrigin(0.5);
@@ -812,10 +814,12 @@ class GameScene extends Phaser.Scene {
         const T = window.TEX || {};
 
         // ─ Background layers (parallax)
+        const sw = this.scale.width;
+        const sh = this.scale.height;
         const skyKey = T.sky || 'sky';
-        this.skyImg = this.add.tileSprite(0, 0, GW, GH, skyKey).setOrigin(0).setScrollFactor(0).setDepth(-10);
-        this.farHills = this.add.tileSprite(0, GH - 180, GW, 200, 'hillsFar').setOrigin(0).setScrollFactor(0).setDepth(-9);
-        this.nearHills = this.add.tileSprite(0, GH - 140, GW, 160, 'hillsNear').setOrigin(0).setScrollFactor(0).setDepth(-8);
+        this.skyImg = this.add.tileSprite(0, 0, sw, sh, skyKey).setOrigin(0).setScrollFactor(0).setDepth(-10);
+        this.farHills = this.add.tileSprite(0, sh - 180, sw, 200, 'hillsFar').setOrigin(0).setScrollFactor(0).setDepth(-9);
+        this.nearHills = this.add.tileSprite(0, sh - 140, sw, 160, 'hillsNear').setOrigin(0).setScrollFactor(0).setDepth(-8);
 
         // ─ World bounds
         this.physics.world.setBounds(0, 0, WORLD_W, WORLD_H);
@@ -969,7 +973,7 @@ class GameScene extends Phaser.Scene {
         });
 
         // ─ Camera
-        this.cameras.main.setBounds(0, 0, WORLD_W, GH);
+        this.cameras.main.setBounds(0, 0, WORLD_W, sh);
         this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
         this.cameras.main.setDeadzone(100, 50);
         this.cameras.main.fadeIn(300);
@@ -1081,7 +1085,7 @@ class GameScene extends Phaser.Scene {
         // ─ Enemy patrol
         this.enemyGroup.children.iterate(e => {
             if (!e || !e.active) return;
-            if (e.y > GH + 100) { e.destroy(); return; }
+            if (e.y > this.scale.height + 100) { e.destroy(); return; }
             if (e.x <= e.patrolL) e.setVelocityX(e.patrolSpeed);
             if (e.x >= e.patrolR) e.setVelocityX(-e.patrolSpeed);
             e.setFlipX(e.body.velocity.x > 0);
@@ -1098,7 +1102,7 @@ class GameScene extends Phaser.Scene {
         }
 
         // ─ Death by falling
-        if (p.y > GH + 80) {
+        if (p.y > this.scale.height + 80) {
             this.playerDie();
         }
 
@@ -1239,7 +1243,8 @@ class GameScene extends Phaser.Scene {
 
         // Screen flash
         const flash = this.add.rectangle(
-            GW / 2, GH / 2, GW, GH, 0xFFFFFF, 0.3
+            this.scale.width / 2, this.scale.height / 2,
+            this.scale.width, this.scale.height, 0xFFFFFF, 0.3
         ).setScrollFactor(0).setDepth(50);
         this.tweens.add({
             targets: flash,
@@ -1381,22 +1386,23 @@ class GameScene extends Phaser.Scene {
     }
 
     showGameOver() {
-        const overlay = this.add.rectangle(GW/2, GH/2, GW, GH, 0x000000, 0.7).setScrollFactor(0).setDepth(200);
+        const ow = this.scale.width, oh = this.scale.height;
+        const overlay = this.add.rectangle(ow/2, oh/2, ow, oh, 0x000000, 0.7).setScrollFactor(0).setDepth(200);
         overlay.setAlpha(0);
         this.tweens.add({ targets: overlay, alpha: 1, duration: 500 });
 
         this.time.delayedCall(500, () => {
-            this.add.text(GW/2, GH/2 - 40, 'GAME OVER', {
+            this.add.text(ow/2, oh/2 - 40, 'GAME OVER', {
                 fontSize: '48px', fontFamily: 'Arial Black, Impact, sans-serif',
                 color: C.capRed, stroke: '#000', strokeThickness: 5,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
-            this.add.text(GW/2, GH/2 + 20, 'FINAL SCORE: ' + this.score, {
+            this.add.text(ow/2, oh/2 + 20, 'FINAL SCORE: ' + this.score, {
                 fontSize: '22px', fontFamily: 'Arial Black, Impact, sans-serif',
                 color: C.gold, stroke: '#000', strokeThickness: 3,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
-            const restart = this.add.text(GW/2, GH/2 + 70, 'PRESS SPACE TO TRY AGAIN', {
+            const restart = this.add.text(ow/2, oh/2 + 70, 'PRESS SPACE TO TRY AGAIN', {
                 fontSize: '18px', fontFamily: 'Arial, sans-serif',
                 color: C.white, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
@@ -1431,27 +1437,28 @@ class GameScene extends Phaser.Scene {
     }
 
     showVictory() {
-        const overlay = this.add.rectangle(GW/2, GH/2, GW, GH, 0x000033, 0.6).setScrollFactor(0).setDepth(200);
+        const ow = this.scale.width, oh = this.scale.height;
+        const overlay = this.add.rectangle(ow/2, oh/2, ow, oh, 0x000033, 0.6).setScrollFactor(0).setDepth(200);
         overlay.setAlpha(0);
         this.tweens.add({ targets: overlay, alpha: 1, duration: 500 });
 
         this.time.delayedCall(400, () => {
-            this.add.text(GW/2, GH/2 - 60, 'LEVEL COMPLETE!', {
+            this.add.text(ow/2, oh/2 - 60, 'LEVEL COMPLETE!', {
                 fontSize: '42px', fontFamily: 'Arial Black, Impact, sans-serif',
                 color: C.gold, stroke: C.capRed, strokeThickness: 5,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
-            this.add.text(GW/2, GH/2, 'SCORE: ' + this.score, {
+            this.add.text(ow/2, oh/2, 'SCORE: ' + this.score, {
                 fontSize: '26px', fontFamily: 'Arial Black, Impact, sans-serif',
                 color: C.white, stroke: '#000', strokeThickness: 3,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
-            this.add.text(GW/2, GH/2 + 40, 'STARS: ' + this.starsCollected + ' / ' + this.totalStars, {
+            this.add.text(ow/2, oh/2 + 40, 'STARS: ' + this.starsCollected + ' / ' + this.totalStars, {
                 fontSize: '20px', fontFamily: 'Arial Black, Impact, sans-serif',
                 color: C.gold, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
-            const cont = this.add.text(GW/2, GH/2 + 90, 'PRESS SPACE FOR MENU', {
+            const cont = this.add.text(ow/2, oh/2 + 90, 'PRESS SPACE FOR MENU', {
                 fontSize: '18px', fontFamily: 'Arial, sans-serif',
                 color: C.white, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
@@ -1472,6 +1479,10 @@ class GameScene extends Phaser.Scene {
 }
 
 // ── Phaser Configuration ────────────────────────────────────
+const _isTouchDevice = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+const _isPortrait = window.innerHeight > window.innerWidth;
+const _mobilePortrait = _isTouchDevice && _isPortrait;
+
 const config = {
     type: Phaser.CANVAS,
     width: GW,
@@ -1487,8 +1498,8 @@ const config = {
     },
     scene: [PreloadScene, BootScene, MenuScene, GameScene],
     scale: {
-        mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_BOTH,
+        mode: _mobilePortrait ? Phaser.Scale.EXPAND : Phaser.Scale.FIT,
+        autoCenter: _mobilePortrait ? Phaser.Scale.CENTER_HORIZONTALLY : Phaser.Scale.CENTER_BOTH,
     },
 };
 
