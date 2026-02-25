@@ -1480,8 +1480,6 @@ class GameScene extends Phaser.Scene {
 
 // ── Phaser Configuration ────────────────────────────────────
 const _isTouchDevice = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
-const _isPortrait = window.innerHeight > window.innerWidth;
-const _mobilePortrait = _isTouchDevice && _isPortrait;
 
 const config = {
     type: Phaser.CANVAS,
@@ -1498,8 +1496,8 @@ const config = {
     },
     scene: [PreloadScene, BootScene, MenuScene, GameScene],
     scale: {
-        mode: _mobilePortrait ? Phaser.Scale.EXPAND : Phaser.Scale.FIT,
-        autoCenter: _mobilePortrait ? Phaser.Scale.CENTER_HORIZONTALLY : Phaser.Scale.CENTER_BOTH,
+        mode: Phaser.Scale.FIT,
+        autoCenter: _isTouchDevice ? Phaser.Scale.CENTER_HORIZONTALLY : Phaser.Scale.CENTER_BOTH,
     },
 };
 
