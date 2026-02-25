@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Super MAGA Bros.</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -15,12 +15,17 @@
             overflow: hidden;
             font-family: Arial, sans-serif;
             color: white;
+            margin: 0;
+            padding: 0;
+            -webkit-touch-callout: none;
         }
         canvas {
             image-rendering: pixelated;
             image-rendering: crisp-edges;
             border: 3px solid #FFD700;
             border-radius: 4px;
+            display: block;
+            touch-action: none;
         }
         #loading-msg {
             text-align: center;
@@ -54,5 +59,110 @@
         }
     </script>
     <script src="game.js"></script>
+
+    <!-- Touch controls overlay (hidden on desktop) -->
+    <div id="touch-controls" style="
+        display: none;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 160px;
+        pointer-events: none;
+        z-index: 9999;
+        user-select: none;
+        -webkit-user-select: none;
+    ">
+      <!-- D-PAD: left side -->
+      <div id="btn-left" style="
+          position:absolute; left:20px; bottom:60px;
+          width:70px; height:70px; border-radius:50%;
+          background:rgba(255,255,255,0.25);
+          border:3px solid rgba(255,255,255,0.5);
+          display:flex; align-items:center; justify-content:center;
+          font-size:28px; color:white; pointer-events:all;
+          touch-action:none;
+      ">&#9664;</div>
+
+      <div id="btn-right" style="
+          position:absolute; left:110px; bottom:60px;
+          width:70px; height:70px; border-radius:50%;
+          background:rgba(255,255,255,0.25);
+          border:3px solid rgba(255,255,255,0.5);
+          display:flex; align-items:center; justify-content:center;
+          font-size:28px; color:white; pointer-events:all;
+          touch-action:none;
+      ">&#9654;</div>
+
+      <!-- ACTION BUTTONS: right side -->
+      <div id="btn-jump" style="
+          position:absolute; right:20px; bottom:80px;
+          width:80px; height:80px; border-radius:50%;
+          background:rgba(255,50,50,0.4);
+          border:3px solid rgba(255,100,100,0.7);
+          display:flex; align-items:center; justify-content:center;
+          font-size:13px; font-weight:bold; color:white;
+          pointer-events:all; touch-action:none;
+          font-family: Arial Black, sans-serif;
+      ">JUMP</div>
+
+      <div id="btn-tweet" style="
+          position:absolute; right:115px; bottom:80px;
+          width:70px; height:70px; border-radius:50%;
+          background:rgba(29,161,242,0.4);
+          border:3px solid rgba(29,161,242,0.7);
+          display:flex; align-items:center; justify-content:center;
+          font-size:11px; font-weight:bold; color:white;
+          pointer-events:all; touch-action:none;
+          font-family: Arial Black, sans-serif;
+      ">TWEET</div>
+    </div>
+
+    <script>
+    (function() {
+        // Touch state flags — read by the game via window.TOUCH
+        window.TOUCH = {
+            left: false, right: false, jump: false, tweet: false
+        };
+
+        // Show controls only on touch devices
+        function initTouch() {
+            var el = document.getElementById('touch-controls');
+            if (!el) return;
+            el.style.display = 'block';
+
+            function bind(id, key) {
+                var btn = document.getElementById(id);
+                if (!btn) return;
+                btn.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    window.TOUCH[key] = true;
+                }, { passive: false });
+                btn.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    window.TOUCH[key] = false;
+                }, { passive: false });
+                btn.addEventListener('touchcancel', function(e) {
+                    e.preventDefault();
+                    window.TOUCH[key] = false;
+                }, { passive: false });
+            }
+
+            bind('btn-left',  'left');
+            bind('btn-right', 'right');
+            bind('btn-jump',  'jump');
+            bind('btn-tweet', 'tweet');
+        }
+
+        // Init immediately if touch is detected, or on first touch
+        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initTouch);
+            } else {
+                initTouch();
+            }
+        }
+    })();
+    </script>
 </body>
 </html>

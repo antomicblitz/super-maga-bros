@@ -1015,19 +1015,38 @@ class GameScene extends Phaser.Scene {
             this.coyoteTimer -= dt;
         }
 
+        // ─ Touch edge detection
+        const T_CTRL = window.TOUCH || {};
+        if (T_CTRL.jump && !this._lastTouchJump) {
+            T_CTRL.jumpJustPressed = true;
+        } else {
+            T_CTRL.jumpJustPressed = false;
+        }
+        this._lastTouchJump = T_CTRL.jump;
+        if (T_CTRL.tweet && !this._lastTouchTweet) {
+            T_CTRL.tweetJustPressed = true;
+        } else {
+            T_CTRL.tweetJustPressed = false;
+        }
+        this._lastTouchTweet = T_CTRL.tweet;
+
         // ─ Jump buffer
         const jumpPressed = Phaser.Input.Keyboard.JustDown(this.spaceKey) ||
                            Phaser.Input.Keyboard.JustDown(this.cursors.up) ||
-                           Phaser.Input.Keyboard.JustDown(this.wasd.up);
+                           Phaser.Input.Keyboard.JustDown(this.wasd.up) ||
+                           T_CTRL.jumpJustPressed;
         if (jumpPressed) this.jumpBufferTimer = 0.1;
         else this.jumpBufferTimer -= dt;
 
         // ─ Horizontal movement
         const speed = 220;
-        if (this.cursors.left.isDown || this.wasd.left.isDown) {
+        const leftDown  = this.cursors.left.isDown  || this.wasd.left.isDown  || T_CTRL.left;
+        const rightDown = this.cursors.right.isDown || this.wasd.right.isDown || T_CTRL.right;
+
+        if (leftDown) {
             p.setVelocityX(-speed);
             p.setFlipX(true);
-        } else if (this.cursors.right.isDown || this.wasd.right.isDown) {
+        } else if (rightDown) {
             p.setVelocityX(speed);
             p.setFlipX(false);
         } else {
@@ -1045,7 +1064,7 @@ class GameScene extends Phaser.Scene {
         }
 
         // Variable jump height
-        const jumpHeld = this.spaceKey.isDown || this.cursors.up.isDown || this.wasd.up.isDown;
+        const jumpHeld = this.spaceKey.isDown || this.cursors.up.isDown || this.wasd.up.isDown || T_CTRL.jump;
         if (!jumpHeld && p.body.velocity.y < -150) {
             p.setVelocityY(p.body.velocity.y * 0.6);
         }
@@ -1102,8 +1121,8 @@ class GameScene extends Phaser.Scene {
             }
         }
 
-        // ─ Z key: fire tweet-blast
-        if (Phaser.Input.Keyboard.JustDown(this.zKey) && this.playerPower === 2) {
+        // ─ Z key / touch: fire tweet-blast
+        if ((Phaser.Input.Keyboard.JustDown(this.zKey) || T_CTRL.tweetJustPressed) && this.playerPower === 2) {
             this.fireTweetBlast();
         }
 
@@ -1117,6 +1136,12 @@ class GameScene extends Phaser.Scene {
         this.livesText.setText('LIVES: ' + this.lives);
         this.starsText.setText('STARS: ' + this.starsCollected + '/' + this.totalStars);
         this.updatePowerHUD();
+
+        // ─ Tweet button visibility
+        var tweetBtn = document.getElementById('btn-tweet');
+        if (tweetBtn) {
+            tweetBtn.style.opacity = (this.playerPower === 2) ? '1' : '0.25';
+        }
     }
 
     // ── Collectibles ────────────────────────────────────────
@@ -1380,6 +1405,9 @@ class GameScene extends Phaser.Scene {
             this.input.keyboard.once('keydown-SPACE', () => {
                 this.scene.start('Menu');
             });
+            this.input.once('pointerdown', () => {
+                this.scene.start('Menu');
+            });
         });
     }
 
@@ -1430,6 +1458,9 @@ class GameScene extends Phaser.Scene {
             this.tweens.add({ targets: cont, alpha: 0.3, duration: 500, yoyo: true, repeat: -1 });
 
             this.input.keyboard.once('keydown-SPACE', () => {
+                this.scene.start('Menu');
+            });
+            this.input.once('pointerdown', () => {
                 this.scene.start('Menu');
             });
         });
