@@ -12,6 +12,7 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            height: 100dvh;
             overflow: hidden;
             font-family: Arial, sans-serif;
             color: white;
@@ -33,6 +34,17 @@
         }
         #loading-msg h2 { color: #FFD700; margin-bottom: 12px; }
         #loading-msg code { background: #222; padding: 4px 10px; border-radius: 4px; }
+
+        /* Mobile portrait: push canvas to top, leave room for controls */
+        @media (orientation: portrait) and (hover: none) and (pointer: coarse) {
+            body {
+                align-items: flex-start;
+                padding-top: env(safe-area-inset-top, 8px);
+            }
+            canvas {
+                border-width: 2px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -67,7 +79,7 @@
         bottom: 0;
         left: 0;
         width: 100%;
-        height: 160px;
+        height: 50%;
         pointer-events: none;
         z-index: 9999;
         user-select: none;
@@ -75,40 +87,40 @@
     ">
       <!-- D-PAD: left side -->
       <div id="btn-left" style="
-          position:absolute; left:20px; bottom:60px;
-          width:70px; height:70px; border-radius:50%;
+          position:absolute; left:16px; bottom:24px;
+          width:72px; height:72px; border-radius:50%;
           background:rgba(255,255,255,0.25);
           border:3px solid rgba(255,255,255,0.5);
           display:flex; align-items:center; justify-content:center;
-          font-size:28px; color:white; pointer-events:all;
+          font-size:30px; color:white; pointer-events:all;
           touch-action:none;
       ">&#9664;</div>
 
       <div id="btn-right" style="
-          position:absolute; left:110px; bottom:60px;
-          width:70px; height:70px; border-radius:50%;
+          position:absolute; left:104px; bottom:24px;
+          width:72px; height:72px; border-radius:50%;
           background:rgba(255,255,255,0.25);
           border:3px solid rgba(255,255,255,0.5);
           display:flex; align-items:center; justify-content:center;
-          font-size:28px; color:white; pointer-events:all;
+          font-size:30px; color:white; pointer-events:all;
           touch-action:none;
       ">&#9654;</div>
 
       <!-- ACTION BUTTONS: right side -->
       <div id="btn-jump" style="
-          position:absolute; right:20px; bottom:80px;
-          width:80px; height:80px; border-radius:50%;
+          position:absolute; right:16px; bottom:24px;
+          width:84px; height:84px; border-radius:50%;
           background:rgba(255,50,50,0.4);
           border:3px solid rgba(255,100,100,0.7);
           display:flex; align-items:center; justify-content:center;
-          font-size:13px; font-weight:bold; color:white;
+          font-size:14px; font-weight:bold; color:white;
           pointer-events:all; touch-action:none;
           font-family: Arial Black, sans-serif;
       ">JUMP</div>
 
       <div id="btn-tweet" style="
-          position:absolute; right:115px; bottom:80px;
-          width:70px; height:70px; border-radius:50%;
+          position:absolute; right:116px; bottom:32px;
+          width:72px; height:72px; border-radius:50%;
           background:rgba(29,161,242,0.4);
           border:3px solid rgba(29,161,242,0.7);
           display:flex; align-items:center; justify-content:center;
