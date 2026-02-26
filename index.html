@@ -77,72 +77,119 @@
     </script>
     <script src="game.js?v=20260226z3"></script>
 
-    <!-- Touch controls overlay (hidden on desktop) -->
+    <!-- Touch controls overlay (hidden on desktop) — SNES-themed -->
     <div id="touch-controls" style="
         display: none;
         position: fixed;
         bottom: 0;
         left: 0;
         width: 100%;
-        height: 50%;
+        height: 44%;
         pointer-events: none;
         z-index: 9999;
         user-select: none;
         -webkit-user-select: none;
+        background: linear-gradient(180deg, #8e8ea0 0%, #7a7a8c 8%, #6e6e80 100%);
+        border-top: 3px solid #a0a0b4;
+        box-shadow: inset 0 2px 4px rgba(255,255,255,0.15), inset 0 -4px 8px rgba(0,0,0,0.3);
     ">
+      <!-- Top highlight ridge (SNES controller seam) -->
+      <div style="
+          position:absolute; top:3px; left:10%; width:80%; height:2px;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+          border-radius:1px;
+      "></div>
+
+      <!-- Left grip area (D-pad well) -->
+      <div style="
+          position:absolute; left:8px; bottom:10px;
+          width:180px; height:110px; border-radius:16px;
+          background: rgba(0,0,0,0.15);
+          box-shadow: inset 0 2px 6px rgba(0,0,0,0.3), 0 1px 0 rgba(255,255,255,0.08);
+          pointer-events:none;
+      "></div>
+
+      <!-- Right grip area (action button well) -->
+      <div style="
+          position:absolute; right:8px; bottom:10px;
+          width:210px; height:150px; border-radius:16px;
+          background: rgba(0,0,0,0.15);
+          box-shadow: inset 0 2px 6px rgba(0,0,0,0.3), 0 1px 0 rgba(255,255,255,0.08);
+          pointer-events:none;
+      "></div>
+
+      <!-- Center label -->
+      <div style="
+          position:absolute; left:50%; top:8px;
+          transform:translateX(-50%);
+          font-family: 'Arial Black', sans-serif;
+          font-size:10px; letter-spacing:2px;
+          color:rgba(255,255,255,0.25);
+          text-transform:uppercase;
+          pointer-events:none;
+      ">Super MAGA Bros</div>
+
       <!-- D-PAD: left side -->
       <div id="btn-left" style="
-          position:absolute; left:16px; bottom:24px;
+          position:absolute; left:20px; bottom:30px;
           width:72px; height:72px; border-radius:50%;
-          background:rgba(255,255,255,0.25);
-          border:3px solid rgba(255,255,255,0.5);
+          background: linear-gradient(145deg, #4a4a54, #333340);
+          border:2px solid #555566;
+          box-shadow: inset 0 1px 2px rgba(255,255,255,0.1), 0 3px 6px rgba(0,0,0,0.4);
           display:flex; align-items:center; justify-content:center;
-          font-size:30px; color:white; pointer-events:all;
+          font-size:28px; color:rgba(255,255,255,0.7); pointer-events:all;
           touch-action:none;
       ">&#9664;</div>
 
       <div id="btn-right" style="
-          position:absolute; left:104px; bottom:24px;
+          position:absolute; left:108px; bottom:30px;
           width:72px; height:72px; border-radius:50%;
-          background:rgba(255,255,255,0.25);
-          border:3px solid rgba(255,255,255,0.5);
+          background: linear-gradient(145deg, #4a4a54, #333340);
+          border:2px solid #555566;
+          box-shadow: inset 0 1px 2px rgba(255,255,255,0.1), 0 3px 6px rgba(0,0,0,0.4);
           display:flex; align-items:center; justify-content:center;
-          font-size:30px; color:white; pointer-events:all;
+          font-size:28px; color:rgba(255,255,255,0.7); pointer-events:all;
           touch-action:none;
       ">&#9654;</div>
 
-      <!-- ACTION BUTTONS: right side -->
+      <!-- ACTION BUTTONS: right side (SNES-style colored) -->
       <div id="btn-jump" style="
-          position:absolute; right:16px; bottom:24px;
-          width:84px; height:84px; border-radius:50%;
-          background:rgba(255,50,50,0.4);
-          border:3px solid rgba(255,100,100,0.7);
+          position:absolute; right:20px; bottom:28px;
+          width:80px; height:80px; border-radius:50%;
+          background: linear-gradient(145deg, #dd4455, #aa2233);
+          border:2px solid #ee6677;
+          box-shadow: inset 0 2px 3px rgba(255,255,255,0.2), 0 3px 6px rgba(0,0,0,0.4);
           display:flex; align-items:center; justify-content:center;
-          font-size:14px; font-weight:bold; color:white;
+          font-size:13px; font-weight:bold; color:rgba(255,255,255,0.9);
           pointer-events:all; touch-action:none;
-          font-family: Arial Black, sans-serif;
+          font-family: 'Arial Black', sans-serif;
+          text-shadow: 0 1px 2px rgba(0,0,0,0.4);
       ">JUMP</div>
 
       <div id="btn-tweet" style="
-          position:absolute; right:116px; bottom:32px;
-          width:72px; height:72px; border-radius:50%;
-          background:rgba(29,161,242,0.4);
-          border:3px solid rgba(29,161,242,0.7);
+          position:absolute; right:116px; bottom:36px;
+          width:68px; height:68px; border-radius:50%;
+          background: linear-gradient(145deg, #2299ee, #1a77cc);
+          border:2px solid #44aaff;
+          box-shadow: inset 0 2px 3px rgba(255,255,255,0.2), 0 3px 6px rgba(0,0,0,0.4);
           display:flex; align-items:center; justify-content:center;
-          font-size:11px; font-weight:bold; color:white;
+          font-size:10px; font-weight:bold; color:rgba(255,255,255,0.9);
           pointer-events:all; touch-action:none;
-          font-family: Arial Black, sans-serif;
+          font-family: 'Arial Black', sans-serif;
+          text-shadow: 0 1px 2px rgba(0,0,0,0.4);
       ">TWEET</div>
 
       <div id="btn-shart" style="
-          position:absolute; right:100px; bottom:112px;
-          width:64px; height:64px; border-radius:50%;
-          background:rgba(136,68,0,0.4);
-          border:3px solid rgba(136,68,0,0.7);
+          position:absolute; right:96px; bottom:112px;
+          width:60px; height:60px; border-radius:50%;
+          background: linear-gradient(145deg, #aa6622, #774400);
+          border:2px solid #cc8844;
+          box-shadow: inset 0 2px 3px rgba(255,255,255,0.2), 0 3px 6px rgba(0,0,0,0.4);
           display:flex; align-items:center; justify-content:center;
-          font-size:9px; font-weight:bold; color:white;
+          font-size:9px; font-weight:bold; color:rgba(255,255,255,0.9);
           pointer-events:all; touch-action:none;
-          font-family: Arial Black, sans-serif;
+          font-family: 'Arial Black', sans-serif;
+          text-shadow: 0 1px 2px rgba(0,0,0,0.4);
       ">SHART</div>
     </div>
 
