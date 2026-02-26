@@ -1311,9 +1311,9 @@ class GameScene extends Phaser.Scene {
                 const AL2 = window.ASSETS_LOADED || {};
                 console.log('[LOBBYIST] spawn x=' + ex + ' lobbyistLoaded=' + AL2.lobbyist + ' enemyExt=' + enemyExt);
                 if (AL2.lobbyist) {
-                    e = this.enemyGroup.create(ex, GROUND_Y - 18, 'lobbyist-ext', 0);
+                    e = this.enemyGroup.create(ex, GROUND_Y - 24, 'lobbyist-ext', 0);
                     e.play('lobbyistWalk');
-                    console.log('[LOBBYIST] created with lobbyist-ext at y=' + (GROUND_Y - 18));
+                    console.log('[LOBBYIST] created with lobbyist-ext at y=' + (GROUND_Y - 24));
                 } else {
                     e = this.enemyGroup.create(ex, GROUND_Y - 14, ek, 0);
                     e.setTint(0xFFAA00);
