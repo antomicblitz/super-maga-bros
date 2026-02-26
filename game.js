@@ -833,11 +833,22 @@ class MenuScene extends Phaser.Scene {
         const sw = this.scale.width;
         const sh = this.scale.height;
 
-        // Background: use menuBg if available, otherwise procedural
+        // Background: use animated GIF if available, then static menuBg, otherwise procedural
         const hasMenuBg = !!T.menuBg;
-        if (hasMenuBg) {
+        let usedGif = false;
+        try {
+            const gifEl = document.createElement('img');
+            gifEl.src = 'assets/sprites/super-maga-bros-title.gif';
+            gifEl.style.width = sw + 'px';
+            gifEl.style.height = sh + 'px';
+            gifEl.style.objectFit = 'cover';
+            gifEl.style.imageRendering = 'pixelated';
+            this.menuGif = this.add.dom(sw/2, sh/2, gifEl);
+            usedGif = true;
+        } catch(e) {}
+        if (!usedGif && hasMenuBg) {
             this.add.image(sw/2, sh/2, T.menuBg).setDisplaySize(sw, sh);
-        } else {
+        } else if (!usedGif) {
             this.add.image(sw/2, sh/2, T.sky || 'sky');
             this.add.image(sw/2, sh - 80, 'hillsFar');
             this.add.image(sw/2, sh - 40, 'hillsNear');
@@ -887,7 +898,7 @@ class MenuScene extends Phaser.Scene {
 
         // Menu background music
         if (this.cache.audio.has('bgmMenu')) {
-            this.menuMusic = this.sound.add('bgmMenu', { loop: true, volume: 0.3 });
+            this.menuMusic = this.sound.add('bgmMenu', { loop: true, volume: 0.7 });
             if (!this.sound.locked) {
                 this.menuMusic.play();
             }
@@ -914,6 +925,7 @@ class MenuScene extends Phaser.Scene {
             gameStarting = true;
             self._menuHandler = null;
             if (self.menuMusic) self.menuMusic.stop();
+            if (self.menuGif) { self.menuGif.destroy(); self.menuGif = null; }
             self.cameras.main.fadeOut(300, 0, 0, 0);
             self.time.delayedCall(300, () => self.scene.start('Game'));
         };
@@ -1876,6 +1888,7 @@ const config = {
     height: GH,
     parent: document.body,
     pixelArt: true,
+    dom: { createContainer: true },
     physics: {
         default: 'arcade',
         arcade: {
