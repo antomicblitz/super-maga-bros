@@ -69,9 +69,11 @@ const SFX = {
 };
 
 // ── Audio helper (tries external asset, falls back to Web Audio) ─
+const SOUND_VOLUME = { 'snd-jump': 0.4 };
 function playSound(scene, key, fallbackFn) {
     if (scene.cache.audio.has(key)) {
-        try { scene.sound.play(key); return; } catch (e) { /* fall through */ }
+        const vol = SOUND_VOLUME[key] !== undefined ? SOUND_VOLUME[key] : 1;
+        try { scene.sound.play(key, { volume: vol }); return; } catch (e) { /* fall through */ }
     }
     if (fallbackFn) fallbackFn();
 }
@@ -1597,11 +1599,11 @@ class GameScene extends Phaser.Scene {
 
         // Swap to shart sprite
         const AL = window.ASSETS_LOADED || {};
+        this._preShartTexture = p.texture.key;
         if (AL.playerShart) {
-            this._preShartTexture = p.texture.key;
-            this._preShartFrame = p.frame.name;
             p.anims.stop();
-            p.setTexture('player-shart');
+            p.setTexture('player-shart', 0);
+            p.setFrame(0);
             p.setDisplaySize(48, 48);
         }
 
@@ -1632,13 +1634,12 @@ class GameScene extends Phaser.Scene {
         // Unfreeze after 1 second, restore sprite
         this.time.delayedCall(1000, () => {
             this.shartFrozen = false;
-            if (this._preShartTexture) {
-                const T = window.TEX || {};
-                p.setTexture(T.player || this._preShartTexture);
-                p.setDisplaySize(48, 48);
-                p.play('idle', true);
-                this._preShartTexture = null;
-            }
+            const T = window.TEX || {};
+            const restoreKey = T.player || this._preShartTexture || 'player';
+            p.setTexture(restoreKey, 0);
+            p.setDisplaySize(48, 48);
+            p.play('idle', true);
+            this._preShartTexture = null;
         });
 
         // Cooldown (1.5s total, but movement returns at 1s)
