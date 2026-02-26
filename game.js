@@ -712,6 +712,7 @@ class PreloadScene extends Phaser.Scene {
         try { this.load.image('player-shart', 'assets/sprites/shart.png'); } catch(e) {}
         try { this.load.image('player-pole', 'assets/sprites/trump-pole-slide.png'); } catch(e) {}
         try { this.load.image('hat-ext', 'assets/sprites/hat.png'); } catch(e) {}
+        try { this.load.image('bar-ext', 'assets/sprites/bar.png'); } catch(e) {}
 
         // Tiles
         try { this.load.image('ground-ext', 'assets/tiles/ground.png'); } catch(e) {}
@@ -756,6 +757,7 @@ class PreloadScene extends Phaser.Scene {
             playerShart: this.textures.exists('player-shart'),
             playerPole: this.textures.exists('player-pole'),
             hat: this.textures.exists('hat-ext'),
+            bar: this.textures.exists('bar-ext'),
             audio:    this.cache.audio.has('snd-jump'),
             censorBgm: this.cache.audio.has('bgm-censor'),
         };
@@ -1082,9 +1084,17 @@ class GameScene extends Phaser.Scene {
         this.player.setDepth(5);
 
         // ─ Censor bar overlay (hidden until Censor Bar power-up collected)
-        this.censorBar = this.add.rectangle(0, 0, 52, 52, 0x000000)
-            .setDepth(6)
-            .setVisible(false);
+        const AL2 = window.ASSETS_LOADED || {};
+        if (AL2.bar) {
+            this.censorBar = this.add.image(0, 0, 'bar-ext')
+                .setDisplaySize(52, 52)
+                .setDepth(6)
+                .setVisible(false);
+        } else {
+            this.censorBar = this.add.rectangle(0, 0, 52, 52, 0x000000)
+                .setDepth(6)
+                .setVisible(false);
+        }
 
         // ─ Player animations (only create once — anims are global)
         if (!this.anims.exists('idle')) {
@@ -1295,9 +1305,17 @@ class GameScene extends Phaser.Scene {
         this.farHills.tilePositionX = camX * 0.15;
         this.nearHills.tilePositionX = camX * 0.35;
 
-        // ─ Censor bar follows player
+        // ─ Censor bar follows player + sparkle
         if (this.censorBar && this.censorBar.visible) {
             this.censorBar.setPosition(this.player.x, this.player.y);
+            // Emit sparkles periodically
+            if (this.sparkleEmitter && Math.random() < 0.3) {
+                this.sparkleEmitter.emitParticleAt(
+                    this.player.x + (Math.random() - 0.5) * 40,
+                    this.player.y + (Math.random() - 0.5) * 40,
+                    1
+                );
+            }
         }
 
         // ─ Death by falling
@@ -1414,7 +1432,7 @@ class GameScene extends Phaser.Scene {
                 this.bgm.pause();
             }
             if (this.cache.audio.has('bgm-censor')) {
-                this.censorMusic = this.sound.add('bgm-censor', { loop: true, volume: 1.0 });
+                this.censorMusic = this.sound.add('bgm-censor', { loop: true, volume: 1.5 });
                 this.censorMusic.play();
             }
         } else if (type === 2) {
