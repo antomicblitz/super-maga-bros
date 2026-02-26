@@ -839,11 +839,11 @@ class MenuScene extends Phaser.Scene {
         try {
             const gifEl = document.createElement('img');
             gifEl.src = 'assets/sprites/super-maga-bros-title.gif';
-            gifEl.style.width = sw + 'px';
-            gifEl.style.height = sh + 'px';
-            gifEl.style.objectFit = 'cover';
+            gifEl.setAttribute('width', sw);
+            gifEl.setAttribute('height', sh);
+            gifEl.style.display = 'block';
             gifEl.style.imageRendering = 'pixelated';
-            this.menuGif = this.add.dom(sw/2, sh/2, gifEl);
+            this.menuGif = this.add.dom(sw/2, sh/2, gifEl).setOrigin(0.5, 0.5);
             usedGif = true;
         } catch(e) {}
         if (!usedGif && hasMenuBg) {
