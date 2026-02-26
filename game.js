@@ -777,6 +777,7 @@ class PreloadScene extends Phaser.Scene {
         try { this.load.image('player-pole', 'assets/sprites/trump-pole-slide.png'); } catch(e) {}
         try { this.load.image('hat-ext', 'assets/sprites/hat.png'); } catch(e) {}
         try { this.load.image('bar-ext', 'assets/sprites/bar.png'); } catch(e) {}
+        try { this.load.image('classified-docs-ext', 'assets/sprites/classified-docs.png'); } catch(e) {}
         try { this.load.spritesheet('lobbyist-ext', 'assets/sprites/lobbyist.png',
             { frameWidth: 48, frameHeight: 48 }); } catch(e) {}
         try { this.load.spritesheet('lobbyist-case-ext', 'assets/sprites/lobbyist-suitcase.png',
@@ -816,6 +817,7 @@ class PreloadScene extends Phaser.Scene {
         try { this.load.audio('bgmMenu',     'assets/audio/bgm-menu.mp3'); } catch(e) {}
         try { this.load.audio('bgm-censor',  'assets/audio/bgm-censor.mp3'); } catch(e) {}
         try { this.load.audio('snd-shart',   'assets/audio/shart.wav'); } catch(e) {}
+        try { this.load.audio('snd-tweet',   'assets/audio/tweet.wav'); } catch(e) {}
         try { this.load.audio('speechAudio', 'assets/audio/trump-speech.mp3'); } catch(e) {}
         try { this.load.audio('hailChief', 'assets/audio/hail-the-chief.mp3'); } catch(e) {}
         try { this.load.audio('crowd', 'assets/audio/crowd.mp3'); } catch(e) {}
@@ -840,6 +842,7 @@ class PreloadScene extends Phaser.Scene {
             playerPole: this.textures.exists('player-pole'),
             hat: this.textures.exists('hat-ext'),
             bar: this.textures.exists('bar-ext'),
+            classifiedDocs: this.textures.exists('classified-docs-ext'),
             lobbyist:     this.textures.exists('lobbyist-ext'),
             lobbyistCase: this.textures.exists('lobbyist-case-ext'),
             audio:    this.cache.audio.has('snd-jump'),
@@ -1276,10 +1279,13 @@ class GameScene extends Phaser.Scene {
         this.cholesterol = data.cholesterol || 0;
         this.earthquakeReady = this.cholesterol >= 50;
         this.earthquakeCooldown = false;
-        // Power-up state resets on death
-        this.playerPower = -1;
-        this.powerTimer = 0;
+        // Power-up state resets on death (independent timers)
+        this.playerPower = -1;   // kept for HUD display of most recent
+        this.powerTimer = 0;     // kept for HUD display
         this.invincible = false;
+        this.censorTimer = 0;
+        this.hasTweetBlast = false;
+        this.tweetBlastTimer = 0;
         this.hasHat = false;
         this.canDoubleJump = false;
         this.hasUsedDoubleJump = false;
@@ -1445,6 +1451,9 @@ class GameScene extends Phaser.Scene {
                 pu.setDisplaySize(32, 32);
             } else if (type === 1 && AL.bar) {
                 pu = this.powerupGroup.create(pux, puy, 'bar-ext');
+                pu.setDisplaySize(32, 32);
+            } else if (type === 2 && AL.classifiedDocs) {
+                pu = this.powerupGroup.create(pux, puy, 'classified-docs-ext');
                 pu.setDisplaySize(32, 32);
             } else if (powerExt) {
                 pu = this.powerupGroup.create(pux, puy, 'powerups-ext', type);
@@ -1721,12 +1730,14 @@ class GameScene extends Phaser.Scene {
             if (e.enemyType === 3) { e.lastVelX = e.body.velocity.x; }
         });
 
-        // ─ Sliding case wall-burst detection
+        // ─ Sliding case wall-burst detection + flip direction
         this.caseGroup.children.iterate(sc => {
             if (!sc || !sc.active || !sc.isSliding) return;
             if (Math.abs(sc.body.velocity.x) < 10) {
                 sc.isSliding = false;
                 this.burstCase(sc);
+            } else {
+                sc.setFlipX(sc.body.velocity.x < 0);
             }
         });
 
@@ -1753,27 +1764,40 @@ class GameScene extends Phaser.Scene {
             this.playerDie();
         }
 
-        // ─ Power-up timer countdown
-        if (this.playerPower >= 0 && this.powerTimer > 0) {
-            this.powerTimer -= dt;
-            if (this.powerTimer <= 0) {
-                this.powerTimer = 0;
-                if (this.playerPower === 1) {
-                    this.invincible = false;
-                    this.censorBar.setVisible(false);
-                    if (this.censorMusic) {
-                        this.censorMusic.stop();
-                        this.censorMusic = null;
-                    }
-                    if (this.bgm) this.bgm.resume();
+        // ─ Censor bar timer (independent)
+        if (this.censorTimer > 0) {
+            this.censorTimer -= dt;
+            if (this.censorTimer <= 0) {
+                this.censorTimer = 0;
+                this.invincible = false;
+                this.censorBar.setVisible(false);
+                if (this.censorMusic) {
+                    this.censorMusic.stop();
+                    this.censorMusic = null;
                 }
-                this.playerPower = -1;
-                p.clearTint();
+                if (this.bgm) this.bgm.resume();
             }
+        }
+        // ─ Tweet blast timer (independent)
+        if (this.tweetBlastTimer > 0) {
+            this.tweetBlastTimer -= dt;
+            if (this.tweetBlastTimer <= 0) {
+                this.tweetBlastTimer = 0;
+                this.hasTweetBlast = false;
+            }
+        }
+        // ─ HUD timer: show the longest remaining timer
+        const maxTimer = Math.max(this.censorTimer, this.tweetBlastTimer);
+        if (maxTimer > 0) {
+            this.powerTimer = maxTimer;
+        } else if (!this.hasHat) {
+            this.playerPower = -1;
+            this.powerTimer = 0;
+            p.clearTint();
         }
 
         // ─ Z key / touch: fire tweet-blast
-        if ((Phaser.Input.Keyboard.JustDown(this.zKey) || T_CTRL.tweetJustPressed) && this.playerPower === 2) {
+        if ((Phaser.Input.Keyboard.JustDown(this.zKey) || T_CTRL.tweetJustPressed) && this.hasTweetBlast) {
             this.fireTweetBlast();
         }
 
@@ -1797,7 +1821,7 @@ class GameScene extends Phaser.Scene {
         // ─ Touch button visibility
         var tweetBtn = document.getElementById('btn-tweet');
         if (tweetBtn) {
-            tweetBtn.style.opacity = (this.playerPower === 2) ? '1' : '0.25';
+            tweetBtn.style.opacity = this.hasTweetBlast ? '1' : '0.25';
         }
         var shartBtn = document.getElementById('btn-shart');
         if (shartBtn) {
@@ -1846,19 +1870,8 @@ class GameScene extends Phaser.Scene {
         powerup.destroy();
         playSound(this, 'snd-powerup', SFX.powerup);
 
-        // Clean up previous powerup state before applying new one
-        if (this.playerPower === 1) {
-            this.invincible = false;
-            this.censorBar.setVisible(false);
-            if (this.censorMusic) {
-                this.censorMusic.stop();
-                this.censorMusic = null;
-            }
-            if (this.bgm) this.bgm.resume();
-        }
-        player.clearTint();
-
-        this.playerPower = type;
+        // Each powerup stacks independently — don't cancel existing ones
+        this.playerPower = type;  // track most recent for HUD
         const pt = POWER_TYPES[type];
 
         if (type === 0) {
@@ -1868,21 +1881,23 @@ class GameScene extends Phaser.Scene {
             this.powerTimer = 0;
             player.setTint(0xFFDD44);
         } else if (type === 1) {
-            // Censor Bar: 10s invincibility
+            // Censor Bar: 10s invincibility (independent timer)
             this.invincible = true;
+            this.censorTimer = pt.duration;
             this.powerTimer = pt.duration;
             this.censorBar.setVisible(true);
             // Swap music to censor track
-            if (this.bgm) {
-                this.bgm.pause();
-            }
-            if (this.cache.audio.has('bgm-censor')) {
-                this.censorMusic = this.sound.add('bgm-censor', { loop: true, volume: 1.5 });
-                this.censorMusic.play();
+            if (!this.censorMusic) {
+                if (this.bgm) this.bgm.pause();
+                if (this.cache.audio.has('bgm-censor')) {
+                    this.censorMusic = this.sound.add('bgm-censor', { loop: true, volume: 1.5 });
+                    this.censorMusic.play();
+                }
             }
         } else if (type === 2) {
-            // Classified Docs: 15s tweet-blast
-            this.invincible = false;
+            // Classified Docs: 15s tweet-blast (independent timer)
+            this.hasTweetBlast = true;
+            this.tweetBlastTimer = pt.duration;
             this.powerTimer = pt.duration;
             player.setTint(0xFF8844);
         }
@@ -1903,6 +1918,8 @@ class GameScene extends Phaser.Scene {
         if (this.tweetCooldown) return;
         this.tweetCooldown = true;
         this.time.delayedCall(700, () => { this.tweetCooldown = false; });
+
+        playSound(this, 'snd-tweet', SFX.jump);
 
         const p = this.player;
         const dir = p.flipX ? -1 : 1;
@@ -2115,6 +2132,7 @@ class GameScene extends Phaser.Scene {
         sc.setSize(36, 32).setOffset(6, 8);
         sc.setBounce(0);
         sc.setVelocityX(dir * 200);
+        sc.setFlipX(dir < 0);
         sc.setDepth(4);
         sc.isSliding = true;
 
@@ -2221,16 +2239,11 @@ class GameScene extends Phaser.Scene {
 
     // ── Power-up HUD ────────────────────────────────────────
     updatePowerHUD() {
-        if (this.playerPower < 0) {
-            this.powerText.setText('');
-        } else {
-            const pt = POWER_TYPES[this.playerPower];
-            let text = pt.name;
-            if (this.powerTimer > 0) {
-                text += ' ' + Math.ceil(this.powerTimer) + 's';
-            }
-            this.powerText.setText(text);
-        }
+        const parts = [];
+        if (this.hasHat) parts.push('MAGA Hat');
+        if (this.censorTimer > 0) parts.push('Censor ' + Math.ceil(this.censorTimer) + 's');
+        if (this.tweetBlastTimer > 0) parts.push('Docs ' + Math.ceil(this.tweetBlastTimer) + 's');
+        this.powerText.setText(parts.join(' | '));
     }
 
     // ── Cholesterol meter ──────────────────────────────────
