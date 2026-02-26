@@ -766,12 +766,14 @@ class MenuScene extends Phaser.Scene {
             }
         }
 
-        // Start listener — any key, click, or tap
+        // Start listener — any key, click, tap, or touch-button press.
         // If audio was locked, the first press unlocks audio & starts music;
         // the second press actually starts the game.
         let needsUnlock = this.sound.locked;
+        let gameStarting = false;
         const self = this;
         const handler = () => {
+            if (gameStarting) return;
             if (needsUnlock) {
                 needsUnlock = false;
                 if (self.menuMusic && !self.menuMusic.isPlaying) {
@@ -782,12 +784,28 @@ class MenuScene extends Phaser.Scene {
                 self.input.once('pointerdown', handler);
                 return;
             }
+            gameStarting = true;
+            self._menuHandler = null;
             if (self.menuMusic) self.menuMusic.stop();
             self.cameras.main.fadeOut(300, 0, 0, 0);
             self.time.delayedCall(300, () => self.scene.start('Game'));
         };
         this.input.keyboard.once('keydown', handler);
         this.input.once('pointerdown', handler);
+
+        // Also detect touch-button presses (HTML overlay buttons don't reach Phaser input)
+        this._menuHandler = handler;
+        this._touchWasDown = false;
+    }
+
+    update() {
+        const T = window.TOUCH;
+        if (!T || !this._menuHandler) return;
+        const down = T.left || T.right || T.jump || T.tweet;
+        if (down && !this._touchWasDown) {
+            this._menuHandler();
+        }
+        this._touchWasDown = !!down;
     }
 }
 
@@ -820,6 +838,12 @@ class GameScene extends Phaser.Scene {
         this.skyImg = this.add.tileSprite(0, 0, sw, sh, skyKey).setOrigin(0).setScrollFactor(0).setDepth(-10);
         this.farHills = this.add.tileSprite(0, sh - 180, sw, 200, 'hillsFar').setOrigin(0).setScrollFactor(0).setDepth(-9);
         this.nearHills = this.add.tileSprite(0, sh - 140, sw, 160, 'hillsNear').setOrigin(0).setScrollFactor(0).setDepth(-8);
+
+        // Hide procedural hills when external background is loaded (it includes its own scenery)
+        if (T.sky) {
+            this.farHills.setVisible(false);
+            this.nearHills.setVisible(false);
+        }
 
         // ─ World bounds
         this.physics.world.setBounds(0, 0, WORLD_W, WORLD_H);
@@ -867,7 +891,7 @@ class GameScene extends Phaser.Scene {
                 e = this.enemyGroup.create(ex, GROUND_Y - 14, ek, 0);
                 if (et.tint) e.setTint(et.tint);
             }
-            e.setSize(24, 24).setOffset(2, 4);
+            e.setSize(28, 36).setOffset(10, 12);
             e.setBounce(0);
             e.setCollideWorldBounds(false);
             e.setVelocityX(-et.speed);
@@ -1301,8 +1325,13 @@ class GameScene extends Phaser.Scene {
             return;
         }
 
-        // Stomp check
-        if (player.body.velocity.y > 0 && player.y + player.body.halfHeight < enemy.y) {
+        // Stomp check: use previous-frame body position so fast falls
+        // still register, and disable the enemy body immediately so the
+        // overlap can't re-fire during the stomp animation.
+        const prevFeet = player.body.prev.y + player.body.height;
+        const enemyMid = enemy.body.y + enemy.body.halfHeight;
+        if (player.body.velocity.y > 0 && prevFeet <= enemyMid) {
+            enemy.body.enable = false;          // prevent repeat overlap
             player.setVelocityY(-280);
             // Show stomp frame briefly before death animation
             const T = window.TEX || {};
