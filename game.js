@@ -1598,10 +1598,27 @@ class GameScene extends Phaser.Scene {
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
             this.tweens.add({ targets: restart, alpha: 0.3, duration: 500, yoyo: true, repeat: -1 });
 
+            let donateClicked = false;
+            if (DONATE_URL) {
+                const btnBg = this.add.rectangle(ow/2, oh/2 + 120, 280, 34, 0xCC9900, 0.9)
+                    .setOrigin(0.5).setScrollFactor(0).setDepth(202).setStrokeStyle(2, 0xFFD700)
+                    .setInteractive({ useHandCursor: true });
+                this.add.text(ow/2, oh/2 + 120, 'ENJOYED THIS? PRESS TO DONATE', {
+                    fontSize: '12px', fontFamily: 'Arial Black, sans-serif',
+                    color: '#FFFFFF', stroke: '#000', strokeThickness: 2,
+                }).setOrigin(0.5).setScrollFactor(0).setDepth(203);
+                btnBg.on('pointerdown', () => {
+                    donateClicked = true;
+                    window.open(DONATE_URL, '_blank');
+                    this.time.delayedCall(500, () => { donateClicked = false; });
+                });
+            }
+
             this.input.keyboard.once('keydown-SPACE', () => {
                 this.scene.start('Menu');
             });
             this.input.once('pointerdown', () => {
+                if (donateClicked) return;
                 this.scene.start('Menu');
             });
         });
@@ -1654,14 +1671,19 @@ class GameScene extends Phaser.Scene {
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
             this.tweens.add({ targets: cont, alpha: 0.3, duration: 500, yoyo: true, repeat: -1 });
 
+            let donateClicked = false;
             if (DONATE_URL) {
-                const tip = this.add.text(ow/2, oh/2 + 130, 'Enjoyed the game? Leave a tip!', {
-                    fontSize: '14px', fontFamily: 'Arial, sans-serif',
-                    color: C.gold, stroke: '#000', strokeThickness: 2,
-                }).setOrigin(0.5).setScrollFactor(0).setDepth(201).setInteractive({ useHandCursor: true });
-                tip.on('pointerdown', (pointer) => {
-                    pointer.event.stopPropagation();
+                const btnBg = this.add.rectangle(ow/2, oh/2 + 130, 280, 34, 0xCC9900, 0.9)
+                    .setOrigin(0.5).setScrollFactor(0).setDepth(202).setStrokeStyle(2, 0xFFD700)
+                    .setInteractive({ useHandCursor: true });
+                this.add.text(ow/2, oh/2 + 130, 'ENJOYED THIS? PRESS TO DONATE', {
+                    fontSize: '12px', fontFamily: 'Arial Black, sans-serif',
+                    color: '#FFFFFF', stroke: '#000', strokeThickness: 2,
+                }).setOrigin(0.5).setScrollFactor(0).setDepth(203);
+                btnBg.on('pointerdown', () => {
+                    donateClicked = true;
                     window.open(DONATE_URL, '_blank');
+                    this.time.delayedCall(500, () => { donateClicked = false; });
                 });
             }
 
@@ -1669,6 +1691,7 @@ class GameScene extends Phaser.Scene {
                 this.scene.start('Menu');
             });
             this.input.once('pointerdown', () => {
+                if (donateClicked) return;
                 this.scene.start('Menu');
             });
         });
