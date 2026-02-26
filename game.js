@@ -1400,6 +1400,9 @@ class GameScene extends Phaser.Scene {
             if (type === 0 && AL.hat) {
                 pu = this.powerupGroup.create(pux, puy, 'hat-ext');
                 pu.setDisplaySize(32, 32);
+            } else if (type === 1 && AL.bar) {
+                pu = this.powerupGroup.create(pux, puy, 'bar-ext');
+                pu.setDisplaySize(32, 32);
             } else if (powerExt) {
                 pu = this.powerupGroup.create(pux, puy, 'powerups-ext', type);
             } else {
@@ -1665,8 +1668,12 @@ class GameScene extends Phaser.Scene {
         this.enemyGroup.children.iterate(e => {
             if (!e || !e.active) return;
             if (e.y > this.scale.height + 100) { e.destroy(); return; }
-            if (e.x <= e.patrolL) e.setVelocityX(e.patrolSpeed);
-            if (e.x >= e.patrolR) e.setVelocityX(-e.patrolSpeed);
+            // Reverse on patrol bounds OR when blocked by a wall/platform
+            if (e.x <= e.patrolL || e.body.blocked.left) {
+                e.setVelocityX(e.patrolSpeed);
+            } else if (e.x >= e.patrolR || e.body.blocked.right) {
+                e.setVelocityX(-e.patrolSpeed);
+            }
             e.setFlipX(e.body.velocity.x > 0);
             if (e.enemyType === 3) { e.lastVelX = e.body.velocity.x; }
         });
