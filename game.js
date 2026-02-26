@@ -1157,37 +1157,28 @@ class SpeechScene extends Phaser.Scene {
         );
         const textMask = maskShape.createGeometryMask();
 
+        const fullSpeechText = speechLines.join('\n');
+        const textStartY = bubbleY + bubbleH / 2 - padY; // start just below visible area
         this.bubbleText = this.add.text(
-            bubbleX - bubbleW / 2 + padX,
-            bubbleY - bubbleH / 2 + padY,
-            '', {
+            bubbleX, textStartY,
+            fullSpeechText, {
             fontSize: speechFontSize + 'px',
             fontFamily: 'Arial, sans-serif',
             color: '#000000',
             wordWrap: { width: bubbleW - padX * 2 },
             lineSpacing: 2,
-        }).setOrigin(0, 0).setMask(textMask);
+            align: 'center',
+        }).setOrigin(0.5, 0).setMask(textMask);
 
-        // Reveal text line by line over ~65 seconds (matching speech audio)
-        const totalDuration = 65000; // ms
-        const lineDelay = totalDuration / speechLines.length;
-        let currentLineIdx = 0;
+        // Slowly scroll text upward over ~65 seconds
+        const textH = this.bubbleText.height;
         const visibleH = bubbleH - padY * 2;
-
-        this._speechScrollTimer = this.time.addEvent({
-            delay: lineDelay,
-            repeat: speechLines.length - 1,
-            callback: () => {
-                if (this._skipping) return;
-                const newLine = (currentLineIdx > 0 ? '\n' : '') + speechLines[currentLineIdx];
-                this.bubbleText.setText(this.bubbleText.text + newLine);
-                currentLineIdx++;
-                // Scroll up if text overflows bubble
-                const textH = this.bubbleText.height;
-                if (textH > visibleH) {
-                    this.bubbleText.y = (bubbleY - bubbleH / 2 + padY) - (textH - visibleH);
-                }
-            },
+        const scrollDist = textH + visibleH; // scroll from below bubble to above it
+        this.tweens.add({
+            targets: this.bubbleText,
+            y: textStartY - scrollDist,
+            duration: 65000,
+            ease: 'Linear',
         });
 
         // ─ Background music (Hail to the Chief)
