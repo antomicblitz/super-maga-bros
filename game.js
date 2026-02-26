@@ -708,6 +708,7 @@ class PreloadScene extends Phaser.Scene {
         try { this.load.image('player-tweet', 'assets/sprites/player-tweet.png'); } catch(e) {}
         try { this.load.image('bigmac-ext', 'assets/sprites/bigmac.png'); } catch(e) {}
         try { this.load.image('coke-ext', 'assets/sprites/coke.png'); } catch(e) {}
+        try { this.load.image('player-shart', 'assets/sprites/shart.png'); } catch(e) {}
 
         // Tiles
         try { this.load.image('ground-ext', 'assets/tiles/ground.png'); } catch(e) {}
@@ -731,6 +732,7 @@ class PreloadScene extends Phaser.Scene {
         try { this.load.audio('bgm',         'assets/audio/bgm-game.mp3'); } catch(e) {}
         try { this.load.audio('bgmMenu',     'assets/audio/bgm-menu.mp3'); } catch(e) {}
         try { this.load.audio('bgm-censor',  'assets/audio/bgm-censor.mp3'); } catch(e) {}
+        try { this.load.audio('snd-shart',   'assets/audio/shart.wav'); } catch(e) {}
     }
 
     create() {
@@ -748,6 +750,7 @@ class PreloadScene extends Phaser.Scene {
             playerTweet: this.textures.exists('player-tweet'),
             bigmac:   this.textures.exists('bigmac-ext'),
             coke:     this.textures.exists('coke-ext'),
+            playerShart: this.textures.exists('player-shart'),
             audio:    this.cache.audio.has('snd-jump'),
             censorBgm: this.cache.audio.has('bgm-censor'),
         };
@@ -1211,6 +1214,11 @@ class GameScene extends Phaser.Scene {
         if (jumpPressed) this.jumpBufferTimer = 0.1;
         else this.jumpBufferTimer -= dt;
 
+        // ─ Frozen during SHART — skip movement, jump, and animations
+        if (this.shartFrozen) {
+            p.setVelocityX(0);
+        } else {
+
         // ─ Horizontal movement
         const speed = 220;
         const leftDown  = this.cursors.left.isDown  || this.wasd.left.isDown  || T_CTRL.left;
@@ -1250,6 +1258,8 @@ class GameScene extends Phaser.Scene {
         } else {
             p.play('idle', true);
         }
+
+        } // end shartFrozen else
 
         // ─ Enemy patrol
         this.enemyGroup.children.iterate(e => {
@@ -1580,9 +1590,26 @@ class GameScene extends Phaser.Scene {
         this.cholesterol -= 50;
         this.earthquakeReady = this.cholesterol >= 50;
 
+        // Freeze player for 1 second
+        this.shartFrozen = true;
+        p.setVelocityX(0);
+        p.setVelocityY(0);
+
+        // Swap to shart sprite
+        const AL = window.ASSETS_LOADED || {};
+        if (AL.playerShart) {
+            this._preShartTexture = p.texture.key;
+            this._preShartFrame = p.frame.name;
+            p.anims.stop();
+            p.setTexture('player-shart');
+            p.setDisplaySize(48, 48);
+        }
+
+        // Play shart sound
+        playSound(this, 'snd-shart', SFX.stomp);
+
         // Screen shake
         this.cameras.main.shake(600, 0.025);
-        playSound(this, 'snd-stomp', SFX.stomp);
 
         // Brown shockwave ring
         const RADIUS = 350;
@@ -1602,7 +1629,19 @@ class GameScene extends Phaser.Scene {
             }
         });
 
-        // Cooldown
+        // Unfreeze after 1 second, restore sprite
+        this.time.delayedCall(1000, () => {
+            this.shartFrozen = false;
+            if (this._preShartTexture) {
+                const T = window.TEX || {};
+                p.setTexture(T.player || this._preShartTexture);
+                p.setDisplaySize(48, 48);
+                p.play('idle', true);
+                this._preShartTexture = null;
+            }
+        });
+
+        // Cooldown (1.5s total, but movement returns at 1s)
         this.time.delayedCall(1500, () => { this.earthquakeCooldown = false; });
     }
 
