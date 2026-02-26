@@ -1600,13 +1600,14 @@ class GameScene extends Phaser.Scene {
 
             let donateClicked = false;
             if (DONATE_URL) {
-                const btnBg = this.add.rectangle(ow/2, oh/2 + 120, 280, 34, 0xCC9900, 0.9)
-                    .setOrigin(0.5).setScrollFactor(0).setDepth(202).setStrokeStyle(2, 0xFFD700)
+                const btnBg = this.add.rectangle(ow/2, oh/2 + 120, 340, 48, 0xCC9900, 0.95)
+                    .setOrigin(0.5).setScrollFactor(0).setDepth(202).setStrokeStyle(3, 0xFFD700)
                     .setInteractive({ useHandCursor: true });
-                this.add.text(ow/2, oh/2 + 120, 'ENJOYED THIS? PRESS TO DONATE', {
-                    fontSize: '12px', fontFamily: 'Arial Black, sans-serif',
-                    color: '#FFFFFF', stroke: '#000', strokeThickness: 2,
+                this.add.text(ow/2, oh/2 + 120, 'ENJOYED THIS? TAP TO DONATE!', {
+                    fontSize: '18px', fontFamily: 'Arial Black, sans-serif',
+                    color: '#FFFFFF', stroke: '#000', strokeThickness: 3,
                 }).setOrigin(0.5).setScrollFactor(0).setDepth(203);
+                this.tweens.add({ targets: btnBg, scaleX: 1.05, scaleY: 1.05, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
                 btnBg.on('pointerdown', () => {
                     donateClicked = true;
                     window.open(DONATE_URL, '_blank');
@@ -1673,13 +1674,14 @@ class GameScene extends Phaser.Scene {
 
             let donateClicked = false;
             if (DONATE_URL) {
-                const btnBg = this.add.rectangle(ow/2, oh/2 + 130, 280, 34, 0xCC9900, 0.9)
-                    .setOrigin(0.5).setScrollFactor(0).setDepth(202).setStrokeStyle(2, 0xFFD700)
+                const btnBg = this.add.rectangle(ow/2, oh/2 + 130, 340, 48, 0xCC9900, 0.95)
+                    .setOrigin(0.5).setScrollFactor(0).setDepth(202).setStrokeStyle(3, 0xFFD700)
                     .setInteractive({ useHandCursor: true });
-                this.add.text(ow/2, oh/2 + 130, 'ENJOYED THIS? PRESS TO DONATE', {
-                    fontSize: '12px', fontFamily: 'Arial Black, sans-serif',
-                    color: '#FFFFFF', stroke: '#000', strokeThickness: 2,
+                this.add.text(ow/2, oh/2 + 130, 'ENJOYED THIS? TAP TO DONATE!', {
+                    fontSize: '18px', fontFamily: 'Arial Black, sans-serif',
+                    color: '#FFFFFF', stroke: '#000', strokeThickness: 3,
                 }).setOrigin(0.5).setScrollFactor(0).setDepth(203);
+                this.tweens.add({ targets: btnBg, scaleX: 1.05, scaleY: 1.05, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
                 btnBg.on('pointerdown', () => {
                     donateClicked = true;
                     window.open(DONATE_URL, '_blank');
