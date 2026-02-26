@@ -35,6 +35,7 @@ const ENEMY_TYPES = [
     { name: 'journalist', speed: 60,  score: 200, tint: 0x4488FF },
     { name: 'scientist',  speed: 80,  score: 300, tint: null },
     { name: 'girl',       speed: 100, score: 150, tint: 0xFF88CC },
+    { name: 'lobbyist',   speed: 55,  score: 250, tint: 0xFFAA00 },
 ];
 const POWER_TYPES = [
     { name: 'MAGA Hat',        duration: Infinity },
@@ -668,6 +669,9 @@ const LEVEL = {
         [11700, 11600, 11900, 1],
         [12000, 11900, 12200, 2],
         [12400, 12200, 12600, 1],
+        [3200, 3100, 3400, 3],
+        [4700, 4600, 4900, 3],
+        [5600, 5500, 5750, 3],
     ],
     // Power-ups [pixelX, pixelY, type]
     // type: 0=MAGA Hat, 1=Censor Bar, 2=Classified Docs
@@ -715,6 +719,10 @@ class PreloadScene extends Phaser.Scene {
         try { this.load.image('player-pole', 'assets/sprites/trump-pole-slide.png'); } catch(e) {}
         try { this.load.image('hat-ext', 'assets/sprites/hat.png'); } catch(e) {}
         try { this.load.image('bar-ext', 'assets/sprites/bar.png'); } catch(e) {}
+        try { this.load.spritesheet('lobbyist-ext', 'assets/sprites/lobbyist-ext.png',
+            { frameWidth: 48, frameHeight: 48 }); } catch(e) {}
+        try { this.load.spritesheet('lobbyist-case-ext', 'assets/sprites/lobbyist-case-ext.png',
+            { frameWidth: 48, frameHeight: 48 }); } catch(e) {}
 
         // Tiles
         try { this.load.image('ground-ext', 'assets/tiles/ground.png'); } catch(e) {}
@@ -774,6 +782,8 @@ class PreloadScene extends Phaser.Scene {
             playerPole: this.textures.exists('player-pole'),
             hat: this.textures.exists('hat-ext'),
             bar: this.textures.exists('bar-ext'),
+            lobbyist:     this.textures.exists('lobbyist-ext'),
+            lobbyistCase: this.textures.exists('lobbyist-case-ext'),
             audio:    this.cache.audio.has('snd-jump'),
             censorBgm: this.cache.audio.has('bgm-censor'),
         };
@@ -832,6 +842,8 @@ class BootScene extends Phaser.Scene {
             menuBg:   AL.menuBg  ? 'menuBg'       : null,
             bigmac:   AL.bigmac  ? 'bigmac-ext'   : 'bigmac',
             coke:     AL.coke    ? 'coke-ext'      : 'coke',
+            lobbyist:     AL.lobbyist     ? 'lobbyist-ext'      : null,
+            lobbyistCase: AL.lobbyistCase ? 'lobbyist-case-ext' : null,
             enemyExt:  !!AL.enemies,
             powerExt:  !!AL.powerups,
         };
@@ -1002,7 +1014,7 @@ class SpeechScene extends Phaser.Scene {
         const girlScale = bgScale * 1.3;
         // Girl1 (2 wave frames) — left of speaker
         const girl1X = bgLeft + 205 * bgScale;
-        const girl1Y = bgTop + 195 * bgScale;
+        const girl1Y = bgTop + 185 * bgScale;
         const g1frames = ['girl1w1', 'girl1w2'].filter(k => this.textures.exists(k));
         if (g1frames.length > 0) {
             this.girl1 = this.add.image(girl1X, girl1Y, g1frames[0]).setScale(girlScale);
@@ -1022,7 +1034,7 @@ class SpeechScene extends Phaser.Scene {
         }
         // Girl2 (4 frames including turn-around) — right of speaker
         const girl2X = bgLeft + 295 * bgScale;
-        const girl2Y = bgTop + 195 * bgScale;
+        const girl2Y = bgTop + 185 * bgScale;
         const g2frames = ['girl2w1', 'girl2w2', 'girl2w3', 'girl2w4'].filter(k => this.textures.exists(k));
         if (g2frames.length > 0) {
             this.girl2 = this.add.image(girl2X, girl2Y, g2frames[0]).setScale(girlScale);
@@ -1084,7 +1096,7 @@ class SpeechScene extends Phaser.Scene {
         // ─ Crowd cheering (looped, low volume)
         this.crowdSound = null;
         if (this.cache.audio.has('crowd')) {
-            this.crowdSound = this.sound.add('crowd', { loop: true, volume: 0.12 });
+            this.crowdSound = this.sound.add('crowd', { loop: true, volume: 0.06 });
             if (!this.sound.locked) {
                 this.crowdSound.play();
             } else {
@@ -1251,7 +1263,17 @@ class GameScene extends Phaser.Scene {
         LEVEL.enemies.forEach(([ex, eL, eR, type]) => {
             const et = ENEMY_TYPES[type] || ENEMY_TYPES[0];
             let e;
-            if (enemyExt) {
+            if (type === 3) {
+                const AL2 = window.ASSETS_LOADED || {};
+                if (AL2.lobbyist) {
+                    e = this.enemyGroup.create(ex, GROUND_Y - 24, 'lobbyist-ext', 0);
+                    e.play('lobbyistWalk');
+                } else {
+                    e = this.enemyGroup.create(ex, GROUND_Y - 14, ek, 0);
+                    e.setTint(0xFFAA00);
+                    e.play('enemyWalk');
+                }
+            } else if (enemyExt) {
                 e = this.enemyGroup.create(ex, GROUND_Y - 24, ek, type * 4);
             } else {
                 e = this.enemyGroup.create(ex, GROUND_Y - 14, ek, 0);
@@ -1308,6 +1330,7 @@ class GameScene extends Phaser.Scene {
 
         // ─ Tweet blast group
         this.tweetGroup = this.physics.add.group({ allowGravity: false });
+        this.caseGroup = this.physics.add.group({ allowGravity: true });
 
         // ─ Flag
         this.flag = this.physics.add.sprite(LEVEL.flagX, GROUND_Y - 80, 'flag');
@@ -1357,8 +1380,52 @@ class GameScene extends Phaser.Scene {
         }
         this.enemyGroup.children.iterate(e => {
             if (!e) return;
+            if (e.enemyType === 3) return;
             e.play(enemyExt ? ('enemy' + e.enemyType + 'Walk') : 'enemyWalk');
         });
+
+        // ─ Lobbyist animations
+        const AL0 = window.ASSETS_LOADED || {};
+        if (AL0.lobbyist) {
+            if (!this.anims.exists('lobbyistWalk')) {
+                this.anims.create({
+                    key: 'lobbyistWalk',
+                    frames: this.anims.generateFrameNumbers('lobbyist-ext', { frames: [0, 1] }),
+                    frameRate: 4, repeat: -1,
+                });
+            }
+            if (!this.anims.exists('lobbyistDead')) {
+                this.anims.create({
+                    key: 'lobbyistDead',
+                    frames: [{ key: 'lobbyist-ext', frame: 2 }],
+                    frameRate: 1,
+                });
+            }
+        }
+        if (AL0.lobbyistCase) {
+            if (!this.anims.exists('caseSlide')) {
+                this.anims.create({
+                    key: 'caseSlide',
+                    frames: [{ key: 'lobbyist-case-ext', frame: 0 }],
+                    frameRate: 1,
+                });
+            }
+            if (!this.anims.exists('caseStill')) {
+                this.anims.create({
+                    key: 'caseStill',
+                    frames: [{ key: 'lobbyist-case-ext', frame: 1 }],
+                    frameRate: 1,
+                });
+            }
+            if (!this.anims.exists('caseBurst')) {
+                this.anims.create({
+                    key: 'caseBurst',
+                    frames: [{ key: 'lobbyist-case-ext', frame: 2 }],
+                    frameRate: 1,
+                    repeat: 0,
+                });
+            }
+        }
 
         // ─ Colliders
         this.physics.add.collider(this.player, this.groundGroup);
@@ -1371,6 +1438,18 @@ class GameScene extends Phaser.Scene {
         this.physics.add.overlap(this.player, this.flag, this.reachFlag, null, this);
         this.physics.add.overlap(this.player, this.powerupGroup, this.collectPowerUp, null, this);
         this.physics.add.overlap(this.tweetGroup, this.enemyGroup, this.tweetHitEnemy, null, this);
+
+        this.physics.add.collider(this.caseGroup, this.groundGroup);
+        this.physics.add.collider(this.caseGroup, this.platformGroup);
+        this.physics.add.overlap(
+            this.caseGroup, this.enemyGroup, this.caseHitEnemy, null, this
+        );
+        this.physics.add.overlap(
+            this.player, this.caseGroup, this.playerHitCase, null, this
+        );
+        this.physics.add.overlap(
+            this.tweetGroup, this.caseGroup, this.tweetHitCase, null, this
+        );
 
         // ─ Particle emitter
         this.sparkleEmitter = this.add.particles(0, 0, 'sparkle', {
@@ -1532,6 +1611,16 @@ class GameScene extends Phaser.Scene {
             if (e.x <= e.patrolL) e.setVelocityX(e.patrolSpeed);
             if (e.x >= e.patrolR) e.setVelocityX(-e.patrolSpeed);
             e.setFlipX(e.body.velocity.x > 0);
+            if (e.enemyType === 3) { e.lastVelX = e.body.velocity.x; }
+        });
+
+        // ─ Sliding case wall-burst detection
+        this.caseGroup.children.iterate(sc => {
+            if (!sc || !sc.active || !sc.isSliding) return;
+            if (Math.abs(sc.body.velocity.x) < 10) {
+                sc.isSliding = false;
+                this.burstCase(sc);
+            }
         });
 
         // ─ Parallax
@@ -1611,6 +1700,21 @@ class GameScene extends Phaser.Scene {
 
     // ── Collectibles ────────────────────────────────────────
     collectFood(_player, food) {
+        if (food.foodType === 2) {
+            this.sparkleEmitter.emitParticleAt(food.x, food.y, 5);
+            food.destroy();
+            this.score += 50;
+            playSound(this, 'snd-coin', SFX.coin);
+            const popup = this.add.text(food.x, food.y, '+50', {
+                fontSize: '13px', fontFamily: 'Arial', fontStyle: 'bold',
+                color: '#FFD700', stroke: '#000', strokeThickness: 2,
+            }).setOrigin(0.5).setDepth(50);
+            this.tweens.add({
+                targets: popup, y: popup.y - 25, alpha: 0, duration: 500,
+                onComplete: () => popup.destroy(),
+            });
+            return;
+        }
         this.sparkleEmitter.emitParticleAt(food.x, food.y, 8);
         const pts = food.foodType === 0 ? 2 : 1;  // bigmac=2, coke=1
         food.destroy();
@@ -1740,8 +1844,81 @@ class GameScene extends Phaser.Scene {
         if (enemy && enemy.active) this.destroyEnemy(enemy);
     }
 
+    caseHitEnemy(slidingCase, enemy) {
+        if (!slidingCase.active || !enemy.active) return;
+        const et = ENEMY_TYPES[enemy.enemyType] || ENEMY_TYPES[0];
+        const bonus = et.score + 300;
+        this.score += bonus;
+
+        const popup = this.add.text(enemy.x, enemy.y - 10,
+            '+' + bonus + ' CHAIN!', {
+            fontSize: '13px', fontFamily: 'Arial Black',
+            color: '#FF6666', stroke: '#000', strokeThickness: 2,
+        }).setOrigin(0.5).setDepth(50);
+        this.tweens.add({
+            targets: popup, y: popup.y - 30, alpha: 0, duration: 600,
+            onComplete: () => popup.destroy(),
+        });
+
+        if (enemy && enemy.active) enemy.destroy();
+        // Case keeps sliding — do NOT destroy it
+    }
+
+    playerHitCase(player, slidingCase) {
+        if (!slidingCase.active || this.dead) return;
+
+        if (slidingCase.isSliding) {
+            if (player.body.velocity.y > 0 &&
+                player.body.prev.y + player.body.height <=
+                slidingCase.body.y + slidingCase.body.halfHeight) {
+                // Stomp from above
+                player.setVelocityY(-280);
+                this.score += 200;
+                const popup = this.add.text(slidingCase.x, slidingCase.y,
+                    '+200 CAUGHT!', {
+                    fontSize: '13px', fontFamily: 'Arial Black',
+                    color: '#FFD700', stroke: '#000', strokeThickness: 2,
+                }).setOrigin(0.5).setDepth(50);
+                this.tweens.add({
+                    targets: popup, y: popup.y - 30, alpha: 0, duration: 600,
+                    onComplete: () => popup.destroy(),
+                });
+                this.burstCase(slidingCase);
+            } else {
+                // Side collision
+                if (!this.invincible) {
+                    this.playerDie();
+                } else {
+                    this.burstCase(slidingCase);
+                }
+            }
+        }
+    }
+
+    tweetHitCase(tweet, slidingCase) {
+        if (!tweet.active || !slidingCase.active) return;
+        if (tweet && tweet.active) tweet.destroy();
+        this.score += 500;
+
+        const popup = this.add.text(slidingCase.x, slidingCase.y,
+            '+500 BIGLY!', {
+            fontSize: '16px', fontFamily: 'Arial Black',
+            color: '#FFD700', stroke: '#000', strokeThickness: 3,
+        }).setOrigin(0.5).setDepth(50);
+        this.tweens.add({
+            targets: popup, y: popup.y - 40, alpha: 0, duration: 800,
+            onComplete: () => popup.destroy(),
+        });
+
+        this.burstCase(slidingCase);
+    }
+
     // ── Enemy helpers ───────────────────────────────────────
     destroyEnemy(enemy) {
+        if (enemy.enemyType === 3) {
+            this.destroyLobbyist(enemy);
+            return;
+        }
         const et = ENEMY_TYPES[enemy.enemyType] || ENEMY_TYPES[0];
         this.score += et.score;
         if (!this.invincible && !this.shartFrozen) {
@@ -1769,6 +1946,109 @@ class GameScene extends Phaser.Scene {
         } else {
             enemy.destroy();
         }
+    }
+
+    destroyLobbyist(enemy) {
+        this.score += 250;
+        playSound(this, 'snd-stomp', SFX.stomp);
+
+        const popup = this.add.text(enemy.x, enemy.y, '+250', {
+            fontSize: '14px', fontFamily: 'Arial', fontStyle: 'bold',
+            color: '#FFAA00', stroke: '#000', strokeThickness: 2,
+        }).setOrigin(0.5).setDepth(50);
+        this.tweens.add({
+            targets: popup, y: popup.y - 30, alpha: 0, duration: 600,
+            onComplete: () => popup.destroy(),
+        });
+
+        const AL = window.ASSETS_LOADED || {};
+        if (AL.lobbyist) {
+            enemy.play('lobbyistDead');
+        }
+        enemy.setVelocity(0, 0);
+        enemy.body.enable = false;
+
+        const dir = (enemy.lastVelX !== undefined && enemy.lastVelX >= 0) ? 1 : -1;
+
+        this.time.delayedCall(300, () => {
+            const ex = enemy.x, ey = enemy.y;
+            if (enemy && enemy.active) enemy.destroy();
+            this.spawnSlidingCase(ex, ey, dir);
+        });
+    }
+
+    spawnSlidingCase(x, y, dir) {
+        const AL = window.ASSETS_LOADED || {};
+        const caseKey = AL.lobbyistCase ? 'lobbyist-case-ext' : 'dollar';
+        const sc = this.caseGroup.create(x, y, caseKey, 0);
+        sc.setSize(36, 32).setOffset(6, 8);
+        sc.setBounce(0);
+        sc.setVelocityX(dir * 350);
+        sc.setDepth(4);
+        sc.isSliding = true;
+
+        if (AL.lobbyistCase) {
+            sc.play('caseSlide');
+        } else {
+            sc.setTint(0xFFAA00);
+        }
+
+        // Auto-burst after 8 seconds if still alive
+        this.time.delayedCall(8000, () => {
+            if (sc && sc.active) this.burstCase(sc);
+        });
+    }
+
+    burstCase(sc) {
+        if (!sc || !sc.active) return;
+        const x = sc.x, y = sc.y;
+
+        const AL = window.ASSETS_LOADED || {};
+        if (AL.lobbyistCase) {
+            sc.play('caseBurst');
+            sc.setVelocity(0, 0);
+            sc.body.enable = false;
+            // Show opened frame briefly then destroy
+            this.time.delayedCall(400, () => {
+                if (sc && sc.active) sc.destroy();
+            });
+        } else {
+            sc.destroy();
+        }
+
+        // Scatter cash coins using foodGroup
+        const count = 4 + Math.floor(Math.random() * 3); // 4–6 coins
+        for (let i = 0; i < count; i++) {
+            const angle = (Math.random() * 160 + 10) * Math.PI / 180;
+            const speed = 80 + Math.random() * 120;
+            const cash = this.foodGroup.create(
+                x + (Math.random() - 0.5) * 20,
+                y - 10,
+                'dollar'
+            );
+            cash.foodType = 2;
+            cash.setDisplaySize(24, 16);
+            cash.setCircle(8, 4, 0);
+            cash.body.setAllowGravity(true);
+            cash.setVelocity(
+                Math.cos(angle) * speed,
+                -Math.sin(angle) * speed
+            );
+            this.time.delayedCall(4000, () => {
+                if (cash && cash.active) cash.destroy();
+            });
+        }
+
+        const cashPopup = this.add.text(x, y, '+CASH!', {
+            fontSize: '16px', fontFamily: 'Arial Black',
+            color: '#FFD700', stroke: '#000', strokeThickness: 3,
+        }).setOrigin(0.5).setDepth(50);
+        this.tweens.add({
+            targets: cashPopup, y: cashPopup.y - 40, alpha: 0, duration: 800,
+            onComplete: () => cashPopup.destroy(),
+        });
+
+        playSound(this, 'snd-powerup', SFX.powerup);
     }
 
     hitEnemy(player, enemy) {

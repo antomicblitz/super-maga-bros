@@ -66,6 +66,7 @@ GW=800, GH=500, TILE=32, WORLD_W=6400, WORLD_H=600, GROUND_Y=468
 0 = journalist  (speed: 60px/s, score: 200)
 1 = scientist   (speed: 80px/s, score: 300)
 2 = girl        (speed: 100px/s, score: 150)
+3 = lobbyist    (speed: 55px/s, score: 250)
 
 ## Power-Up Types
 0 = MAGA Hat      — absorbs 1 hit, duration: permanent until hit
@@ -90,6 +91,24 @@ Z = fire tweet-blast (Classified Docs power-up active) —
 - Parallax background: bg1 scrolls at 0.2x camera speed
 - Power-up state lives on GameScene: this.playerPower, this.powerTimer, this.invincible
 - Tweet-blast travels 400px/s horizontally, no gravity, destroys on enemy hit, auto-destroys after 2s
+
+## Lobbyist Enemy (type 3)
+- ENEMY_TYPES index 3, speed 55px/s, base score 250 pts
+- Sprite: assets/sprites/lobbyist-ext.png (144×48px, 3 frames at 48×48)
+  frame 0 = standing, frame 1 = walking, frame 2 = dead flat
+- Case sprite: assets/sprites/lobbyist-case-ext.png (144×48px, 3 frames at 48×48)
+  frame 0 = moving/flames, frame 1 = still/closed, frame 2 = opened/burst
+- Stomp → plays dead frame, releases sliding briefcase at 350px/s
+- Sliding case knocks out any enemy it touches (+score+300 chain)
+- Case velocity drops below 10 or hits wall → burstCase() fires
+- burstCase() shows opened frame for 400ms, scatters 4–6 dollar coins
+- Dollar coins use foodGroup (foodType=2), collected at +50 each
+- Player stomps case from above → +200 CAUGHT + burst
+- Player hits case from side → playerDie() (invincible: burst instead)
+- Tweet blast hits case → +500 BIGLY + burst
+- Auto-burst after 8 seconds if untouched
+- foodType=2 branch at top of collectFood() handles cash collection
+- caseGroup is a separate physics group with gravity, own colliders
 
 ## File Editing Rules for Claude Code
 - Only edit game.js and CLAUDE.md unless explicitly told otherwise
