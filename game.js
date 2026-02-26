@@ -1786,9 +1786,6 @@ class GameScene extends Phaser.Scene {
         player.setVelocity(0, 0);
         player.body.setAllowGravity(false);
 
-        // Move player to flag pole position (offset to align hand with pole)
-        player.x = this.flag.x;
-
         // Swap to pole slide sprite if available
         const AL = window.ASSETS_LOADED || {};
         if (AL.playerPole) {
@@ -1797,7 +1794,10 @@ class GameScene extends Phaser.Scene {
             player.setFrame(0);
             player.setDisplaySize(48, 48);
             player.setFlipX(false);
+            // Offset player left so hand aligns with pole
+            player.x = this.flag.x - 12;
         } else {
+            player.x = this.flag.x;
             player.play('idle');
         }
 
