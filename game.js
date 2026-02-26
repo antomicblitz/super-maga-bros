@@ -719,9 +719,9 @@ class PreloadScene extends Phaser.Scene {
         try { this.load.image('player-pole', 'assets/sprites/trump-pole-slide.png'); } catch(e) {}
         try { this.load.image('hat-ext', 'assets/sprites/hat.png'); } catch(e) {}
         try { this.load.image('bar-ext', 'assets/sprites/bar.png'); } catch(e) {}
-        try { this.load.spritesheet('lobbyist-ext', 'assets/sprites/lobbyist-ext.png',
+        try { this.load.spritesheet('lobbyist-ext', 'assets/sprites/lobbyist.png',
             { frameWidth: 48, frameHeight: 48 }); } catch(e) {}
-        try { this.load.spritesheet('lobbyist-case-ext', 'assets/sprites/lobbyist-case-ext.png',
+        try { this.load.spritesheet('lobbyist-case-ext', 'assets/sprites/lobbyist-suitcase.png',
             { frameWidth: 48, frameHeight: 48 }); } catch(e) {}
 
         // Tiles

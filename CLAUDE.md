@@ -94,9 +94,9 @@ Z = fire tweet-blast (Classified Docs power-up active) —
 
 ## Lobbyist Enemy (type 3)
 - ENEMY_TYPES index 3, speed 55px/s, base score 250 pts
-- Sprite: assets/sprites/lobbyist-ext.png (144×48px, 3 frames at 48×48)
+- Sprite: assets/sprites/lobbyist.png (144×48px, 3 frames at 48×48)
   frame 0 = standing, frame 1 = walking, frame 2 = dead flat
-- Case sprite: assets/sprites/lobbyist-case-ext.png (144×48px, 3 frames at 48×48)
+- Case sprite: assets/sprites/lobbyist-suitcase.png (144×48px, 3 frames at 48×48)
   frame 0 = moving/flames, frame 1 = still/closed, frame 2 = opened/burst
 - Stomp → plays dead frame, releases sliding briefcase at 350px/s
 - Sliding case knocks out any enemy it touches (+score+300 chain)
