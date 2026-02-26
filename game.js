@@ -1785,6 +1785,7 @@ class GameScene extends Phaser.Scene {
 
         player.setVelocity(0, 0);
         player.body.setAllowGravity(false);
+        player.body.enable = false;  // disable physics so it doesn't reposition
 
         // Swap to pole slide sprite if available
         const AL = window.ASSETS_LOADED || {};
@@ -1794,12 +1795,11 @@ class GameScene extends Phaser.Scene {
             player.setFrame(0);
             player.setDisplaySize(48, 48);
             player.setFlipX(false);
-            // Offset player left so hand aligns with pole
-            player.x = this.flag.x - 12;
         } else {
-            player.x = this.flag.x;
             player.play('idle');
         }
+        // Position player on the pole (offset -12px so hand grips pole)
+        player.x = this.flag.x - 12;
 
         this.tweens.add({
             targets: player, y: GROUND_Y - 24, duration: 800, ease: 'Sine.easeIn',
