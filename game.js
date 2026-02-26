@@ -1129,56 +1129,40 @@ class SpeechScene extends Phaser.Scene {
         gfx.lineStyle(2 * bgScale, 0x000000);
         gfx.lineBetween(bubbleX - 8 * bgScale, triY, bubbleX, triY + 12 * bgScale);
         gfx.lineBetween(bubbleX + 8 * bgScale, triY, bubbleX, triY + 12 * bgScale);
-        // Scrolling speech text inside bubble
-        const speechLines = [
-            'Thank you.',
-            'It is really a great crowd, truly, truly great.',
-            'And I want to tell you something that\'s been weighing on my mind a lot lately.',
-            'You see, there was this one guy, Jeffrey Epstein.',
-            'We used to have some great times together, truly, truly great.',
-            'But the fake news is trying to ruin everybody\'s good time with their facts and their evidence.',
-            'We had some good times together, truly, truly great.',
-            'But I swear, all of those girls were at least 18.',
-            'So let me tell you something else.',
-            'Let me tell you.',
-            'I\'m going on a mission and I\'m embarking out of Mar-a-Lago on a journey to clear Jeffrey Epstein\'s name.',
-            'I\'ll be also taking down the deep state and the fake news because when it comes to fighting for what\'s right, nobody, and I mean nobody truly, can match Donald J. Trump.',
-            'Thank you for your attention to this matter.',
+        // Timed speech captions synced to audio (seconds when each line is spoken)
+        const speechCaptions = [
+            [0,  'Thank you.'],
+            [3,  'It is really a great crowd, truly, truly great.'],
+            [7,  'And I want to tell you something that\'s been weighing on my mind a lot lately.'],
+            [13, 'You see, there was this one guy, Jeffrey Epstein.'],
+            [17, 'We used to have some great times together, truly, truly great.'],
+            [22, 'But the fake news is trying to ruin everybody\'s good time with their facts and their evidence.'],
+            [29, 'We had some good times together, truly, truly great.'],
+            [33, 'But I swear, all of those girls were at least 18.'],
+            [37, 'So let me tell you something else.'],
+            [40, 'Let me tell you.'],
+            [42, 'I\'m going on a mission and I\'m embarking out of Mar-a-Lago on a journey to clear Jeffrey Epstein\'s name.'],
+            [52, 'I\'ll be also taking down the deep state and the fake news because when it comes to fighting for what\'s right, nobody, and I mean nobody truly, can match Donald J. Trump.'],
+            [62, 'Thank you for your attention to this matter.'],
         ];
         const speechFontSize = Math.max(9, Math.round(11 * bgScale));
         const padX = 10 * bgScale;
-        const padY = 6 * bgScale;
-        // Mask to clip text inside bubble
-        const maskShape = this.make.graphics({ x: 0, y: 0, add: false });
-        maskShape.fillStyle(0xffffff);
-        maskShape.fillRoundedRect(
-            bubbleX - bubbleW / 2 + padX, bubbleY - bubbleH / 2 + padY,
-            bubbleW - padX * 2, bubbleH - padY * 2, 6 * bgScale
-        );
-        const textMask = maskShape.createGeometryMask();
 
-        const fullSpeechText = speechLines.join('\n');
-        const textStartY = bubbleY + bubbleH / 2 - padY; // start just below visible area
-        this.bubbleText = this.add.text(
-            bubbleX, textStartY,
-            fullSpeechText, {
+        this.bubbleText = this.add.text(bubbleX, bubbleY, '', {
             fontSize: speechFontSize + 'px',
             fontFamily: 'Arial, sans-serif',
             color: '#000000',
             wordWrap: { width: bubbleW - padX * 2 },
             lineSpacing: 2,
             align: 'center',
-        }).setOrigin(0.5, 0).setMask(textMask);
+        }).setOrigin(0.5);
 
-        // Slowly scroll text upward over ~65 seconds
-        const textH = this.bubbleText.height;
-        const visibleH = bubbleH - padY * 2;
-        const scrollDist = textH + visibleH; // scroll from below bubble to above it
-        this.tweens.add({
-            targets: this.bubbleText,
-            y: textStartY - scrollDist,
-            duration: 65000,
-            ease: 'Linear',
+        // Schedule each caption at its timestamp
+        speechCaptions.forEach(([timeSec, text]) => {
+            this.time.delayedCall(timeSec * 1000, () => {
+                if (this._skipping || !this.bubbleText) return;
+                this.bubbleText.setText(text);
+            });
         });
 
         // ─ Background music (Hail to the Chief)
