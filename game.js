@@ -676,13 +676,10 @@ const LEVEL = {
         [800,  336, 0],    // MAGA Hat — double jump before first gap
         [1536, 272, 1],
         [2304, 208, 2],
-        [2600, 304, 0],    // MAGA Hat — before gap 3 climbing
         [4512, 272, 1],
-        [5000, 304, 0],    // MAGA Hat — before Zone 3 transition
         [5472, 272, 2],
         // Zone 3-4 rewards
         [7200, 240, 0],    // MAGA Hat — harder platforms
-        [9200, 304, 0],    // MAGA Hat — before gauntlet platforming
         [9500, 240, 1],    // Censor Bar — invincibility for gauntlet
         [11500, 240, 2],   // Classified Docs — tweet-blast for final stretch
     ],
@@ -1417,7 +1414,7 @@ class GameScene extends Phaser.Scene {
                 this.bgm.pause();
             }
             if (this.cache.audio.has('bgm-censor')) {
-                this.censorMusic = this.sound.add('bgm-censor', { loop: true, volume: 0.4 });
+                this.censorMusic = this.sound.add('bgm-censor', { loop: true, volume: 1.0 });
                 this.censorMusic.play();
             }
         } else if (type === 2) {
@@ -1763,8 +1760,8 @@ class GameScene extends Phaser.Scene {
         player.setVelocity(0, 0);
         player.body.setAllowGravity(false);
 
-        // Move player to flag pole position
-        player.x = this.flag.x;
+        // Move player to flag pole position (offset to align hand with pole)
+        player.x = this.flag.x + 6;
 
         // Swap to pole slide sprite if available
         const AL = window.ASSETS_LOADED || {};
