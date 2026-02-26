@@ -1787,7 +1787,7 @@ class GameScene extends Phaser.Scene {
         player.body.setAllowGravity(false);
 
         // Move player to flag pole position (offset to align hand with pole)
-        player.x = this.flag.x + 6;
+        player.x = this.flag.x;
 
         // Swap to pole slide sprite if available
         const AL = window.ASSETS_LOADED || {};
