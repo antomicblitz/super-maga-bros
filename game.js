@@ -1266,7 +1266,7 @@ class GameScene extends Phaser.Scene {
             if (type === 3) {
                 const AL2 = window.ASSETS_LOADED || {};
                 if (AL2.lobbyist) {
-                    e = this.enemyGroup.create(ex, GROUND_Y - 24, 'lobbyist-ext', 0);
+                    e = this.enemyGroup.create(ex, GROUND_Y - 18, 'lobbyist-ext', 0);
                     e.play('lobbyistWalk');
                 } else {
                     e = this.enemyGroup.create(ex, GROUND_Y - 14, ek, 0);
@@ -2070,7 +2070,10 @@ class GameScene extends Phaser.Scene {
             player.setVelocityY(-280);
             // Show stomp frame briefly before death animation
             const T = window.TEX || {};
-            if (T.enemyExt) {
+            if (enemy.enemyType === 3) {
+                // Lobbyist uses its own spritesheet — skip enemies-ext frame logic
+                this.destroyEnemy(enemy);
+            } else if (T.enemyExt) {
                 enemy.setFrame(enemy.enemyType * 4 + 2);
                 this.time.delayedCall(100, () => {
                     if (enemy && enemy.active) this.destroyEnemy(enemy);
