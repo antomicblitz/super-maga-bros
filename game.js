@@ -8,6 +8,7 @@ const TILE = 32;
 const WORLD_W = 6400, WORLD_H = 600;
 const GROUND_Y = GH - TILE;          // 468
 const PX = 2;                         // pixel‑art scale (each art‑pixel = 2×2)
+const DONATE_URL = 'https://buy.stripe.com/3cI28q0Ds61569wcB71gs0C';
 
 // ── Colour palette (from reference images) ───────────────────
 const C = {
@@ -835,7 +836,13 @@ class GameScene extends Phaser.Scene {
         const sw = this.scale.width;
         const sh = this.scale.height;
         const skyKey = T.sky || 'sky';
-        this.skyImg = this.add.tileSprite(0, 0, sw, sh, skyKey).setOrigin(0).setScrollFactor(0).setDepth(-10);
+        if (T.sky) {
+            // External background: plain image avoids tileSprite seam artifacts
+            this.skyImg = this.add.image(0, 0, skyKey).setOrigin(0).setDisplaySize(sw, sh).setScrollFactor(0).setDepth(-10);
+        } else {
+            // Procedural sky: tileSprite for seamless tiling
+            this.skyImg = this.add.tileSprite(0, 0, sw, sh, skyKey).setOrigin(0).setScrollFactor(0).setDepth(-10);
+        }
         this.farHills = this.add.tileSprite(0, sh - 180, sw, 200, 'hillsFar').setOrigin(0).setScrollFactor(0).setDepth(-9);
         this.nearHills = this.add.tileSprite(0, sh - 140, sw, 160, 'hillsNear').setOrigin(0).setScrollFactor(0).setDepth(-8);
 
@@ -1492,6 +1499,17 @@ class GameScene extends Phaser.Scene {
                 color: C.white, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
             this.tweens.add({ targets: cont, alpha: 0.3, duration: 500, yoyo: true, repeat: -1 });
+
+            if (DONATE_URL) {
+                const tip = this.add.text(ow/2, oh/2 + 130, 'Enjoyed the game? Leave a tip!', {
+                    fontSize: '14px', fontFamily: 'Arial, sans-serif',
+                    color: C.gold, stroke: '#000', strokeThickness: 2,
+                }).setOrigin(0.5).setScrollFactor(0).setDepth(201).setInteractive({ useHandCursor: true });
+                tip.on('pointerdown', (pointer) => {
+                    pointer.event.stopPropagation();
+                    window.open(DONATE_URL, '_blank');
+                });
+            }
 
             this.input.keyboard.once('keydown-SPACE', () => {
                 this.scene.start('Menu');
