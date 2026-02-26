@@ -692,12 +692,14 @@ class PreloadScene extends Phaser.Scene {
 
     preload() {
         // Progress bar
-        this.add.rectangle(400, 250, 804, 24, 0x333333);
-        const bar = this.add.rectangle(400, 250, 0, 20, 0xFFD700).setOrigin(0.5);
-        this.add.text(400, 220, 'LOADING...', {
+        const cx = this.scale.width / 2, cy = this.scale.height / 2;
+        this.add.rectangle(cx, cy, this.scale.width * 0.9 + 4, 24, 0x333333);
+        const bar = this.add.rectangle(cx, cy, 0, 20, 0xFFD700).setOrigin(0.5);
+        const barMaxW = this.scale.width * 0.9;
+        this.add.text(cx, cy - 30, 'LOADING...', {
             fontSize: '16px', fontFamily: 'Arial Black', color: '#FFD700'
         }).setOrigin(0.5);
-        this.load.on('progress', v => { bar.width = 800 * v; });
+        this.load.on('progress', v => { bar.width = barMaxW * v; });
 
         // Silently skip missing/corrupt placeholders
         this.load.on('loaderror', (file) => { console.warn('Asset skipped:', file.key); });
@@ -722,6 +724,17 @@ class PreloadScene extends Phaser.Scene {
         // Backgrounds
         try { this.load.image('sky-ext', 'assets/sprites/background.png'); } catch(e) {}
         try { this.load.image('menuBg',  'assets/ui/title-screen.png'); } catch(e) {}
+        try { this.load.image('menuCover', 'assets/game-cover-2.jpg'); } catch(e) {}
+
+        // Speech scene
+        try { this.load.image('speechBg', 'assets/presidential-podium.png'); } catch(e) {}
+        try { this.load.spritesheet('speechSprite', 'assets/sprites/png-trump-speech.png', { frameWidth: 48, frameHeight: 48 }); } catch(e) {}
+        try { this.load.image('girl1w1', 'assets/sprites/girl1-wave1.png'); } catch(e) {}
+        try { this.load.image('girl1w2', 'assets/sprites/girl1-wave2.png'); } catch(e) {}
+        try { this.load.image('girl2w1', 'assets/sprites/girl2-wave1.png'); } catch(e) {}
+        try { this.load.image('girl2w2', 'assets/sprites/girl2-wave2.png'); } catch(e) {}
+        try { this.load.image('girl2w3', 'assets/sprites/girl2-wave3.png'); } catch(e) {}
+        try { this.load.image('girl2w4', 'assets/sprites/girl2-wave4.png'); } catch(e) {}
 
         // HUD
         try { this.load.spritesheet('hudIcons', 'assets/ui/hud-icons.png', { frameWidth: 32, frameHeight: 32 }); } catch(e) {}
@@ -737,6 +750,9 @@ class PreloadScene extends Phaser.Scene {
         try { this.load.audio('bgmMenu',     'assets/audio/bgm-menu.mp3'); } catch(e) {}
         try { this.load.audio('bgm-censor',  'assets/audio/bgm-censor.mp3'); } catch(e) {}
         try { this.load.audio('snd-shart',   'assets/audio/shart.wav'); } catch(e) {}
+        try { this.load.audio('speechAudio', 'assets/audio/trump-speech.mp3'); } catch(e) {}
+        try { this.load.audio('hailChief', 'assets/audio/hail-the-chief.mp3'); } catch(e) {}
+        try { this.load.audio('crowd', 'assets/audio/crowd.mp3'); } catch(e) {}
     }
 
     create() {
@@ -833,23 +849,16 @@ class MenuScene extends Phaser.Scene {
         const sw = this.scale.width;
         const sh = this.scale.height;
 
-        // Background: use animated GIF overlay on top of canvas, fall back to static
-        const hasMenuBg = !!T.menuBg;
-        let usedGif = false;
-        try {
-            const canvas = this.game.canvas;
-            const gifEl = document.createElement('img');
-            gifEl.src = 'assets/sprites/super-maga-bros-title.gif';
-            gifEl.id = 'menu-gif-overlay';
-            gifEl.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:fill;image-rendering:pixelated;pointer-events:none;z-index:1;';
-            canvas.parentElement.style.position = 'relative';
-            canvas.parentElement.appendChild(gifEl);
-            this._gifOverlay = gifEl;
-            usedGif = true;
-        } catch(e) {}
-        if (!usedGif && hasMenuBg) {
+        // Background: use game-cover-2.jpg, fall back to static
+        this.cameras.main.setBackgroundColor('#000000');
+        const hasMenuCover = this.textures.exists('menuCover');
+        if (hasMenuCover) {
+            const cover = this.add.image(sw/2, sh/2, 'menuCover');
+            const coverScale = Math.min(sw / cover.width, sh / cover.height);
+            cover.setScale(coverScale);
+        } else if (T.menuBg) {
             this.add.image(sw/2, sh/2, T.menuBg).setDisplaySize(sw, sh);
-        } else if (!usedGif) {
+        } else {
             this.add.image(sw/2, sh/2, T.sky || 'sky');
             this.add.image(sw/2, sh - 80, 'hillsFar');
             this.add.image(sw/2, sh - 40, 'hillsNear');
@@ -890,12 +899,16 @@ class MenuScene extends Phaser.Scene {
             this.tweens.add({ targets: [starL, starR], angle: 360, duration: 3000, repeat: -1 });
         }
 
-        // "Press any button" prompt (always shown)
-        const inst = this.add.text(sw/2, sh - 80, 'PRESS ANY BUTTON TO PLAY', {
+        // "Press to play" prompt + credit (overlaid on cover image)
+        const inst = this.add.text(sw/2, sh - 80, 'Press or touch anywhere to play', {
             fontSize: '22px', fontFamily: 'Arial Black, Impact, sans-serif',
             color: C.white, stroke: C.navy, strokeThickness: 3,
         }).setOrigin(0.5);
         this.tweens.add({ targets: inst, alpha: 0.2, duration: 600, yoyo: true, repeat: -1 });
+        this.add.text(sw/2, sh - 50, 'created by Antonio Lamb', {
+            fontSize: '14px', fontFamily: 'Arial, sans-serif',
+            color: C.gold, stroke: '#000', strokeThickness: 2,
+        }).setOrigin(0.5);
 
         // Menu background music
         if (this.cache.audio.has('bgmMenu')) {
@@ -926,9 +939,8 @@ class MenuScene extends Phaser.Scene {
             gameStarting = true;
             self._menuHandler = null;
             if (self.menuMusic) self.menuMusic.stop();
-            if (self._gifOverlay) { self._gifOverlay.remove(); self._gifOverlay = null; }
             self.cameras.main.fadeOut(300, 0, 0, 0);
-            self.time.delayedCall(300, () => self.scene.start('Game'));
+            self.time.delayedCall(300, () => self.scene.start('Speech'));
         };
         this.input.keyboard.once('keydown', handler);
         this.input.once('pointerdown', handler);
@@ -944,6 +956,198 @@ class MenuScene extends Phaser.Scene {
         const down = T.left || T.right || T.jump || T.tweet;
         if (down && !this._touchWasDown) {
             this._menuHandler();
+        }
+        this._touchWasDown = !!down;
+    }
+}
+
+// ── SPEECH SCENE ────────────────────────────────────────────
+class SpeechScene extends Phaser.Scene {
+    constructor() { super('Speech'); }
+
+    create() {
+        const sw = this.scale.width;
+        const sh = this.scale.height;
+        this.cameras.main.setBackgroundColor('#000000');
+        this.cameras.main.fadeIn(300);
+        this._skipping = false;
+
+        // ─ Background (500x333) scaled to fit viewport
+        const bgScale = Math.min(sw / 500, sh / 333);
+        const bgLeft = sw / 2 - (500 * bgScale) / 2;
+        const bgTop  = sh / 2 - (333 * bgScale) / 2;
+        if (this.textures.exists('speechBg')) {
+            this.add.image(sw / 2, sh / 2, 'speechBg').setScale(bgScale);
+        }
+
+        // ─ Speech sprite at (250, 157) relative to background
+        const spriteX = bgLeft + 250 * bgScale;
+        const spriteY = bgTop + 157 * bgScale;
+        if (this.textures.exists('speechSprite')) {
+            this.speechChar = this.add.sprite(spriteX, spriteY, 'speechSprite', 0)
+                .setScale(bgScale);
+            // Random frame switching to simulate speaking
+            this.time.addEvent({
+                delay: 250,
+                callback: () => {
+                    if (this.speechChar && this.speechChar.active) {
+                        this.speechChar.setFrame(Phaser.Math.Between(0, 3));
+                    }
+                },
+                loop: true,
+            });
+        }
+
+        // ─ Bystander girls waving next to the speaker
+        const girlScale = bgScale * 1.3;
+        // Girl1 (2 wave frames) — left of speaker
+        const girl1X = bgLeft + 205 * bgScale;
+        const girl1Y = bgTop + 195 * bgScale;
+        const g1frames = ['girl1w1', 'girl1w2'].filter(k => this.textures.exists(k));
+        if (g1frames.length > 0) {
+            this.girl1 = this.add.image(girl1X, girl1Y, g1frames[0]).setScale(girlScale);
+            if (g1frames.length > 1) {
+                let g1i = 0;
+                this.time.addEvent({
+                    delay: 350,
+                    callback: () => {
+                        if (this.girl1 && this.girl1.active) {
+                            g1i = (g1i + 1) % g1frames.length;
+                            this.girl1.setTexture(g1frames[g1i]);
+                        }
+                    },
+                    loop: true,
+                });
+            }
+        }
+        // Girl2 (4 frames including turn-around) — right of speaker
+        const girl2X = bgLeft + 295 * bgScale;
+        const girl2Y = bgTop + 195 * bgScale;
+        const g2frames = ['girl2w1', 'girl2w2', 'girl2w3', 'girl2w4'].filter(k => this.textures.exists(k));
+        if (g2frames.length > 0) {
+            this.girl2 = this.add.image(girl2X, girl2Y, g2frames[0]).setScale(girlScale);
+            if (g2frames.length > 1) {
+                let g2i = 0;
+                this.time.addEvent({
+                    delay: 400,
+                    callback: () => {
+                        if (this.girl2 && this.girl2.active) {
+                            g2i = (g2i + 1) % g2frames.length;
+                            this.girl2.setTexture(g2frames[g2i]);
+                        }
+                    },
+                    loop: true,
+                });
+            }
+        }
+
+        // ─ Text bubble above character
+        const bubbleW = 340 * bgScale;
+        const bubbleH = 70 * bgScale;
+        const bubbleX = spriteX;
+        const bubbleY = spriteY - 115 * bgScale;
+        const gfx = this.add.graphics();
+        // Bubble background
+        gfx.fillStyle(0xffffff, 0.92);
+        gfx.fillRoundedRect(bubbleX - bubbleW / 2, bubbleY - bubbleH / 2, bubbleW, bubbleH, 10 * bgScale);
+        gfx.lineStyle(2 * bgScale, 0x000000);
+        gfx.strokeRoundedRect(bubbleX - bubbleW / 2, bubbleY - bubbleH / 2, bubbleW, bubbleH, 10 * bgScale);
+        // Small triangle pointer toward character
+        const triY = bubbleY + bubbleH / 2;
+        gfx.fillStyle(0xffffff, 0.92);
+        gfx.fillTriangle(bubbleX - 8 * bgScale, triY, bubbleX + 8 * bgScale, triY, bubbleX, triY + 12 * bgScale);
+        gfx.lineStyle(2 * bgScale, 0x000000);
+        gfx.lineBetween(bubbleX - 8 * bgScale, triY, bubbleX, triY + 12 * bgScale);
+        gfx.lineBetween(bubbleX + 8 * bgScale, triY, bubbleX, triY + 12 * bgScale);
+        // Bubble text (placeholder)
+        this.bubbleText = this.add.text(bubbleX, bubbleY, 'Speech text coming soon...', {
+            fontSize: Math.max(10, Math.round(13 * bgScale)) + 'px',
+            fontFamily: 'Arial, sans-serif',
+            color: '#000000',
+            wordWrap: { width: bubbleW - 20 * bgScale },
+            align: 'center',
+        }).setOrigin(0.5);
+
+        // ─ Background music (Hail to the Chief)
+        this.bgMusic = null;
+        if (this.cache.audio.has('hailChief')) {
+            this.bgMusic = this.sound.add('hailChief', { loop: true, volume: 0.2 });
+            if (!this.sound.locked) {
+                this.bgMusic.play();
+            } else {
+                this.sound.once('unlocked', () => {
+                    if (this.bgMusic && !this._skipping) this.bgMusic.play();
+                });
+            }
+        }
+
+        // ─ Crowd cheering (looped, low volume)
+        this.crowdSound = null;
+        if (this.cache.audio.has('crowd')) {
+            this.crowdSound = this.sound.add('crowd', { loop: true, volume: 0.12 });
+            if (!this.sound.locked) {
+                this.crowdSound.play();
+            } else {
+                this.sound.once('unlocked', () => {
+                    if (this.crowdSound && !this._skipping) this.crowdSound.play();
+                });
+            }
+        }
+
+        // ─ Speech audio
+        this.speechSound = null;
+        if (this.cache.audio.has('speechAudio')) {
+            this.speechSound = this.sound.add('speechAudio', { volume: 1.4 });
+            if (!this.sound.locked) {
+                this.speechSound.play();
+            } else {
+                this.sound.once('unlocked', () => {
+                    if (this.speechSound && !this._skipping) this.speechSound.play();
+                });
+            }
+            this.speechSound.once('complete', () => {
+                if (!this._skipping) this._goToGame();
+            });
+        } else {
+            // No audio — auto-advance after a short delay
+            this.time.delayedCall(3000, () => { if (!this._skipping) this._goToGame(); });
+        }
+
+        // ─ Skip prompt
+        this.add.text(sw / 2, sh - 20, 'Tap or press any key to skip', {
+            fontSize: '14px', fontFamily: 'Arial, sans-serif',
+            color: '#aaaaaa',
+        }).setOrigin(0.5);
+
+        // ─ Skip handlers
+        this.input.keyboard.once('keydown', () => this._goToGame());
+        this.input.once('pointerdown', () => this._goToGame());
+        this._touchWasDown = false;
+    }
+
+    _goToGame() {
+        if (this._skipping) return;
+        this._skipping = true;
+        if (this.speechSound && this.speechSound.isPlaying) {
+            this.speechSound.stop();
+        }
+        if (this.bgMusic && this.bgMusic.isPlaying) {
+            this.bgMusic.stop();
+        }
+        if (this.crowdSound && this.crowdSound.isPlaying) {
+            this.crowdSound.stop();
+        }
+        this.cameras.main.fadeOut(300, 0, 0, 0);
+        this.time.delayedCall(300, () => this.scene.start('Game'));
+    }
+
+    update() {
+        // Detect touch-button presses (HTML overlay buttons don't reach Phaser input)
+        const T = window.TOUCH;
+        if (!T) return;
+        const down = T.left || T.right || T.jump || T.tweet;
+        if (down && !this._touchWasDown) {
+            this._goToGame();
         }
         this._touchWasDown = !!down;
     }
@@ -980,8 +1184,14 @@ class GameScene extends Phaser.Scene {
         const sh = this.scale.height;
         const skyKey = T.sky || 'sky';
         if (T.sky) {
-            // External background: plain image avoids tileSprite seam artifacts
-            this.skyImg = this.add.image(0, 0, skyKey).setOrigin(0).setDisplaySize(sw, sh).setScrollFactor(0).setDepth(-10);
+            // External background: image anchored at bottom-left, height matches ground
+            const tex = this.textures.get(skyKey).getSourceImage();
+            const bgScale = (GROUND_Y + TILE) / tex.height;  // scale so image bottom = ground bottom
+            this.skyImg = this.add.image(0, GROUND_Y + TILE, skyKey)
+                .setOrigin(0, 1)           // anchor bottom-left
+                .setScale(bgScale)
+                .setScrollFactor(0.03, 0)  // slow horizontal parallax, fixed vertical
+                .setDepth(-10);
         } else {
             // Procedural sky: tileSprite for seamless tiling
             this.skyImg = this.add.tileSprite(0, 0, sw, sh, skyKey).setOrigin(0).setScrollFactor(0).setDepth(-10);
@@ -995,8 +1205,8 @@ class GameScene extends Phaser.Scene {
             this.nearHills.setVisible(false);
         }
 
-        // ─ World bounds
-        this.physics.world.setBounds(0, 0, WORLD_W, WORLD_H);
+        // ─ World bounds (clamp to ground bottom so camera never shows below ground)
+        this.physics.world.setBounds(0, 0, WORLD_W, GROUND_Y + TILE);
 
         // ─ Static groups
         const gndKey = T.ground || 'ground';
@@ -1009,6 +1219,7 @@ class GameScene extends Phaser.Scene {
                 this.groundGroup.create(tx * TILE + TILE/2, GROUND_Y + TILE/2, gndKey);
             }
         });
+
 
         LEVEL.platforms.forEach(([tx, py, w]) => {
             for (let i = 0; i < w; i++) {
@@ -1172,9 +1383,11 @@ class GameScene extends Phaser.Scene {
         });
 
         // ─ Camera
-        this.cameras.main.setBounds(0, 0, WORLD_W, sh);
+        this.cameras.main.setBounds(0, 0, WORLD_W, GROUND_Y + TILE);
         this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
-        this.cameras.main.setDeadzone(100, 50);
+        const dzX = _isMobilePortrait ? 60 : 100;
+        const dzY = _isMobilePortrait ? 40 : 50;
+        this.cameras.main.setDeadzone(dzX, dzY);
         this.cameras.main.fadeIn(300);
 
         // ─ Controls
@@ -1187,12 +1400,12 @@ class GameScene extends Phaser.Scene {
         // ─ HUD
         const hudStyle = { fontSize: '18px', fontFamily: 'Arial Black, Impact, sans-serif', color: C.white, stroke: '#000', strokeThickness: 3 };
         this.scoreText = this.add.text(16, 12, 'SCORE: 0', hudStyle).setScrollFactor(0).setDepth(100);
-        this.livesText = this.add.text(GW - 16, 12, 'LIVES: 3', hudStyle).setOrigin(1, 0).setScrollFactor(0).setDepth(100);
-        this.cholesterolText = this.add.text(GW / 2, 8, 'CHOLESTEROL: 0', { ...hudStyle, fontSize: '14px', color: C.gold }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(100);
+        this.livesText = this.add.text(sw - 16, 12, 'LIVES: 3', hudStyle).setOrigin(1, 0).setScrollFactor(0).setDepth(100);
+        this.cholesterolText = this.add.text(sw / 2, 8, 'CHOLESTEROL: 0', { ...hudStyle, fontSize: '14px', color: C.gold }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(100);
         this.powerText = this.add.text(16, 36, '', { ...hudStyle, fontSize: '14px', color: '#88FF88' }).setScrollFactor(0).setDepth(100);
 
         // Cholesterol meter bar
-        const barX = GW / 2 - 60, barY = 26;
+        const barX = sw / 2 - 60, barY = 26;
         this.cholBarBg = this.add.rectangle(barX, barY, 120, 8, 0x333333).setOrigin(0, 0).setScrollFactor(0).setDepth(100);
         this.cholBarFill = this.add.rectangle(barX + 1, barY + 1, 0, 6, 0x44CC44).setOrigin(0, 0).setScrollFactor(0).setDepth(101);
         this.cholBarBorder = this.add.rectangle(barX, barY, 120, 8).setOrigin(0, 0).setScrollFactor(0).setDepth(102);
@@ -1375,7 +1588,7 @@ class GameScene extends Phaser.Scene {
 
         // ─ Clean up off-screen tweets
         this.tweetGroup.children.iterate(t => {
-            if (t && (t.x < camX - 100 || t.x > camX + GW + 100)) t.destroy();
+            if (t && (t.x < camX - 100 || t.x > camX + this.scale.width + 100)) t.destroy();
         });
 
         // ─ Update HUD
@@ -1882,11 +2095,14 @@ class GameScene extends Phaser.Scene {
 
 // ── Phaser Configuration ────────────────────────────────────
 const _isTouchDevice = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+const _isMobilePortrait = _isTouchDevice && (window.innerHeight > window.innerWidth) && (window.innerWidth < 600);
+const _configW = _isMobilePortrait ? 500 : GW;
+const _configH = _isMobilePortrait ? 500 : GH;
 
 const config = {
     type: Phaser.CANVAS,
-    width: GW,
-    height: GH,
+    width: _configW,
+    height: _configH,
     parent: document.body,
     pixelArt: true,
     physics: {
@@ -1896,11 +2112,33 @@ const config = {
             debug: false,
         },
     },
-    scene: [PreloadScene, BootScene, MenuScene, GameScene],
+    scene: [PreloadScene, BootScene, MenuScene, SpeechScene, GameScene],
     scale: {
         mode: Phaser.Scale.FIT,
-        autoCenter: _isTouchDevice ? Phaser.Scale.CENTER_HORIZONTALLY : Phaser.Scale.CENTER_BOTH,
+        autoCenter: _isMobilePortrait ? Phaser.Scale.NO_CENTER : Phaser.Scale.CENTER_BOTH,
     },
 };
 
 const game = new Phaser.Game(config);
+
+// Force canvas to top of screen on mobile (CSS media query may not match all browsers)
+if (_isMobilePortrait) {
+    const applyMobileLayout = () => {
+        // Body: switch from flex-center to block layout so canvas sits at top
+        document.body.style.setProperty('display', 'block', 'important');
+        document.body.style.setProperty('padding', '0', 'important');
+        document.body.style.setProperty('margin', '0', 'important');
+        document.body.style.setProperty('text-align', 'center');
+        // Canvas: top of page, centered horizontally, no border
+        const c = game.canvas;
+        c.style.setProperty('display', 'block', 'important');
+        c.style.setProperty('margin', '0 auto', 'important');
+        c.style.setProperty('border', 'none', 'important');
+        c.style.setProperty('border-radius', '0', 'important');
+    };
+    game.events.once('ready', () => {
+        applyMobileLayout();
+        // Re-apply after a frame in case ScaleManager defers positioning
+        requestAnimationFrame(applyMobileLayout);
+    });
+}

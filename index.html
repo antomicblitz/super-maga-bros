@@ -35,15 +35,19 @@
         #loading-msg h2 { color: #FFD700; margin-bottom: 12px; }
         #loading-msg code { background: #222; padding: 4px 10px; border-radius: 4px; }
 
-        /* Mobile: canvas fills the screen, controls overlay on top */
+        /* Mobile: canvas at very top, controls below */
         @media (hover: none) and (pointer: coarse) {
             body {
-                align-items: flex-start;
-                justify-content: flex-start;
+                display: block !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                text-align: center;
             }
             canvas {
                 border: none !important;
                 border-radius: 0 !important;
+                display: block !important;
+                margin: 0 auto !important;
             }
         }
     </style>
@@ -71,7 +75,7 @@
             document.getElementById('loading-msg').style.display = 'none';
         }
     </script>
-    <script src="game.js?v=20260226p"></script>
+    <script src="game.js?v=20260226z3"></script>
 
     <!-- Touch controls overlay (hidden on desktop) -->
     <div id="touch-controls" style="
