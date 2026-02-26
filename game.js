@@ -69,7 +69,7 @@ const SFX = {
 };
 
 // ── Audio helper (tries external asset, falls back to Web Audio) ─
-const SOUND_VOLUME = { 'snd-jump': 0.4 };
+const SOUND_VOLUME = { 'snd-jump': 0.15 };
 function playSound(scene, key, fallbackFn) {
     if (scene.cache.audio.has(key)) {
         const vol = SOUND_VOLUME[key] !== undefined ? SOUND_VOLUME[key] : 1;
