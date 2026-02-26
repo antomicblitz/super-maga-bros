@@ -934,6 +934,7 @@ class GameScene extends Phaser.Scene {
             const key = ftype === 0 ? bmKey : ckKey;
             const food = this.foodGroup.create(fx, fy, key);
             food.foodType = ftype;
+            food.setDisplaySize(24, 24);
             food.setCircle(10, 2, 2);
             this.tweens.add({
                 targets: food, y: fy - 6, duration: 800 + (idx % 5) * 100,
