@@ -1255,10 +1255,53 @@ class GameScene extends Phaser.Scene {
             });
         });
 
-        // ─ Enemies (3 types)
+        // ─ Enemies (3 types + lobbyist)
         const ek = T.enemy || 'enemy';
         const enemyExt = T.enemyExt;
         this.enemyGroup = this.physics.add.group();
+
+        // Pre-create lobbyist animations before spawn loop
+        const AL0 = window.ASSETS_LOADED || {};
+        if (AL0.lobbyist) {
+            if (!this.anims.exists('lobbyistWalk')) {
+                this.anims.create({
+                    key: 'lobbyistWalk',
+                    frames: this.anims.generateFrameNumbers('lobbyist-ext', { frames: [0, 1] }),
+                    frameRate: 4, repeat: -1,
+                });
+            }
+            if (!this.anims.exists('lobbyistDead')) {
+                this.anims.create({
+                    key: 'lobbyistDead',
+                    frames: [{ key: 'lobbyist-ext', frame: 2 }],
+                    frameRate: 1,
+                });
+            }
+        }
+        if (AL0.lobbyistCase) {
+            if (!this.anims.exists('caseSlide')) {
+                this.anims.create({
+                    key: 'caseSlide',
+                    frames: [{ key: 'lobbyist-case-ext', frame: 0 }],
+                    frameRate: 1,
+                });
+            }
+            if (!this.anims.exists('caseStill')) {
+                this.anims.create({
+                    key: 'caseStill',
+                    frames: [{ key: 'lobbyist-case-ext', frame: 1 }],
+                    frameRate: 1,
+                });
+            }
+            if (!this.anims.exists('caseBurst')) {
+                this.anims.create({
+                    key: 'caseBurst',
+                    frames: [{ key: 'lobbyist-case-ext', frame: 2 }],
+                    frameRate: 1,
+                    repeat: 0,
+                });
+            }
+        }
 
         LEVEL.enemies.forEach(([ex, eL, eR, type]) => {
             const et = ENEMY_TYPES[type] || ENEMY_TYPES[0];
@@ -1383,49 +1426,6 @@ class GameScene extends Phaser.Scene {
             if (e.enemyType === 3) return;
             e.play(enemyExt ? ('enemy' + e.enemyType + 'Walk') : 'enemyWalk');
         });
-
-        // ─ Lobbyist animations
-        const AL0 = window.ASSETS_LOADED || {};
-        if (AL0.lobbyist) {
-            if (!this.anims.exists('lobbyistWalk')) {
-                this.anims.create({
-                    key: 'lobbyistWalk',
-                    frames: this.anims.generateFrameNumbers('lobbyist-ext', { frames: [0, 1] }),
-                    frameRate: 4, repeat: -1,
-                });
-            }
-            if (!this.anims.exists('lobbyistDead')) {
-                this.anims.create({
-                    key: 'lobbyistDead',
-                    frames: [{ key: 'lobbyist-ext', frame: 2 }],
-                    frameRate: 1,
-                });
-            }
-        }
-        if (AL0.lobbyistCase) {
-            if (!this.anims.exists('caseSlide')) {
-                this.anims.create({
-                    key: 'caseSlide',
-                    frames: [{ key: 'lobbyist-case-ext', frame: 0 }],
-                    frameRate: 1,
-                });
-            }
-            if (!this.anims.exists('caseStill')) {
-                this.anims.create({
-                    key: 'caseStill',
-                    frames: [{ key: 'lobbyist-case-ext', frame: 1 }],
-                    frameRate: 1,
-                });
-            }
-            if (!this.anims.exists('caseBurst')) {
-                this.anims.create({
-                    key: 'caseBurst',
-                    frames: [{ key: 'lobbyist-case-ext', frame: 2 }],
-                    frameRate: 1,
-                    repeat: 0,
-                });
-            }
-        }
 
         // ─ Colliders
         this.physics.add.collider(this.player, this.groundGroup);
