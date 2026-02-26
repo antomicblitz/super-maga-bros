@@ -1129,14 +1129,66 @@ class SpeechScene extends Phaser.Scene {
         gfx.lineStyle(2 * bgScale, 0x000000);
         gfx.lineBetween(bubbleX - 8 * bgScale, triY, bubbleX, triY + 12 * bgScale);
         gfx.lineBetween(bubbleX + 8 * bgScale, triY, bubbleX, triY + 12 * bgScale);
-        // Bubble text (placeholder)
-        this.bubbleText = this.add.text(bubbleX, bubbleY, 'Speech text coming soon...', {
-            fontSize: Math.max(10, Math.round(13 * bgScale)) + 'px',
+        // Scrolling speech text inside bubble
+        const speechLines = [
+            'Thank you.',
+            'It is really a great crowd, truly, truly great.',
+            'And I want to tell you something that\'s been weighing on my mind a lot lately.',
+            'You see, there was this one guy, Jeffrey Epstein.',
+            'We used to have some great times together, truly, truly great.',
+            'But the fake news is trying to ruin everybody\'s good time with their facts and their evidence.',
+            'We had some good times together, truly, truly great.',
+            'But I swear, all of those girls were at least 18.',
+            'So let me tell you something else.',
+            'Let me tell you.',
+            'I\'m going on a mission and I\'m embarking out of Mar-a-Lago on a journey to clear Jeffrey Epstein\'s name.',
+            'I\'ll be also taking down the deep state and the fake news because when it comes to fighting for what\'s right, nobody, and I mean nobody truly, can match Donald J. Trump.',
+            'Thank you for your attention to this matter.',
+        ];
+        const speechFontSize = Math.max(9, Math.round(11 * bgScale));
+        const padX = 10 * bgScale;
+        const padY = 6 * bgScale;
+        // Mask to clip text inside bubble
+        const maskShape = this.make.graphics({ x: 0, y: 0, add: false });
+        maskShape.fillStyle(0xffffff);
+        maskShape.fillRoundedRect(
+            bubbleX - bubbleW / 2 + padX, bubbleY - bubbleH / 2 + padY,
+            bubbleW - padX * 2, bubbleH - padY * 2, 6 * bgScale
+        );
+        const textMask = maskShape.createGeometryMask();
+
+        this.bubbleText = this.add.text(
+            bubbleX - bubbleW / 2 + padX,
+            bubbleY - bubbleH / 2 + padY,
+            '', {
+            fontSize: speechFontSize + 'px',
             fontFamily: 'Arial, sans-serif',
             color: '#000000',
-            wordWrap: { width: bubbleW - 20 * bgScale },
-            align: 'center',
-        }).setOrigin(0.5);
+            wordWrap: { width: bubbleW - padX * 2 },
+            lineSpacing: 2,
+        }).setOrigin(0, 0).setMask(textMask);
+
+        // Reveal text line by line over ~65 seconds (matching speech audio)
+        const totalDuration = 65000; // ms
+        const lineDelay = totalDuration / speechLines.length;
+        let currentLineIdx = 0;
+        const visibleH = bubbleH - padY * 2;
+
+        this._speechScrollTimer = this.time.addEvent({
+            delay: lineDelay,
+            repeat: speechLines.length - 1,
+            callback: () => {
+                if (this._skipping) return;
+                const newLine = (currentLineIdx > 0 ? '\n' : '') + speechLines[currentLineIdx];
+                this.bubbleText.setText(this.bubbleText.text + newLine);
+                currentLineIdx++;
+                // Scroll up if text overflows bubble
+                const textH = this.bubbleText.height;
+                if (textH > visibleH) {
+                    this.bubbleText.y = (bubbleY - bubbleH / 2 + padY) - (textH - visibleH);
+                }
+            },
+        });
 
         // ─ Background music (Hail to the Chief)
         this.bgMusic = null;
