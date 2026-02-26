@@ -271,6 +271,48 @@ function genStar() {
     return cv;
 }
 
+// ── Big Mac fallback sprite ────────────────────────────────
+function genBigmac() {
+    const cv = mkCanvas(24, 24), ctx = cv.getContext('2d');
+    // Bottom bun
+    ctx.fillStyle = '#C8882A'; ctx.fillRect(3, 16, 18, 5);
+    ctx.fillStyle = '#E8A830'; ctx.fillRect(4, 15, 16, 2);
+    // Patty
+    ctx.fillStyle = '#6B3410'; ctx.fillRect(4, 12, 16, 4);
+    // Lettuce
+    ctx.fillStyle = '#44AA22'; ctx.fillRect(3, 11, 18, 2);
+    // Middle bun
+    ctx.fillStyle = '#E8A830'; ctx.fillRect(4, 8, 16, 4);
+    // Patty 2
+    ctx.fillStyle = '#6B3410'; ctx.fillRect(4, 5, 16, 4);
+    // Top bun
+    ctx.fillStyle = '#E8A830';
+    ctx.beginPath(); ctx.arc(12, 5, 8, Math.PI, 0); ctx.fill();
+    // Sesame seeds
+    ctx.fillStyle = '#FFF8B0';
+    ctx.fillRect(8, 1, 2, 1); ctx.fillRect(13, 2, 2, 1);
+    return cv;
+}
+
+// ── Coke fallback sprite ───────────────────────────────────
+function genCoke() {
+    const cv = mkCanvas(24, 24), ctx = cv.getContext('2d');
+    // Can body
+    ctx.fillStyle = '#CC1111'; ctx.fillRect(7, 4, 10, 18);
+    // Rounded top/bottom
+    ctx.fillStyle = '#CC1111';
+    ctx.fillRect(8, 3, 8, 1); ctx.fillRect(8, 22, 8, 1);
+    // Silver top
+    ctx.fillStyle = '#BBBBBB'; ctx.fillRect(8, 3, 8, 2);
+    ctx.fillStyle = '#999999'; ctx.fillRect(10, 2, 4, 1);
+    // White wave stripe
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(7, 11, 10, 1); ctx.fillRect(8, 12, 8, 1);
+    // Label text hint
+    ctx.fillStyle = '#FFFFFF'; ctx.fillRect(9, 8, 6, 2);
+    return cv;
+}
+
 // ── Dollar bill collectible ─────────────────────────────────
 function genDollar() {
     const cv = mkCanvas(24, 16), ctx = cv.getContext('2d'), s = 2;
@@ -507,44 +549,45 @@ const LEVEL = {
         [170, 336, 4],
         [178, 368, 3],
     ],
-    // Stars [pixelX, pixelY]
-    stars: [
+    // Food collectibles [pixelX, pixelY, type]
+    // type: 0=bigmac (2 cholesterol pts), 1=coke (1 cholesterol pt)
+    food: [
         // Ground section 1
-        [160,436],[192,436],[256,436],[320,436],
+        [160,436,0],[192,436,1],[256,436,1],[320,436,1],
         // On platforms
-        [480,336],[512,336],
-        [672,304],[704,304],
+        [480,336,0],[512,336,1],
+        [672,304,1],[704,304,0],
         // Over gap 1
-        [960,336],[1024,368],
-        [1120,336],[1152,336],
+        [960,336,1],[1024,368,0],
+        [1120,336,1],[1152,336,1],
         // Section 2
-        [1312,272],[1344,272],
-        [1504,336],[1536,336],
-        [1632,304],
+        [1312,272,0],[1344,272,1],
+        [1504,336,1],[1536,336,0],
+        [1632,304,1],
         // Over gap 2
-        [1760,368],[1824,336],
+        [1760,368,0],[1824,336,1],
         // Section 3
-        [1984,304],[2016,304],
-        [2112,272],[2144,272],
-        [2272,240],[2304,240],
+        [1984,304,1],[2016,304,0],
+        [2112,272,1],[2144,272,1],
+        [2272,240,0],[2304,240,1],
         // Over gap 3
-        [2688,368],[2752,336],
+        [2688,368,0],[2752,336,1],
         // Section 4
-        [2976,304],[3008,304],
-        [3168,272],[3200,240],
-        [3296,272],
-        [3424,304],[3456,304],
-        [3616,336],
-        [3776,272],[3808,272],
+        [2976,304,1],[3008,304,0],
+        [3168,272,1],[3200,240,0],
+        [3296,272,1],
+        [3424,304,0],[3456,304,1],
+        [3616,336,1],
+        [3776,272,0],[3808,272,1],
         // Final area
-        [4064,368],
-        [4256,336],[4288,336],
-        [4480,304],[4512,304],
-        [4736,368],
-        [4960,304],[4992,304],
-        [5184,368],
-        [5440,304],[5472,304],[5504,304],
-        [5696,336],[5728,336],
+        [4064,368,0],
+        [4256,336,1],[4288,336,0],
+        [4480,304,1],[4512,304,1],
+        [4736,368,0],
+        [4960,304,1],[4992,304,0],
+        [5184,368,1],
+        [5440,304,0],[5472,304,1],[5504,304,1],
+        [5696,336,0],[5728,336,1],
     ],
     // Enemies [pixelX, patrolLeft, patrolRight, type]
     // type: 0=journalist, 1=scientist, 2=girl
@@ -598,6 +641,8 @@ class PreloadScene extends Phaser.Scene {
         try { this.load.spritesheet('enemies-ext', 'assets/sprites/enemies.png', { frameWidth: 48, frameHeight: 48 }); } catch(e) {}
         try { this.load.spritesheet('powerups-ext', 'assets/sprites/powerups.png', { frameWidth: 48, frameHeight: 48 }); } catch(e) {}
         try { this.load.image('player-tweet', 'assets/sprites/player-tweet.png'); } catch(e) {}
+        try { this.load.image('bigmac-ext', 'assets/sprites/bigmac.png'); } catch(e) {}
+        try { this.load.image('coke-ext', 'assets/sprites/coke.png'); } catch(e) {}
 
         // Tiles
         try { this.load.image('ground-ext', 'assets/tiles/ground.png'); } catch(e) {}
@@ -636,6 +681,8 @@ class PreloadScene extends Phaser.Scene {
             menuBg:   this.textures.exists('menuBg'),
             hud:      this.textures.exists('hudIcons'),
             playerTweet: this.textures.exists('player-tweet'),
+            bigmac:   this.textures.exists('bigmac-ext'),
+            coke:     this.textures.exists('coke-ext'),
             audio:    this.cache.audio.has('snd-jump'),
             censorBgm: this.cache.audio.has('bgm-censor'),
         };
@@ -663,6 +710,8 @@ class BootScene extends Phaser.Scene {
         if (!AL.brick)   this.textures.addCanvas('brick', genBrick());
         if (!AL.qblock)  this.textures.addCanvas('qblock', genQBlock());
         if (!AL.sky)     this.textures.addCanvas('sky', genSkyBg());
+        if (!AL.bigmac)  this.textures.addCanvas('bigmac', genBigmac());
+        if (!AL.coke)    this.textures.addCanvas('coke', genCoke());
 
         // Always generate (no external equivalent)
         this.textures.addCanvas('star', genStar());
@@ -690,6 +739,8 @@ class BootScene extends Phaser.Scene {
             qblock:   AL.qblock  ? 'qblock-ext'   : 'qblock',
             sky:      AL.sky     ? 'sky-ext'       : 'sky',
             menuBg:   AL.menuBg  ? 'menuBg'       : null,
+            bigmac:   AL.bigmac  ? 'bigmac-ext'   : 'bigmac',
+            coke:     AL.coke    ? 'coke-ext'      : 'coke',
             enemyExt:  !!AL.enemies,
             powerExt:  !!AL.powerups,
         };
@@ -817,7 +868,9 @@ class GameScene extends Phaser.Scene {
     init(data) {
         this.score = data.score || 0;
         this.lives = data.lives !== undefined ? data.lives : 3;
-        this.starsCollected = data.starsCollected || 0;
+        this.cholesterol = data.cholesterol || 0;
+        this.earthquakeReady = this.cholesterol >= 50;
+        this.earthquakeCooldown = false;
         // Power-up state resets on death
         this.playerPower = -1;
         this.powerTimer = 0;
@@ -827,7 +880,7 @@ class GameScene extends Phaser.Scene {
     }
 
     create() {
-        this.totalStars = LEVEL.stars.length;
+        this.totalFood = LEVEL.food.length;
         this.dead = false;
         this.won = false;
         const T = window.TEX || {};
@@ -873,13 +926,17 @@ class GameScene extends Phaser.Scene {
             }
         });
 
-        // ─ Stars
-        this.starsGroup = this.physics.add.group({ allowGravity: false });
-        LEVEL.stars.forEach(([sx, sy], idx) => {
-            const star = this.starsGroup.create(sx, sy, 'star');
-            star.setCircle(10, 2, 2);
+        // ─ Food collectibles (bigmacs + cokes)
+        const bmKey = T.bigmac || 'bigmac';
+        const ckKey = T.coke || 'coke';
+        this.foodGroup = this.physics.add.group({ allowGravity: false });
+        LEVEL.food.forEach(([fx, fy, ftype], idx) => {
+            const key = ftype === 0 ? bmKey : ckKey;
+            const food = this.foodGroup.create(fx, fy, key);
+            food.foodType = ftype;
+            food.setCircle(10, 2, 2);
             this.tweens.add({
-                targets: star, y: sy - 6, duration: 800 + (idx % 5) * 100,
+                targets: food, y: fy - 6, duration: 800 + (idx % 5) * 100,
                 yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
             });
         });
@@ -987,7 +1044,7 @@ class GameScene extends Phaser.Scene {
         this.physics.add.collider(this.enemyGroup, this.groundGroup);
         this.physics.add.collider(this.enemyGroup, this.platformGroup);
 
-        this.physics.add.overlap(this.player, this.starsGroup, this.collectStar, null, this);
+        this.physics.add.overlap(this.player, this.foodGroup, this.collectFood, null, this);
         this.physics.add.overlap(this.player, this.enemyGroup, this.hitEnemy, null, this);
         this.physics.add.overlap(this.player, this.flag, this.reachFlag, null, this);
         this.physics.add.overlap(this.player, this.powerupGroup, this.collectPowerUp, null, this);
@@ -1014,13 +1071,22 @@ class GameScene extends Phaser.Scene {
         this.wasd = this.input.keyboard.addKeys({ up: 'W', down: 'S', left: 'A', right: 'D' });
         this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
         this.zKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
+        this.xKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X);
 
         // ─ HUD
         const hudStyle = { fontSize: '18px', fontFamily: 'Arial Black, Impact, sans-serif', color: C.white, stroke: '#000', strokeThickness: 3 };
         this.scoreText = this.add.text(16, 12, 'SCORE: 0', hudStyle).setScrollFactor(0).setDepth(100);
         this.livesText = this.add.text(GW - 16, 12, 'LIVES: 3', hudStyle).setOrigin(1, 0).setScrollFactor(0).setDepth(100);
-        this.starsText = this.add.text(GW / 2, 12, 'STARS: 0/' + this.totalStars, { ...hudStyle, color: C.gold }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(100);
+        this.cholesterolText = this.add.text(GW / 2, 8, 'CHOLESTEROL: 0', { ...hudStyle, fontSize: '14px', color: C.gold }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(100);
         this.powerText = this.add.text(16, 36, '', { ...hudStyle, fontSize: '14px', color: '#88FF88' }).setScrollFactor(0).setDepth(100);
+
+        // Cholesterol meter bar
+        const barX = GW / 2 - 60, barY = 26;
+        this.cholBarBg = this.add.rectangle(barX, barY, 120, 8, 0x333333).setOrigin(0, 0).setScrollFactor(0).setDepth(100);
+        this.cholBarFill = this.add.rectangle(barX + 1, barY + 1, 0, 6, 0x44CC44).setOrigin(0, 0).setScrollFactor(0).setDepth(101);
+        this.cholBarBorder = this.add.rectangle(barX, barY, 120, 8).setOrigin(0, 0).setScrollFactor(0).setDepth(102);
+        this.cholBarBorder.setStrokeStyle(1, 0xFFFFFF, 0.5);
+        this.cholBarBorder.setFillStyle(0, 0);  // transparent fill
 
         // Coyote time tracking
         this.coyoteTimer = 0;
@@ -1064,6 +1130,12 @@ class GameScene extends Phaser.Scene {
             T_CTRL.tweetJustPressed = false;
         }
         this._lastTouchTweet = T_CTRL.tweet;
+        if (T_CTRL.shart && !this._lastTouchShart) {
+            T_CTRL.shartJustPressed = true;
+        } else {
+            T_CTRL.shartJustPressed = false;
+        }
+        this._lastTouchShart = T_CTRL.shart;
 
         // ─ Jump buffer
         const jumpPressed = Phaser.Input.Keyboard.JustDown(this.spaceKey) ||
@@ -1161,6 +1233,11 @@ class GameScene extends Phaser.Scene {
             this.fireTweetBlast();
         }
 
+        // ─ X key / touch: earthquake (SHART)
+        if ((Phaser.Input.Keyboard.JustDown(this.xKey) || T_CTRL.shartJustPressed) && this.earthquakeReady && !this.earthquakeCooldown) {
+            this.triggerEarthquake();
+        }
+
         // ─ Clean up off-screen tweets
         this.tweetGroup.children.iterate(t => {
             if (t && (t.x < camX - 100 || t.x > camX + GW + 100)) t.destroy();
@@ -1169,27 +1246,34 @@ class GameScene extends Phaser.Scene {
         // ─ Update HUD
         this.scoreText.setText('SCORE: ' + this.score);
         this.livesText.setText('LIVES: ' + this.lives);
-        this.starsText.setText('STARS: ' + this.starsCollected + '/' + this.totalStars);
+        this.cholesterolText.setText('CHOLESTEROL: ' + this.cholesterol);
         this.updatePowerHUD();
+        this.updateCholesterolBar();
 
-        // ─ Tweet button visibility
+        // ─ Touch button visibility
         var tweetBtn = document.getElementById('btn-tweet');
         if (tweetBtn) {
             tweetBtn.style.opacity = (this.playerPower === 2) ? '1' : '0.25';
         }
+        var shartBtn = document.getElementById('btn-shart');
+        if (shartBtn) {
+            shartBtn.style.opacity = this.earthquakeReady ? '1' : '0.25';
+        }
     }
 
     // ── Collectibles ────────────────────────────────────────
-    collectStar(_player, star) {
-        this.sparkleEmitter.emitParticleAt(star.x, star.y, 8);
-        star.destroy();
-        this.score += 100;
-        this.starsCollected++;
+    collectFood(_player, food) {
+        this.sparkleEmitter.emitParticleAt(food.x, food.y, 8);
+        const pts = food.foodType === 0 ? 2 : 1;  // bigmac=2, coke=1
+        food.destroy();
+        this.cholesterol += pts;
+        this.score += pts * 50;
+        if (this.cholesterol >= 50) this.earthquakeReady = true;
         playSound(this, 'snd-coin', SFX.coin);
 
-        const popup = this.add.text(star.x, star.y, '+100', {
+        const popup = this.add.text(food.x, food.y, '+' + pts, {
             fontSize: '14px', fontFamily: 'Arial', fontStyle: 'bold',
-            color: C.gold, stroke: '#000', strokeThickness: 2,
+            color: '#FF6644', stroke: '#000', strokeThickness: 2,
         }).setOrigin(0.5).setDepth(50);
         this.tweens.add({
             targets: popup, y: popup.y - 30, alpha: 0, duration: 600,
@@ -1387,6 +1471,75 @@ class GameScene extends Phaser.Scene {
         }
     }
 
+    // ── Cholesterol meter ──────────────────────────────────
+    updateCholesterolBar() {
+        const pct = Math.min(this.cholesterol / 50, 1);
+        const w = Math.floor(118 * pct);
+        this.cholBarFill.width = w;
+        // Green → Yellow → Red
+        let color;
+        if (pct < 0.5) {
+            const t = pct * 2;
+            color = Phaser.Display.Color.GetColor(
+                Math.floor(0x44 + (0xFF - 0x44) * t),
+                Math.floor(0xCC - (0xCC - 0xCC) * t),
+                Math.floor(0x44 * (1 - t))
+            );
+        } else {
+            const t = (pct - 0.5) * 2;
+            color = Phaser.Display.Color.GetColor(
+                0xFF,
+                Math.floor(0xCC * (1 - t)),
+                0x00
+            );
+        }
+        this.cholBarFill.setFillStyle(color);
+        // Pulse when full
+        if (pct >= 1 && !this._cholPulse) {
+            this._cholPulse = this.tweens.add({
+                targets: this.cholBarFill, alpha: 0.4, duration: 300,
+                yoyo: true, repeat: -1,
+            });
+        } else if (pct < 1 && this._cholPulse) {
+            this._cholPulse.stop();
+            this._cholPulse = null;
+            this.cholBarFill.setAlpha(1);
+        }
+    }
+
+    // ── Earthquake (SHART) ──────────────────────────────────
+    triggerEarthquake() {
+        const p = this.player;
+        this.earthquakeCooldown = true;
+        this.cholesterol -= 50;
+        this.earthquakeReady = this.cholesterol >= 50;
+
+        // Screen shake
+        this.cameras.main.shake(600, 0.025);
+        playSound(this, 'snd-stomp', SFX.stomp);
+
+        // Brown shockwave ring
+        const RADIUS = 350;
+        const ring = this.add.circle(p.x, p.y, 20, 0x884400, 0.5).setDepth(50);
+        this.tweens.add({
+            targets: ring, scaleX: RADIUS / 20, scaleY: RADIUS / 20, alpha: 0,
+            duration: 500, ease: 'Sine.easeOut',
+            onComplete: () => ring.destroy(),
+        });
+
+        // Kill enemies within radius
+        const enemies = this.enemyGroup.getChildren().filter(e => e && e.active);
+        enemies.forEach(enemy => {
+            const dist = Phaser.Math.Distance.Between(p.x, p.y, enemy.x, enemy.y);
+            if (dist <= RADIUS) {
+                this.destroyEnemy(enemy);
+            }
+        });
+
+        // Cooldown
+        this.time.delayedCall(1500, () => { this.earthquakeCooldown = false; });
+    }
+
     // ── Death & Game Over ───────────────────────────────────
     playerDie() {
         if (this.dead) return;
@@ -1414,7 +1567,7 @@ class GameScene extends Phaser.Scene {
 
         this.time.delayedCall(3500, () => {
             if (this.lives > 0) {
-                this.scene.restart({ lives: this.lives, score: this.score, starsCollected: this.starsCollected });
+                this.scene.restart({ lives: this.lives, score: this.score, cholesterol: this.cholesterol });
             } else {
                 this.showGameOver();
             }
@@ -1460,7 +1613,7 @@ class GameScene extends Phaser.Scene {
         playSound(this, 'snd-win', SFX.win);
         if (this.bgm) this.bgm.stop();
 
-        this.score += 1000 + this.starsCollected * 50;
+        this.score += 1000 + this.cholesterol * 50;
 
         player.setVelocity(0, 0);
         player.body.setAllowGravity(false);
@@ -1489,7 +1642,7 @@ class GameScene extends Phaser.Scene {
                 color: C.white, stroke: '#000', strokeThickness: 3,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
-            this.add.text(ow/2, oh/2 + 40, 'STARS: ' + this.starsCollected + ' / ' + this.totalStars, {
+            this.add.text(ow/2, oh/2 + 40, 'CHOLESTEROL: ' + this.cholesterol, {
                 fontSize: '20px', fontFamily: 'Arial Black, Impact, sans-serif',
                 color: C.gold, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);

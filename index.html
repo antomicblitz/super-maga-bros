@@ -129,13 +129,24 @@
           pointer-events:all; touch-action:none;
           font-family: Arial Black, sans-serif;
       ">TWEET</div>
+
+      <div id="btn-shart" style="
+          position:absolute; right:200px; bottom:56px;
+          width:64px; height:64px; border-radius:50%;
+          background:rgba(136,68,0,0.4);
+          border:3px solid rgba(136,68,0,0.7);
+          display:flex; align-items:center; justify-content:center;
+          font-size:9px; font-weight:bold; color:white;
+          pointer-events:all; touch-action:none;
+          font-family: Arial Black, sans-serif;
+      ">SHART</div>
     </div>
 
     <script>
     (function() {
         // Touch state flags — read by the game via window.TOUCH
         window.TOUCH = {
-            left: false, right: false, jump: false, tweet: false
+            left: false, right: false, jump: false, tweet: false, shart: false
         };
 
         // Show controls only on touch devices
@@ -165,6 +176,7 @@
             bind('btn-right', 'right');
             bind('btn-jump',  'jump');
             bind('btn-tweet', 'tweet');
+            bind('btn-shart', 'shart');
         }
 
         // Init immediately if touch is detected, or on first touch
