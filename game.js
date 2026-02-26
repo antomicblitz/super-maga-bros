@@ -1798,8 +1798,8 @@ class GameScene extends Phaser.Scene {
         } else {
             player.play('idle');
         }
-        // Position player on the pole (offset -12px so hand grips pole)
-        player.x = this.flag.x - 12;
+        // Position player on the pole (offset so hand grips pole)
+        player.x = this.flag.x - 8;
 
         this.tweens.add({
             targets: player, y: GROUND_Y - 24, duration: 800, ease: 'Sine.easeIn',
