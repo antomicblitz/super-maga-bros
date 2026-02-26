@@ -673,15 +673,17 @@ const LEVEL = {
     // type: 0=MAGA Hat, 1=Censor Bar, 2=Classified Docs
     powerups: [
         // Zone 1-2
-        [700,  336, 0],
+        [800,  336, 0],    // MAGA Hat — double jump before first gap
         [1536, 272, 1],
         [2304, 208, 2],
-        [3456, 272, 0],
+        [2600, 304, 0],    // MAGA Hat — before gap 3 climbing
         [4512, 272, 1],
+        [5000, 304, 0],    // MAGA Hat — before Zone 3 transition
         [5472, 272, 2],
         // Zone 3-4 rewards
-        [7200, 240, 0],    // MAGA Hat — protection for harder area
-        [9500, 240, 1],    // Censor Bar — invincibility for gauntlet start
+        [7200, 240, 0],    // MAGA Hat — harder platforms
+        [9200, 304, 0],    // MAGA Hat — before gauntlet platforming
+        [9500, 240, 1],    // Censor Bar — invincibility for gauntlet
         [11500, 240, 2],   // Classified Docs — tweet-blast for final stretch
     ],
     flagX: 12500,
@@ -712,6 +714,7 @@ class PreloadScene extends Phaser.Scene {
         try { this.load.image('coke-ext', 'assets/sprites/coke.png'); } catch(e) {}
         try { this.load.image('player-shart', 'assets/sprites/shart.png'); } catch(e) {}
         try { this.load.image('player-pole', 'assets/sprites/trump-pole-slide.png'); } catch(e) {}
+        try { this.load.image('hat-ext', 'assets/sprites/hat.png'); } catch(e) {}
 
         // Tiles
         try { this.load.image('ground-ext', 'assets/tiles/ground.png'); } catch(e) {}
@@ -728,7 +731,7 @@ class PreloadScene extends Phaser.Scene {
         // Audio
         try { this.load.audio('snd-jump',    'assets/audio/jump.wav'); } catch(e) {}
         try { this.load.audio('snd-stomp',   'assets/audio/stomp.wav'); } catch(e) {}
-        try { this.load.audio('snd-coin',    'assets/audio/coin.wav'); } catch(e) {}
+        try { this.load.audio('snd-coin',    'assets/audio/coin.mp3'); } catch(e) {}
         try { this.load.audio('snd-die',     'assets/audio/die.wav'); } catch(e) {}
         try { this.load.audio('snd-win',     'assets/audio/win.wav'); } catch(e) {}
         try { this.load.audio('snd-powerup', 'assets/audio/powerup.wav'); } catch(e) {}
@@ -755,6 +758,7 @@ class PreloadScene extends Phaser.Scene {
             coke:     this.textures.exists('coke-ext'),
             playerShart: this.textures.exists('player-shart'),
             playerPole: this.textures.exists('player-pole'),
+            hat: this.textures.exists('hat-ext'),
             audio:    this.cache.audio.has('snd-jump'),
             censorBgm: this.cache.audio.has('bgm-censor'),
         };
@@ -948,6 +952,8 @@ class GameScene extends Phaser.Scene {
         this.powerTimer = 0;
         this.invincible = false;
         this.hasHat = false;
+        this.canDoubleJump = false;
+        this.hasUsedDoubleJump = false;
         this.tweetCooldown = false;
     }
 
@@ -1043,9 +1049,13 @@ class GameScene extends Phaser.Scene {
         const powerExt = T.powerExt;
         this.powerupGroup = this.physics.add.group({ allowGravity: false });
 
+        const AL = window.ASSETS_LOADED || {};
         LEVEL.powerups.forEach(([pux, puy, type]) => {
             let pu;
-            if (powerExt) {
+            if (type === 0 && AL.hat) {
+                pu = this.powerupGroup.create(pux, puy, 'hat-ext');
+                pu.setDisplaySize(48, 48);
+            } else if (powerExt) {
                 pu = this.powerupGroup.create(pux, puy, 'powerups-ext', type);
             } else {
                 pu = this.powerupGroup.create(pux, puy, 'powerup' + type);
@@ -1185,6 +1195,7 @@ class GameScene extends Phaser.Scene {
         if (onGround) {
             this.coyoteTimer = 0.08;
             this.wasOnGround = true;
+            this.hasUsedDoubleJump = false;
         } else {
             this.coyoteTimer -= dt;
         }
@@ -1244,6 +1255,14 @@ class GameScene extends Phaser.Scene {
         if (this.jumpBufferTimer > 0 && canJump) {
             p.setVelocityY(-430);
             this.coyoteTimer = 0;
+            this.jumpBufferTimer = 0;
+            playSound(this, 'snd-jump', SFX.jump);
+        }
+
+        // ─ Double jump (MAGA Hat)
+        if (jumpPressed && !onGround && this.canDoubleJump && !this.hasUsedDoubleJump && this.coyoteTimer <= 0) {
+            p.setVelocityY(-400);
+            this.hasUsedDoubleJump = true;
             this.jumpBufferTimer = 0;
             playSound(this, 'snd-jump', SFX.jump);
         }
@@ -1383,8 +1402,9 @@ class GameScene extends Phaser.Scene {
         const pt = POWER_TYPES[type];
 
         if (type === 0) {
-            // MAGA Hat: permanent until hit
+            // MAGA Hat: grants permanent double jump
             this.hasHat = true;
+            this.canDoubleJump = true;
             this.powerTimer = 0;
             player.setTint(0xFFDD44);
         } else if (type === 1) {
@@ -1407,7 +1427,8 @@ class GameScene extends Phaser.Scene {
             player.setTint(0xFF8844);
         }
 
-        const popup = this.add.text(powerup.x, powerup.y, pt.name + '!', {
+        const popupMsg = type === 0 ? 'DOUBLE JUMP!' : pt.name + '!';
+        const popup = this.add.text(powerup.x, powerup.y, popupMsg, {
             fontSize: '12px', fontFamily: 'Arial Black', fontStyle: 'bold',
             color: '#88FF88', stroke: '#000', strokeThickness: 2,
         }).setOrigin(0.5).setDepth(50);
@@ -1528,22 +1549,6 @@ class GameScene extends Phaser.Scene {
             } else {
                 this.destroyEnemy(enemy);
             }
-            return;
-        }
-
-        // MAGA Hat absorbs one hit
-        if (this.hasHat) {
-            this.hasHat = false;
-            this.playerPower = -1;
-            player.clearTint();
-            player.play('hurt');
-            playSound(this, 'snd-stomp', SFX.stomp);
-            const dir = player.x < enemy.x ? -1 : 1;
-            player.setVelocityX(dir * 200);
-            player.setVelocityY(-200);
-            this.time.delayedCall(300, () => {
-                if (!this.dead) player.play('idle');
-            });
             return;
         }
 
