@@ -1064,6 +1064,22 @@ class GameScene extends Phaser.Scene {
                 targets: pu, y: puy - 8, duration: 1000,
                 yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
             });
+            // Censor bar items sparkle on the map
+            if (type === 1) {
+                pu._sparkleTimer = this.time.addEvent({
+                    delay: 300,
+                    loop: true,
+                    callback: () => {
+                        if (pu.active && this.sparkleEmitter) {
+                            this.sparkleEmitter.emitParticleAt(
+                                pu.x + (Math.random() - 0.5) * 30,
+                                pu.y + (Math.random() - 0.5) * 30,
+                                1
+                            );
+                        }
+                    },
+                });
+            }
         });
 
         // ─ Tweet blast group
@@ -1084,17 +1100,9 @@ class GameScene extends Phaser.Scene {
         this.player.setDepth(5);
 
         // ─ Censor bar overlay (hidden until Censor Bar power-up collected)
-        const AL2 = window.ASSETS_LOADED || {};
-        if (AL2.bar) {
-            this.censorBar = this.add.image(0, 0, 'bar-ext')
-                .setDisplaySize(52, 52)
-                .setDepth(6)
-                .setVisible(false);
-        } else {
-            this.censorBar = this.add.rectangle(0, 0, 52, 52, 0x000000)
-                .setDepth(6)
-                .setVisible(false);
-        }
+        this.censorBar = this.add.rectangle(0, 0, 52, 52, 0x000000)
+            .setDepth(6)
+            .setVisible(false);
 
         // ─ Player animations (only create once — anims are global)
         if (!this.anims.exists('idle')) {
