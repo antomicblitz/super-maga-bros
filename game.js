@@ -711,6 +711,7 @@ class PreloadScene extends Phaser.Scene {
         try { this.load.image('bigmac-ext', 'assets/sprites/bigmac.png'); } catch(e) {}
         try { this.load.image('coke-ext', 'assets/sprites/coke.png'); } catch(e) {}
         try { this.load.image('player-shart', 'assets/sprites/shart.png'); } catch(e) {}
+        try { this.load.image('player-pole', 'assets/sprites/trump-pole-slide.png'); } catch(e) {}
 
         // Tiles
         try { this.load.image('ground-ext', 'assets/tiles/ground.png'); } catch(e) {}
@@ -753,6 +754,7 @@ class PreloadScene extends Phaser.Scene {
             bigmac:   this.textures.exists('bigmac-ext'),
             coke:     this.textures.exists('coke-ext'),
             playerShart: this.textures.exists('player-shart'),
+            playerPole: this.textures.exists('player-pole'),
             audio:    this.cache.audio.has('snd-jump'),
             censorBgm: this.cache.audio.has('bgm-censor'),
         };
@@ -1741,7 +1743,17 @@ class GameScene extends Phaser.Scene {
 
         player.setVelocity(0, 0);
         player.body.setAllowGravity(false);
-        player.play('idle');
+
+        // Swap to pole slide sprite if available
+        const AL = window.ASSETS_LOADED || {};
+        if (AL.playerPole) {
+            player.anims.stop();
+            player.setTexture('player-pole', 0);
+            player.setFrame(0);
+            player.setDisplaySize(48, 48);
+        } else {
+            player.play('idle');
+        }
 
         this.tweens.add({
             targets: player, y: GROUND_Y - 24, duration: 800, ease: 'Sine.easeIn',
