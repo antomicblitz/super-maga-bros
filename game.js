@@ -833,17 +833,18 @@ class MenuScene extends Phaser.Scene {
         const sw = this.scale.width;
         const sh = this.scale.height;
 
-        // Background: use animated GIF if available, then static menuBg, otherwise procedural
+        // Background: use animated GIF overlay on top of canvas, fall back to static
         const hasMenuBg = !!T.menuBg;
         let usedGif = false;
         try {
+            const canvas = this.game.canvas;
             const gifEl = document.createElement('img');
             gifEl.src = 'assets/sprites/super-maga-bros-title.gif';
-            gifEl.setAttribute('width', sw);
-            gifEl.setAttribute('height', sh);
-            gifEl.style.display = 'block';
-            gifEl.style.imageRendering = 'pixelated';
-            this.menuGif = this.add.dom(sw/2, sh/2, gifEl).setOrigin(0.5, 0.5);
+            gifEl.id = 'menu-gif-overlay';
+            gifEl.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:fill;image-rendering:pixelated;pointer-events:none;z-index:1;';
+            canvas.parentElement.style.position = 'relative';
+            canvas.parentElement.appendChild(gifEl);
+            this._gifOverlay = gifEl;
             usedGif = true;
         } catch(e) {}
         if (!usedGif && hasMenuBg) {
@@ -925,7 +926,7 @@ class MenuScene extends Phaser.Scene {
             gameStarting = true;
             self._menuHandler = null;
             if (self.menuMusic) self.menuMusic.stop();
-            if (self.menuGif) { self.menuGif.destroy(); self.menuGif = null; }
+            if (self._gifOverlay) { self._gifOverlay.remove(); self._gifOverlay = null; }
             self.cameras.main.fadeOut(300, 0, 0, 0);
             self.time.delayedCall(300, () => self.scene.start('Game'));
         };
@@ -1888,7 +1889,6 @@ const config = {
     height: GH,
     parent: document.body,
     pixelArt: true,
-    dom: { createContainer: true },
     physics: {
         default: 'arcade',
         arcade: {
