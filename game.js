@@ -1051,7 +1051,7 @@ class GameScene extends Phaser.Scene {
             let pu;
             if (type === 0 && AL.hat) {
                 pu = this.powerupGroup.create(pux, puy, 'hat-ext');
-                pu.setDisplaySize(48, 48);
+                pu.setDisplaySize(32, 32);
             } else if (powerExt) {
                 pu = this.powerupGroup.create(pux, puy, 'powerups-ext', type);
             } else {
