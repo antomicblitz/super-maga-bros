@@ -669,6 +669,7 @@ const LEVEL = {
         [11700, 11600, 11900, 1],
         [12000, 11900, 12200, 2],
         [12400, 12200, 12600, 1],
+        [400, 300, 600, 3],
         [3200, 3100, 3400, 3],
         [4700, 4600, 4900, 3],
         [5600, 5500, 5750, 3],
@@ -1308,13 +1309,15 @@ class GameScene extends Phaser.Scene {
             let e;
             if (type === 3) {
                 const AL2 = window.ASSETS_LOADED || {};
+                console.log('[LOBBYIST] spawn x=' + ex + ' lobbyistLoaded=' + AL2.lobbyist + ' enemyExt=' + enemyExt);
                 if (AL2.lobbyist) {
                     e = this.enemyGroup.create(ex, GROUND_Y - 18, 'lobbyist-ext', 0);
                     e.play('lobbyistWalk');
+                    console.log('[LOBBYIST] created with lobbyist-ext at y=' + (GROUND_Y - 18));
                 } else {
                     e = this.enemyGroup.create(ex, GROUND_Y - 14, ek, 0);
                     e.setTint(0xFFAA00);
-                    e.play('enemyWalk');
+                    console.log('[LOBBYIST] fallback: created with ' + ek + ' at y=' + (GROUND_Y - 14));
                 }
             } else if (enemyExt) {
                 e = this.enemyGroup.create(ex, GROUND_Y - 24, ek, type * 4);
