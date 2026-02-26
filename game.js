@@ -1873,7 +1873,7 @@ class GameScene extends Phaser.Scene {
         if (slidingCase.isSliding) {
             if (player.body.velocity.y > 0 &&
                 player.body.prev.y + player.body.height <=
-                slidingCase.body.y + slidingCase.body.halfHeight) {
+                slidingCase.body.y + slidingCase.body.height) {
                 // Stomp from above
                 player.setVelocityY(-280);
                 this.score += 200;
@@ -1986,7 +1986,7 @@ class GameScene extends Phaser.Scene {
         const sc = this.caseGroup.create(x, y, caseKey, 0);
         sc.setSize(36, 32).setOffset(6, 8);
         sc.setBounce(0);
-        sc.setVelocityX(dir * 350);
+        sc.setVelocityX(dir * 200);
         sc.setDepth(4);
         sc.isSliding = true;
 
