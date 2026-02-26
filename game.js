@@ -887,7 +887,7 @@ class MenuScene extends Phaser.Scene {
 
         // Menu background music
         if (this.cache.audio.has('bgmMenu')) {
-            this.menuMusic = this.sound.add('bgmMenu', { loop: true, volume: 1.0 });
+            this.menuMusic = this.sound.add('bgmMenu', { loop: true, volume: 0.3 });
             if (!this.sound.locked) {
                 this.menuMusic.play();
             }
