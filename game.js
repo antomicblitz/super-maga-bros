@@ -524,6 +524,8 @@ const LEVEL = {
         // Section 1 – intro
         [14, 368, 4],
         [20, 336, 3],
+        // Wall after intro (suitcase blocker)
+        [26, 436, 1], [26, 404, 1], [26, 372, 1],
         // Over gap 1
         [28, 400, 3],
         [31, 368, 3],
@@ -532,6 +534,8 @@ const LEVEL = {
         [40, 304, 4],
         [46, 368, 3],
         [50, 336, 3],
+        // Wall before gap 2 (corridor wall)
+        [52, 436, 1], [52, 404, 1], [52, 372, 1],
         // Over gap 2
         [53, 400, 3],
         [56, 368, 3],
@@ -541,42 +545,78 @@ const LEVEL = {
         [70, 272, 3],
         [74, 336, 3],
         [78, 368, 3],
+        // Wall pair forming corridor (lobbyist alley)
+        [80, 436, 1], [80, 404, 1], [80, 372, 1],
         // Over gap 3
         [83, 400, 3],
         [86, 368, 3],
-        // Section 4 – challenge
+        // Section 4 – challenge with enclosed areas
         [92, 336, 4],
+        // Wall right side of platform
+        [96, 436, 1], [96, 404, 1], [96, 372, 1], [96, 340, 1],
         [98, 304, 3],
         [103, 272, 3],
+        // Low wall creating ground corridor
+        [106, 436, 1], [106, 404, 1],
         [107, 336, 4],
         [113, 368, 3],
+        // Wall before final zone 1-2 bridge
+        [116, 436, 1], [116, 404, 1], [116, 372, 1],
         [118, 304, 4],
         // Final area (Zone 2)
         [125, 400, 3],
         [128, 368, 3],
         [133, 336, 4],
+        // Wall inside zone 2 — suitcase bounce zone
+        [138, 436, 1], [138, 404, 1], [138, 372, 1],
         [140, 368, 5],
         [148, 336, 3],
+        // Enclosed section — walls on both sides
+        [153, 436, 1], [153, 404, 1], [153, 372, 1],
         [155, 304, 4],
         [162, 368, 3],
+        [166, 436, 1], [166, 404, 1], [166, 372, 1],
         [170, 336, 4],
         [178, 368, 3],
-        // Zone 3 — medium difficulty
+        // Zone 3 — medium difficulty with walls
         [205, 368, 3], [210, 336, 3], [215, 304, 3],
-        [220, 368, 4], [226, 336, 3],
+        [220, 368, 4],
+        // Wall pair — lobbyist bounce arena
+        [219, 436, 1], [219, 404, 1], [219, 372, 1],
+        [225, 436, 1], [225, 404, 1], [225, 372, 1],
+        [226, 336, 3],
         [231, 400, 3], [234, 368, 3], [238, 304, 4],
         [244, 336, 3], [249, 368, 3],
+        // Wall before gap zone
+        [253, 436, 1], [253, 404, 1],
         [254, 400, 2], [257, 336, 3], [262, 304, 3],
-        [267, 368, 3], [272, 336, 4], [278, 304, 3],
-        // Zone 4 — hard (narrower platforms)
+        [267, 368, 3],
+        // Enclosed corridor with ceiling
+        [270, 436, 1], [270, 404, 1], [270, 372, 1],
+        [271, 340, 7],  // ceiling over corridor
+        [272, 368, 4],
+        [278, 436, 1], [278, 404, 1], [278, 372, 1],
+        [278, 304, 3],
+        // Zone 4 — hard (narrower platforms + more walls)
         [287, 400, 2], [290, 368, 2], [294, 304, 3],
+        // Wall with small opening
+        [299, 436, 1], [299, 404, 1],
         [300, 336, 2], [304, 272, 2],
         [311, 400, 2], [314, 336, 2], [318, 272, 3],
+        // Double wall — tight suitcase corridor
+        [323, 436, 1], [323, 404, 1], [323, 372, 1],
         [324, 368, 2],
+        [327, 436, 1], [327, 404, 1], [327, 372, 1],
         [333, 400, 2], [336, 336, 2], [340, 272, 3],
         [345, 368, 2],
+        // Final gauntlet walls
+        [353, 436, 1], [353, 404, 1], [353, 372, 1],
         [354, 336, 3], [360, 304, 2], [366, 368, 4],
-        [374, 336, 3], [380, 304, 3], [388, 368, 3],
+        [374, 336, 3],
+        [377, 436, 1], [377, 404, 1], [377, 372, 1],
+        [380, 304, 3], [388, 368, 3],
+        // End wall before flag
+        [393, 436, 1], [393, 404, 1], [393, 372, 1], [393, 340, 1],
     ],
     // Food collectibles [pixelX, pixelY, type]
     // type: 0=bigmac (2 cholesterol pts), 1=coke (1 cholesterol pt)
@@ -632,47 +672,64 @@ const LEVEL = {
         [12700,336,0],
     ],
     // Enemies [pixelX, patrolLeft, patrolRight, type]
-    // type: 0=journalist, 1=scientist, 2=girl
+    // type: 0=journalist, 1=scientist, 2=girl, 3=lobbyist
     enemies: [
-        // Zone 1-2 (original — mostly journalists/scientists)
+        // Zone 1-2 (intro — journalists/scientists + first lobbyist)
         [520, 440, 720, 0],
         [960, 960, 1100, 1],
         [1400, 1280, 1520, 0],
+        [1600, 1520, 1660, 3],   // lobbyist near wall at tile 52
         [1800, 1760, 1920, 2],
         [2100, 1952, 2240, 1],
         [2500, 2368, 2624, 0],
+        [2560, 2500, 2560, 3],   // lobbyist in corridor near wall at tile 80
         [2900, 2720, 3000, 2],
+        // Section 4 — lobbyist between walls at tiles 96/106
+        [3100, 3072, 3392, 0],
+        [3200, 3072, 3392, 3],   // lobbyist in enclosed area
         [3300, 3200, 3420, 1],
         [3700, 3550, 3800, 0],
+        // Zone 2 — lobbyists near bounce walls
         [4100, 4000, 4200, 2],
+        [4400, 4350, 4416, 3],   // lobbyist near wall at tile 138
         [4500, 4416, 4600, 1],
         [4900, 4800, 5000, 0],
+        // Enclosed section — lobbyist bouncing between walls at 153/166
+        [5000, 4896, 5312, 3],   // lobbyist in walled corridor
+        [5100, 4896, 5312, 2],
         [5300, 5200, 5400, 2],
         [5700, 5600, 5800, 1],
-        // Zone 3 — mixed types, tighter spacing
+        // Zone 3 — mixed types with lobbyists near wall arenas
         [6600,  6496,  6800,  0],
         [7000,  6900,  7200,  1],
+        [7050,  7008,  7200,  3],  // lobbyist in wall arena at tiles 219/225
         [7300,  7200,  7488,  2],
         [7700,  7488,  7900,  1],
         [8100,  8000,  8288,  2],
         [8500,  8288,  8700,  0],
-        // Zone 4 — gauntlet (heavy scientists & girls, clustered)
+        // Zone 3 corridor — lobbyist trapped between walls at 270/278
+        [8680,  8640,  8896,  3],  // lobbyist in ceiling corridor
+        [8750,  8640,  8896,  1],
+        // Zone 4 — gauntlet (heavy enemies + lobbyists near walls)
         [9200,  9120,  9400,  1],
         [9400,  9200,  9600,  2],
+        [9580,  9568,  9600,  3],  // lobbyist near wall at tile 299
         [9700,  9600,  9920,  2],
         [10000, 9920,  10200, 1],
         [10200, 10100, 10400, 2],
+        // Tight corridor lobbyist between walls at 323/327
+        [10400, 10336, 10464, 3],
         [10600, 10500, 10800, 1],
         [10800, 10592, 11000, 2],
         [11100, 11000, 11264, 1],
+        // Final gauntlet walls — lobbyist at wall 353
+        [11300, 11264, 11296, 3],
         [11400, 11264, 11600, 2],
         [11700, 11600, 11900, 1],
         [12000, 11900, 12200, 2],
+        // Lobbyist before final wall at 377/393
+        [12100, 12064, 12200, 3],
         [12400, 12200, 12600, 1],
-        [400, 300, 600, 3],
-        [3200, 3100, 3400, 3],
-        [4700, 4600, 4900, 3],
-        [5600, 5500, 5750, 3],
     ],
     // Power-ups [pixelX, pixelY, type]
     // type: 0=MAGA Hat, 1=Censor Bar, 2=Classified Docs
@@ -1084,7 +1141,7 @@ class SpeechScene extends Phaser.Scene {
         // ─ Background music (Hail to the Chief)
         this.bgMusic = null;
         if (this.cache.audio.has('hailChief')) {
-            this.bgMusic = this.sound.add('hailChief', { loop: true, volume: 0.2 });
+            this.bgMusic = this.sound.add('hailChief', { loop: true, volume: 0.1 });
             if (!this.sound.locked) {
                 this.bgMusic.play();
             } else {
@@ -1097,7 +1154,7 @@ class SpeechScene extends Phaser.Scene {
         // ─ Crowd cheering (looped, low volume)
         this.crowdSound = null;
         if (this.cache.audio.has('crowd')) {
-            this.crowdSound = this.sound.add('crowd', { loop: true, volume: 0.06 });
+            this.crowdSound = this.sound.add('crowd', { loop: true, volume: 0.03 });
             if (!this.sound.locked) {
                 this.crowdSound.play();
             } else {
@@ -1110,7 +1167,7 @@ class SpeechScene extends Phaser.Scene {
         // ─ Speech audio
         this.speechSound = null;
         if (this.cache.audio.has('speechAudio')) {
-            this.speechSound = this.sound.add('speechAudio', { volume: 1.4 });
+            this.speechSound = this.sound.add('speechAudio', { volume: 1.8 });
             if (!this.sound.locked) {
                 this.speechSound.play();
             } else {
@@ -1309,15 +1366,12 @@ class GameScene extends Phaser.Scene {
             let e;
             if (type === 3) {
                 const AL2 = window.ASSETS_LOADED || {};
-                console.log('[LOBBYIST] spawn x=' + ex + ' lobbyistLoaded=' + AL2.lobbyist + ' enemyExt=' + enemyExt);
                 if (AL2.lobbyist) {
                     e = this.enemyGroup.create(ex, GROUND_Y - 24, 'lobbyist-ext', 0);
                     e.play('lobbyistWalk');
-                    console.log('[LOBBYIST] created with lobbyist-ext at y=' + (GROUND_Y - 24));
                 } else {
                     e = this.enemyGroup.create(ex, GROUND_Y - 14, ek, 0);
                     e.setTint(0xFFAA00);
-                    console.log('[LOBBYIST] fallback: created with ' + ek + ' at y=' + (GROUND_Y - 14));
                 }
             } else if (enemyExt) {
                 e = this.enemyGroup.create(ex, GROUND_Y - 24, ek, type * 4);
@@ -1863,7 +1917,31 @@ class GameScene extends Phaser.Scene {
             onComplete: () => popup.destroy(),
         });
 
-        if (enemy && enemy.active) enemy.destroy();
+        // Play death animation then destroy
+        if (enemy && enemy.active) {
+            const T = window.TEX || {};
+            if (enemy.enemyType === 3) {
+                // Lobbyist — play dead frame, no sub-case spawn from chain kills
+                const AL3 = window.ASSETS_LOADED || {};
+                if (AL3.lobbyist) {
+                    enemy.play('lobbyistDead');
+                }
+                enemy.setVelocity(0, 0);
+                enemy.body.enable = false;
+                this.time.delayedCall(400, () => {
+                    if (enemy && enemy.active) enemy.destroy();
+                });
+            } else if (T.enemyExt && this.anims.exists('enemy' + enemy.enemyType + 'Die')) {
+                enemy.play('enemy' + enemy.enemyType + 'Die');
+                enemy.setVelocity(0, 0);
+                enemy.body.enable = false;
+                this.time.delayedCall(400, () => {
+                    if (enemy && enemy.active) enemy.destroy();
+                });
+            } else {
+                enemy.destroy();
+            }
+        }
         // Case keeps sliding — do NOT destroy it
     }
 
