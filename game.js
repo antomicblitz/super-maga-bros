@@ -1367,6 +1367,18 @@ class GameScene extends Phaser.Scene {
         powerup.destroy();
         playSound(this, 'snd-powerup', SFX.powerup);
 
+        // Clean up previous powerup state before applying new one
+        if (this.playerPower === 1) {
+            this.invincible = false;
+            this.censorBar.setVisible(false);
+            if (this.censorMusic) {
+                this.censorMusic.stop();
+                this.censorMusic = null;
+            }
+            if (this.bgm) this.bgm.resume();
+        }
+        player.clearTint();
+
         this.playerPower = type;
         const pt = POWER_TYPES[type];
 
@@ -1462,7 +1474,9 @@ class GameScene extends Phaser.Scene {
     destroyEnemy(enemy) {
         const et = ENEMY_TYPES[enemy.enemyType] || ENEMY_TYPES[0];
         this.score += et.score;
-        playSound(this, 'snd-stomp', SFX.stomp);
+        if (!this.invincible) {
+            playSound(this, 'snd-stomp', SFX.stomp);
+        }
 
         const popup = this.add.text(enemy.x, enemy.y, '+' + et.score, {
             fontSize: '14px', fontFamily: 'Arial', fontStyle: 'bold',
@@ -1744,6 +1758,9 @@ class GameScene extends Phaser.Scene {
         player.setVelocity(0, 0);
         player.body.setAllowGravity(false);
 
+        // Move player to flag pole position
+        player.x = this.flag.x;
+
         // Swap to pole slide sprite if available
         const AL = window.ASSETS_LOADED || {};
         if (AL.playerPole) {
@@ -1751,6 +1768,7 @@ class GameScene extends Phaser.Scene {
             player.setTexture('player-pole', 0);
             player.setFrame(0);
             player.setDisplaySize(48, 48);
+            player.setFlipX(false);
         } else {
             player.play('idle');
         }
