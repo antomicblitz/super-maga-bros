@@ -1474,7 +1474,7 @@ class GameScene extends Phaser.Scene {
     destroyEnemy(enemy) {
         const et = ENEMY_TYPES[enemy.enemyType] || ENEMY_TYPES[0];
         this.score += et.score;
-        if (!this.invincible) {
+        if (!this.invincible && !this.shartFrozen) {
             playSound(this, 'snd-stomp', SFX.stomp);
         }
 
@@ -1647,8 +1647,8 @@ class GameScene extends Phaser.Scene {
             }
         });
 
-        // Unfreeze after 1 second, restore sprite
-        this.time.delayedCall(1000, () => {
+        // Unfreeze after 2 seconds, restore sprite
+        this.time.delayedCall(2000, () => {
             this.shartFrozen = false;
             const T = window.TEX || {};
             const restoreKey = T.player || this._preShartTexture || 'player';
@@ -1658,8 +1658,8 @@ class GameScene extends Phaser.Scene {
             this._preShartTexture = null;
         });
 
-        // Cooldown (1.5s total, but movement returns at 1s)
-        this.time.delayedCall(1500, () => { this.earthquakeCooldown = false; });
+        // Cooldown (2.5s total, movement returns at 2s)
+        this.time.delayedCall(2500, () => { this.earthquakeCooldown = false; });
     }
 
     // ── Death & Game Over ───────────────────────────────────
