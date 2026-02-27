@@ -90,116 +90,164 @@
         user-select: none;
         -webkit-user-select: none;
         background:
-          repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.03) 3px, rgba(0,0,0,0.03) 4px),
-          repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(0,0,0,0.03) 3px, rgba(0,0,0,0.03) 4px),
-          linear-gradient(180deg, #9494a8 0%, #7e7e92 6%, #6a6a7e 50%, #5e5e72 100%);
-        border-top: 3px solid #aaaabc;
-        box-shadow: inset 0 2px 6px rgba(255,255,255,0.18), inset 0 -6px 12px rgba(0,0,0,0.25), 0 -2px 8px rgba(0,0,0,0.3);
+          radial-gradient(circle, rgba(0,0,0,0.05) 1px, transparent 1px),
+          repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.02) 3px, rgba(0,0,0,0.02) 4px),
+          repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(0,0,0,0.02) 3px, rgba(0,0,0,0.02) 4px),
+          repeating-linear-gradient(180deg, transparent, transparent 38px, rgba(0,0,0,0.04) 38px, rgba(0,0,0,0.04) 40px),
+          linear-gradient(180deg, #a0a0b4 0%, #8e8ea2 6%, #7a7a8e 40%, #686878 70%, #5a5a6e 100%);
+        background-size: 6px 6px, auto, auto, auto, auto;
+        border-top: 3px solid #b0b0c4;
+        box-shadow: inset 0 2px 8px rgba(255,255,255,0.22), inset 0 -8px 16px rgba(0,0,0,0.3), 0 -3px 10px rgba(0,0,0,0.35);
     ">
-      <!-- Top highlight ridge (SNES controller seam) -->
+      <!-- Top highlight ridge -->
       <div style="
-          position:absolute; top:0; left:0; width:100%; height:4px;
-          background: linear-gradient(180deg, rgba(255,255,255,0.12), transparent);
+          position:absolute; top:0; left:0; width:100%; height:6px;
+          background: linear-gradient(180deg, rgba(255,255,255,0.15), rgba(255,255,255,0.04) 60%, transparent);
+          pointer-events:none;
+      "></div>
+      <!-- Dark seam line below ridge -->
+      <div style="
+          position:absolute; top:6px; left:0; width:100%; height:2px;
+          background: rgba(0,0,0,0.12);
+          pointer-events:none;
+      "></div>
+      <!-- SNES color stripe -->
+      <div style="
+          position:absolute; top:8px; left:0; width:100%; height:3px;
+          background: linear-gradient(90deg,
+            transparent 15%, #cc3344 15%, #cc3344 30%,
+            #2266bb 30%, #2266bb 45%,
+            #44aa44 45%, #44aa44 60%,
+            #ccaa22 60%, #ccaa22 75%,
+            transparent 75%);
+          opacity: 0.35;
           pointer-events:none;
       "></div>
 
       <!-- Left grip area (D-pad well) -->
       <div style="
           position:absolute; left:3%; bottom:8px;
-          width:46%; height:calc(100% - 30px); border-radius:18px;
-          background: linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.18));
-          border: 1px solid rgba(0,0,0,0.15);
-          box-shadow: inset 0 2px 8px rgba(0,0,0,0.25), inset 0 -1px 0 rgba(255,255,255,0.06);
+          width:46%; height:calc(100% - 34px); border-radius:22px;
+          background:
+            repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0,0,0,0.03) 4px, rgba(0,0,0,0.03) 5px),
+            repeating-linear-gradient(-45deg, transparent, transparent 4px, rgba(0,0,0,0.03) 4px, rgba(0,0,0,0.03) 5px),
+            linear-gradient(180deg, rgba(0,0,0,0.10), rgba(0,0,0,0.22));
+          border: 1px solid rgba(0,0,0,0.18);
+          box-shadow: inset 0 3px 10px rgba(0,0,0,0.30), inset 0 -2px 4px rgba(0,0,0,0.10), inset 0 0 0 1px rgba(255,255,255,0.04), 0 1px 0 rgba(255,255,255,0.06);
           pointer-events:none;
       "></div>
 
       <!-- Right grip area (action button well) -->
       <div style="
           position:absolute; right:3%; bottom:8px;
-          width:46%; height:calc(100% - 30px); border-radius:18px;
-          background: linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0.18));
-          border: 1px solid rgba(0,0,0,0.15);
-          box-shadow: inset 0 2px 8px rgba(0,0,0,0.25), inset 0 -1px 0 rgba(255,255,255,0.06);
+          width:46%; height:calc(100% - 34px); border-radius:22px;
+          background:
+            repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0,0,0,0.03) 4px, rgba(0,0,0,0.03) 5px),
+            repeating-linear-gradient(-45deg, transparent, transparent 4px, rgba(0,0,0,0.03) 4px, rgba(0,0,0,0.03) 5px),
+            linear-gradient(180deg, rgba(0,0,0,0.10), rgba(0,0,0,0.22));
+          border: 1px solid rgba(0,0,0,0.18);
+          box-shadow: inset 0 3px 10px rgba(0,0,0,0.30), inset 0 -2px 4px rgba(0,0,0,0.10), inset 0 0 0 1px rgba(255,255,255,0.04), 0 1px 0 rgba(255,255,255,0.06);
           pointer-events:none;
       "></div>
 
       <!-- Center label -->
       <div style="
-          position:absolute; left:50%; top:6px;
+          position:absolute; left:50%; top:14px;
           transform:translateX(-50%);
           font-family: 'Arial Black', sans-serif;
-          font-size:9px; letter-spacing:3px;
-          color:rgba(255,255,255,0.2);
+          font-size:9px; letter-spacing:4px;
+          color:rgba(255,255,255,0.18);
           text-transform:uppercase; white-space:nowrap;
           pointer-events:none;
       ">Super MAGA Bros</div>
 
-      <!-- Decorative screw dots (SNES detail) -->
-      <div style="position:absolute;left:8px;top:8px;width:6px;height:6px;border-radius:50%;background:rgba(0,0,0,0.2);box-shadow:inset 0 1px 1px rgba(255,255,255,0.1);pointer-events:none;"></div>
-      <div style="position:absolute;right:8px;top:8px;width:6px;height:6px;border-radius:50%;background:rgba(0,0,0,0.2);box-shadow:inset 0 1px 1px rgba(255,255,255,0.1);pointer-events:none;"></div>
+      <!-- Decorative screw dots (4 corners) -->
+      <div style="position:absolute;left:10px;top:10px;width:10px;height:10px;border-radius:50%;background:radial-gradient(circle,#606068 2px,#50505a 3px,#45454f 5px);box-shadow:inset 0 1px 2px rgba(255,255,255,0.18),inset 0 -1px 1px rgba(0,0,0,0.3),0 1px 2px rgba(0,0,0,0.25);pointer-events:none;"></div>
+      <div style="position:absolute;right:10px;top:10px;width:10px;height:10px;border-radius:50%;background:radial-gradient(circle,#606068 2px,#50505a 3px,#45454f 5px);box-shadow:inset 0 1px 2px rgba(255,255,255,0.18),inset 0 -1px 1px rgba(0,0,0,0.3),0 1px 2px rgba(0,0,0,0.25);pointer-events:none;"></div>
+      <div style="position:absolute;left:10px;bottom:10px;width:10px;height:10px;border-radius:50%;background:radial-gradient(circle,#606068 2px,#50505a 3px,#45454f 5px);box-shadow:inset 0 1px 2px rgba(255,255,255,0.18),inset 0 -1px 1px rgba(0,0,0,0.3),0 1px 2px rgba(0,0,0,0.25);pointer-events:none;"></div>
+      <div style="position:absolute;right:10px;bottom:10px;width:10px;height:10px;border-radius:50%;background:radial-gradient(circle,#606068 2px,#50505a 3px,#45454f 5px);box-shadow:inset 0 1px 2px rgba(255,255,255,0.18),inset 0 -1px 1px rgba(0,0,0,0.3),0 1px 2px rgba(0,0,0,0.25);pointer-events:none;"></div>
+      <!-- Screw cross slots (overlaid on corner screws) -->
+      <div style="position:absolute;left:14px;top:10px;width:2px;height:10px;background:rgba(0,0,0,0.3);pointer-events:none;"></div>
+      <div style="position:absolute;left:10px;top:14px;width:10px;height:2px;background:rgba(0,0,0,0.3);pointer-events:none;"></div>
+      <div style="position:absolute;right:10px;top:10px;width:2px;height:10px;background:rgba(0,0,0,0.3);pointer-events:none;margin-right:4px;"></div>
+      <div style="position:absolute;right:10px;top:14px;width:10px;height:2px;background:rgba(0,0,0,0.3);pointer-events:none;"></div>
 
-      <!-- D-PAD: left side — percentage-based positioning -->
+      <!-- Center vent slots -->
+      <div style="position:absolute;left:50%;bottom:calc(50% + 20px);transform:translateX(-50%);display:flex;flex-direction:column;gap:4px;pointer-events:none;">
+        <div style="width:22px;height:2px;background:rgba(0,0,0,0.15);border-radius:1px;box-shadow:0 1px 0 rgba(255,255,255,0.05);"></div>
+        <div style="width:22px;height:2px;background:rgba(0,0,0,0.15);border-radius:1px;box-shadow:0 1px 0 rgba(255,255,255,0.05);"></div>
+        <div style="width:22px;height:2px;background:rgba(0,0,0,0.15);border-radius:1px;box-shadow:0 1px 0 rgba(255,255,255,0.05);"></div>
+        <div style="width:22px;height:2px;background:rgba(0,0,0,0.15);border-radius:1px;box-shadow:0 1px 0 rgba(255,255,255,0.05);"></div>
+      </div>
+
+      <!-- Center START/SELECT decorative bumps -->
+      <div style="position:absolute;left:50%;bottom:calc(50% - 10px);transform:translateX(-50%);display:flex;gap:14px;pointer-events:none;">
+        <div style="width:28px;height:10px;border-radius:5px;background:linear-gradient(180deg,#58585e,#48484e);border:1px solid rgba(0,0,0,0.2);box-shadow:inset 0 1px 1px rgba(255,255,255,0.1),0 2px 3px rgba(0,0,0,0.25);"></div>
+        <div style="width:28px;height:10px;border-radius:5px;background:linear-gradient(180deg,#58585e,#48484e);border:1px solid rgba(0,0,0,0.2);box-shadow:inset 0 1px 1px rgba(255,255,255,0.1),0 2px 3px rgba(0,0,0,0.25);"></div>
+      </div>
+
+      <!-- D-PAD: left side — centered within left grip well -->
       <div id="btn-left" style="
-          position:absolute; left:6%; bottom:calc(50% - 36px);
+          position:absolute; left:calc(26% - 72px); bottom:calc(50% - 32px);
           width:64px; height:64px; border-radius:50%;
-          background: linear-gradient(145deg, #505060, #38384a);
-          border:2px solid rgba(255,255,255,0.08);
-          box-shadow: inset 0 1px 2px rgba(255,255,255,0.12), 0 4px 8px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.3);
+          background: linear-gradient(145deg, #555566, #3a3a4c);
+          border:2px solid rgba(255,255,255,0.06);
+          box-shadow: inset 0 1px 3px rgba(255,255,255,0.15), inset 0 -2px 3px rgba(0,0,0,0.2), 0 0 0 3px rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.5);
           display:flex; align-items:center; justify-content:center;
-          font-size:26px; color:rgba(255,255,255,0.6); pointer-events:all;
+          font-size:26px; color:rgba(255,255,255,0.55); pointer-events:all;
           touch-action:none;
       ">&#9664;</div>
 
       <div id="btn-right" style="
-          position:absolute; left:calc(6% + 76px); bottom:calc(50% - 36px);
+          position:absolute; left:calc(26% + 8px); bottom:calc(50% - 32px);
           width:64px; height:64px; border-radius:50%;
-          background: linear-gradient(145deg, #505060, #38384a);
-          border:2px solid rgba(255,255,255,0.08);
-          box-shadow: inset 0 1px 2px rgba(255,255,255,0.12), 0 4px 8px rgba(0,0,0,0.5), 0 1px 2px rgba(0,0,0,0.3);
+          background: linear-gradient(145deg, #555566, #3a3a4c);
+          border:2px solid rgba(255,255,255,0.06);
+          box-shadow: inset 0 1px 3px rgba(255,255,255,0.15), inset 0 -2px 3px rgba(0,0,0,0.2), 0 0 0 3px rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.5);
           display:flex; align-items:center; justify-content:center;
-          font-size:26px; color:rgba(255,255,255,0.6); pointer-events:all;
+          font-size:26px; color:rgba(255,255,255,0.55); pointer-events:all;
           touch-action:none;
       ">&#9654;</div>
 
-      <!-- ACTION BUTTONS: right side — diamond layout like SNES A/B/X/Y -->
+      <!-- ACTION BUTTONS: right side — SNES diamond layout -->
       <div id="btn-jump" style="
-          position:absolute; right:6%; bottom:calc(50% - 38px);
+          position:absolute; right:8%; bottom:calc(50% - 42px);
           width:72px; height:72px; border-radius:50%;
-          background: linear-gradient(145deg, #dd4455, #992233);
-          border:2px solid rgba(255,150,160,0.3);
-          box-shadow: inset 0 2px 4px rgba(255,255,255,0.25), inset 0 -2px 4px rgba(0,0,0,0.2), 0 4px 8px rgba(0,0,0,0.5);
-          display:flex; align-items:center; justify-content:center;
-          font-size:12px; font-weight:bold; color:rgba(255,255,255,0.9);
+          background: radial-gradient(circle at 35% 35%, #ee5566, #cc3344 40%, #992233);
+          border:2px solid rgba(255,150,160,0.25);
+          box-shadow: inset 0 2px 5px rgba(255,255,255,0.30), inset 0 -3px 5px rgba(0,0,0,0.25), 0 0 0 3px rgba(0,0,0,0.15), 0 5px 10px rgba(0,0,0,0.5);
+          display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
+          font-size:11px; font-weight:bold; color:rgba(255,255,255,0.92);
           pointer-events:all; touch-action:none;
           font-family: 'Arial Black', sans-serif;
           text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-      ">JUMP</div>
+      "><span>JUMP</span><span style="font-size:7px;opacity:0.4;margin-top:-1px;">A</span></div>
 
       <div id="btn-tweet" style="
-          position:absolute; right:calc(6% + 82px); bottom:calc(50% - 32px);
-          width:60px; height:60px; border-radius:50%;
-          background: linear-gradient(145deg, #2299ee, #1566aa);
-          border:2px solid rgba(100,180,255,0.3);
-          box-shadow: inset 0 2px 4px rgba(255,255,255,0.25), inset 0 -2px 4px rgba(0,0,0,0.2), 0 4px 8px rgba(0,0,0,0.5);
-          display:flex; align-items:center; justify-content:center;
-          font-size:9px; font-weight:bold; color:rgba(255,255,255,0.9);
+          position:absolute; right:calc(8% + 82px); bottom:calc(50% - 36px);
+          width:62px; height:62px; border-radius:50%;
+          background: radial-gradient(circle at 35% 35%, #33aaff, #2299ee 40%, #1566aa);
+          border:2px solid rgba(100,180,255,0.25);
+          box-shadow: inset 0 2px 5px rgba(255,255,255,0.30), inset 0 -3px 5px rgba(0,0,0,0.25), 0 0 0 3px rgba(0,0,0,0.15), 0 5px 10px rgba(0,0,0,0.5);
+          display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
+          font-size:9px; font-weight:bold; color:rgba(255,255,255,0.92);
           pointer-events:all; touch-action:none;
           font-family: 'Arial Black', sans-serif;
           text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-      ">TWEET</div>
+      "><span>TWEET</span><span style="font-size:7px;opacity:0.4;margin-top:-1px;">B</span></div>
 
       <div id="btn-shart" style="
-          position:absolute; right:calc(6% + 36px); bottom:calc(50% + 30px);
-          width:54px; height:54px; border-radius:50%;
-          background: linear-gradient(145deg, #aa6622, #6e4010);
-          border:2px solid rgba(200,140,80,0.3);
-          box-shadow: inset 0 2px 4px rgba(255,255,255,0.25), inset 0 -2px 4px rgba(0,0,0,0.2), 0 4px 8px rgba(0,0,0,0.5);
-          display:flex; align-items:center; justify-content:center;
-          font-size:8px; font-weight:bold; color:rgba(255,255,255,0.9);
+          position:absolute; right:calc(8% + 34px); bottom:calc(50% + 28px);
+          width:56px; height:56px; border-radius:50%;
+          background: radial-gradient(circle at 35% 35%, #cc7733, #aa6622 40%, #6e4010);
+          border:2px solid rgba(200,140,80,0.25);
+          box-shadow: inset 0 2px 5px rgba(255,255,255,0.30), inset 0 -3px 5px rgba(0,0,0,0.25), 0 0 0 3px rgba(0,0,0,0.15), 0 5px 10px rgba(0,0,0,0.5);
+          display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
+          font-size:8px; font-weight:bold; color:rgba(255,255,255,0.92);
           pointer-events:all; touch-action:none;
           font-family: 'Arial Black', sans-serif;
           text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-      ">SHART</div>
+      "><span>SHART</span><span style="font-size:7px;opacity:0.4;margin-top:-1px;">X</span></div>
     </div>
 
     <script>
