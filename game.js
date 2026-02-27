@@ -2458,7 +2458,7 @@ class GameScene extends Phaser.Scene {
                 color: C.white, stroke: '#000', strokeThickness: 4,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
-            const cont = this.add.text(ow/2, oh/2 + 20, 'PRESS SPACE TO CONTINUE', {
+            const cont = this.add.text(ow/2, oh/2 + 20, _isTouchDevice ? 'TAP JUMP TO CONTINUE' : 'PRESS SPACE TO CONTINUE', {
                 fontSize: '16px', fontFamily: 'Arial, sans-serif',
                 color: C.white, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
@@ -2500,7 +2500,7 @@ class GameScene extends Phaser.Scene {
                 color: C.gold, stroke: '#000', strokeThickness: 3,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
-            const restart = this.add.text(ow/2, oh/2 + 70, 'PRESS SPACE TO TRY AGAIN', {
+            const restart = this.add.text(ow/2, oh/2 + 70, _isTouchDevice ? 'TAP JUMP TO TRY AGAIN' : 'PRESS SPACE TO TRY AGAIN', {
                 fontSize: '18px', fontFamily: 'Arial, sans-serif',
                 color: C.white, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
@@ -2508,12 +2508,17 @@ class GameScene extends Phaser.Scene {
 
             const flag = this._addDonateButtons(ow/2, oh/2 + 120, '16px');
 
-            this.input.keyboard.once('keydown-SPACE', () => {
-                this.scene.start('Menu');
-            });
+            const goMenu = () => { this.scene.start('Menu'); };
+            this.input.keyboard.once('keydown-SPACE', goMenu);
             this.input.once('pointerdown', () => {
                 if (flag.clicked) return;
-                this.scene.start('Menu');
+                goMenu();
+            });
+            this._gameOverSkipTimer = this.time.addEvent({
+                delay: 100, loop: true,
+                callback: () => {
+                    if (window.TOUCH && window.TOUCH.jump) goMenu();
+                },
             });
         });
     }
@@ -2573,7 +2578,7 @@ class GameScene extends Phaser.Scene {
                 color: C.gold, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
-            const cont = this.add.text(ow/2, oh/2 + 90, 'PRESS SPACE FOR MENU', {
+            const cont = this.add.text(ow/2, oh/2 + 90, _isTouchDevice ? 'TAP JUMP FOR MENU' : 'PRESS SPACE FOR MENU', {
                 fontSize: '18px', fontFamily: 'Arial, sans-serif',
                 color: C.white, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
@@ -2581,12 +2586,17 @@ class GameScene extends Phaser.Scene {
 
             const flag = this._addDonateButtons(ow/2, oh/2 + 130, '16px');
 
-            this.input.keyboard.once('keydown-SPACE', () => {
-                this.scene.start('Menu');
-            });
+            const goMenu = () => { this.scene.start('Menu'); };
+            this.input.keyboard.once('keydown-SPACE', goMenu);
             this.input.once('pointerdown', () => {
                 if (flag.clicked) return;
-                this.scene.start('Menu');
+                goMenu();
+            });
+            this._victorySkipTimer = this.time.addEvent({
+                delay: 100, loop: true,
+                callback: () => {
+                    if (window.TOUCH && window.TOUCH.jump) goMenu();
+                },
             });
         });
     }
