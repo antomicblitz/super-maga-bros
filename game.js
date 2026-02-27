@@ -756,9 +756,10 @@ class PreloadScene extends Phaser.Scene {
     preload() {
         // Progress bar
         const cx = this.scale.width / 2, cy = this.scale.height / 2;
-        this.add.rectangle(cx, cy, this.scale.width * 0.9 + 4, 24, 0x333333);
-        const bar = this.add.rectangle(cx, cy, 0, 20, 0xFFD700).setOrigin(0.5);
         const barMaxW = this.scale.width * 0.9;
+        const barLeft = cx - barMaxW / 2;
+        this.add.rectangle(cx, cy, barMaxW + 4, 24, 0x333333);
+        const bar = this.add.rectangle(barLeft, cy, 0, 20, 0xFFD700).setOrigin(0, 0.5);
         this.add.text(cx, cy - 30, 'LOADING...', {
             fontSize: '16px', fontFamily: 'Arial Black', color: '#FFD700'
         }).setOrigin(0.5);
@@ -2407,10 +2408,10 @@ class GameScene extends Phaser.Scene {
     _addDonateButtons(cx, y, fontSize) {
         const flag = { clicked: false };
         const fs = fontSize || '16px';
-        this.add.text(cx, y - 28, 'Like the game? Consider donating to support open science at Lamda Biolab', {
+        this.add.text(cx, y - 26, 'Like the game? Consider donating to support open science at Lamda Biolab', {
             fontSize: '11px', fontFamily: 'Arial, sans-serif',
             color: '#cccccc', stroke: '#000', strokeThickness: 2,
-            wordWrap: { width: 360 },
+            wordWrap: { width: 340 }, align: 'center',
         }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(201);
         const btnW = 165, btnH = 40, gap = 10;
         if (DONATE_URL) {
