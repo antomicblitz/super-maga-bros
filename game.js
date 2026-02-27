@@ -2408,11 +2408,6 @@ class GameScene extends Phaser.Scene {
     _addDonateButtons(cx, y, fontSize) {
         const flag = { clicked: false };
         const fs = fontSize || '16px';
-        this.add.text(cx, y - 26, 'Like the game? Consider donating to support open science at Lamda Biolab', {
-            fontSize: '11px', fontFamily: 'Arial, sans-serif',
-            color: '#cccccc', stroke: '#000', strokeThickness: 2,
-            wordWrap: { width: 340 }, align: 'center',
-        }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(201);
         const btnW = 165, btnH = 40, gap = 10;
         if (DONATE_URL) {
             const bg1 = this.add.rectangle(cx - btnW/2 - gap/2, y, btnW, btnH, 0xCC9900, 0.95)
@@ -2444,6 +2439,10 @@ class GameScene extends Phaser.Scene {
                 this.time.delayedCall(500, () => { flag.clicked = false; });
             });
         }
+        this.add.text(cx, y + btnH / 2 + 14, 'Support open science at Lamda Biolab', {
+            fontSize: '12px', fontFamily: 'Arial, sans-serif',
+            color: '#aaaaaa', stroke: '#000', strokeThickness: 2,
+        }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(201);
         return flag;
     }
 
