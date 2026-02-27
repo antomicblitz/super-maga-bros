@@ -2098,7 +2098,7 @@ class GameScene extends Phaser.Scene {
 
     destroyLobbyist(enemy) {
         this.score += 250;
-        if (!this.shartFrozen) {
+        if (!this.shartFrozen && !this.invincible) {
             playSound(this, 'snd-stomp', SFX.stomp);
         }
 
