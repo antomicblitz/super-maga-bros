@@ -172,20 +172,6 @@
       <div style="position:absolute;right:10px;top:10px;width:2px;height:10px;background:rgba(0,0,0,0.3);pointer-events:none;margin-right:4px;"></div>
       <div style="position:absolute;right:10px;top:14px;width:10px;height:2px;background:rgba(0,0,0,0.3);pointer-events:none;"></div>
 
-      <!-- Center vent slots -->
-      <div style="position:absolute;left:50%;bottom:calc(50% + 20px);transform:translateX(-50%);display:flex;flex-direction:column;gap:4px;pointer-events:none;">
-        <div style="width:22px;height:2px;background:rgba(0,0,0,0.15);border-radius:1px;box-shadow:0 1px 0 rgba(255,255,255,0.05);"></div>
-        <div style="width:22px;height:2px;background:rgba(0,0,0,0.15);border-radius:1px;box-shadow:0 1px 0 rgba(255,255,255,0.05);"></div>
-        <div style="width:22px;height:2px;background:rgba(0,0,0,0.15);border-radius:1px;box-shadow:0 1px 0 rgba(255,255,255,0.05);"></div>
-        <div style="width:22px;height:2px;background:rgba(0,0,0,0.15);border-radius:1px;box-shadow:0 1px 0 rgba(255,255,255,0.05);"></div>
-      </div>
-
-      <!-- Center START/SELECT decorative bumps -->
-      <div style="position:absolute;left:50%;bottom:calc(50% - 10px);transform:translateX(-50%);display:flex;gap:14px;pointer-events:none;">
-        <div style="width:28px;height:10px;border-radius:5px;background:linear-gradient(180deg,#58585e,#48484e);border:1px solid rgba(0,0,0,0.2);box-shadow:inset 0 1px 1px rgba(255,255,255,0.1),0 2px 3px rgba(0,0,0,0.25);"></div>
-        <div style="width:28px;height:10px;border-radius:5px;background:linear-gradient(180deg,#58585e,#48484e);border:1px solid rgba(0,0,0,0.2);box-shadow:inset 0 1px 1px rgba(255,255,255,0.1),0 2px 3px rgba(0,0,0,0.25);"></div>
-      </div>
-
       <!-- D-PAD: left side — centered within left grip well -->
       <div id="btn-left" style="
           position:absolute; left:calc(26% - 72px); bottom:calc(50% - 32px);
@@ -195,7 +181,7 @@
           box-shadow: inset 0 1px 3px rgba(255,255,255,0.15), inset 0 -2px 3px rgba(0,0,0,0.2), 0 0 0 3px rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.5);
           display:flex; align-items:center; justify-content:center;
           font-size:26px; color:rgba(255,255,255,0.55); pointer-events:all;
-          touch-action:none;
+          touch-action:none; transition: transform 0.06s, box-shadow 0.06s;
       ">&#9664;</div>
 
       <div id="btn-right" style="
@@ -206,12 +192,13 @@
           box-shadow: inset 0 1px 3px rgba(255,255,255,0.15), inset 0 -2px 3px rgba(0,0,0,0.2), 0 0 0 3px rgba(0,0,0,0.15), 0 4px 10px rgba(0,0,0,0.5);
           display:flex; align-items:center; justify-content:center;
           font-size:26px; color:rgba(255,255,255,0.55); pointer-events:all;
-          touch-action:none;
+          touch-action:none; transition: transform 0.06s, box-shadow 0.06s;
       ">&#9654;</div>
 
-      <!-- ACTION BUTTONS: right side — SNES diamond layout -->
+      <!-- ACTION BUTTONS: right side — SNES diamond centered in right grip well -->
+      <!-- Right grip center = right:26%. Diamond: A=right, B=left, X=top -->
       <div id="btn-jump" style="
-          position:absolute; right:8%; bottom:calc(50% - 42px);
+          position:absolute; right:calc(26% - 42px); bottom:calc(50% - 42px);
           width:72px; height:72px; border-radius:50%;
           background: radial-gradient(circle at 35% 35%, #ee5566, #cc3344 40%, #992233);
           border:2px solid rgba(255,150,160,0.25);
@@ -221,10 +208,11 @@
           pointer-events:all; touch-action:none;
           font-family: 'Arial Black', sans-serif;
           text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+          transition: transform 0.06s, box-shadow 0.06s;
       "><span>JUMP</span><span style="font-size:7px;opacity:0.4;margin-top:-1px;">A</span></div>
 
       <div id="btn-tweet" style="
-          position:absolute; right:calc(8% + 82px); bottom:calc(50% - 36px);
+          position:absolute; right:calc(26% + 26px); bottom:calc(50% - 36px);
           width:62px; height:62px; border-radius:50%;
           background: radial-gradient(circle at 35% 35%, #33aaff, #2299ee 40%, #1566aa);
           border:2px solid rgba(100,180,255,0.25);
@@ -234,10 +222,11 @@
           pointer-events:all; touch-action:none;
           font-family: 'Arial Black', sans-serif;
           text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+          transition: transform 0.06s, box-shadow 0.06s;
       "><span>TWEET</span><span style="font-size:7px;opacity:0.4;margin-top:-1px;">B</span></div>
 
       <div id="btn-shart" style="
-          position:absolute; right:calc(8% + 34px); bottom:calc(50% + 28px);
+          position:absolute; right:calc(26% - 6px); bottom:calc(50% + 24px);
           width:56px; height:56px; border-radius:50%;
           background: radial-gradient(circle at 35% 35%, #cc7733, #aa6622 40%, #6e4010);
           border:2px solid rgba(200,140,80,0.25);
@@ -247,6 +236,7 @@
           pointer-events:all; touch-action:none;
           font-family: 'Arial Black', sans-serif;
           text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+          transition: transform 0.06s, box-shadow 0.06s;
       "><span>SHART</span><span style="font-size:7px;opacity:0.4;margin-top:-1px;">X</span></div>
     </div>
 
@@ -269,14 +259,20 @@
                 btn.addEventListener('touchstart', function(e) {
                     e.preventDefault();
                     window.TOUCH[key] = true;
+                    btn.style.transform = 'scale(0.90)';
+                    btn.style.boxShadow = 'inset 0 3px 8px rgba(0,0,0,0.5), 0 0 0 3px rgba(0,0,0,0.15), 0 1px 3px rgba(0,0,0,0.4)';
                 }, { passive: false });
                 btn.addEventListener('touchend', function(e) {
                     e.preventDefault();
                     window.TOUCH[key] = false;
+                    btn.style.transform = '';
+                    btn.style.boxShadow = '';
                 }, { passive: false });
                 btn.addEventListener('touchcancel', function(e) {
                     e.preventDefault();
                     window.TOUCH[key] = false;
+                    btn.style.transform = '';
+                    btn.style.boxShadow = '';
                 }, { passive: false });
             }
 
