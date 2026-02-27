@@ -2407,6 +2407,11 @@ class GameScene extends Phaser.Scene {
     _addDonateButtons(cx, y, fontSize) {
         const flag = { clicked: false };
         const fs = fontSize || '16px';
+        this.add.text(cx, y - 28, 'Like the game? Consider donating to support open science at Lamda Biolab', {
+            fontSize: '11px', fontFamily: 'Arial, sans-serif',
+            color: '#cccccc', stroke: '#000', strokeThickness: 2,
+            wordWrap: { width: 360 },
+        }).setOrigin(0.5, 1).setScrollFactor(0).setDepth(201);
         const btnW = 165, btnH = 40, gap = 10;
         if (DONATE_URL) {
             const bg1 = this.add.rectangle(cx - btnW/2 - gap/2, y, btnW, btnH, 0xCC9900, 0.95)
