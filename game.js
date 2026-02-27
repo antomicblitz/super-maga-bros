@@ -9,6 +9,7 @@ const WORLD_W = 12800, WORLD_H = 600;
 const GROUND_Y = GH - TILE;          // 468
 const PX = 2;                         // pixel‑art scale (each art‑pixel = 2×2)
 const DONATE_URL = 'https://buy.stripe.com/3cI28q0Ds61569wcB71gs0C';
+const CRYPTO_URL = 'https://commerce.coinbase.com/checkout/3ac70090-fd98-44d5-a2f4-ff30eee60019';
 
 // ── Colour palette (from reference images) ───────────────────
 const C = {
@@ -2402,6 +2403,44 @@ class GameScene extends Phaser.Scene {
         });
     }
 
+    // Helper: create donate + crypto buttons, returns { donateClicked } flag object
+    _addDonateButtons(cx, y, fontSize) {
+        const flag = { clicked: false };
+        const fs = fontSize || '16px';
+        const btnW = 165, btnH = 40, gap = 10;
+        if (DONATE_URL) {
+            const bg1 = this.add.rectangle(cx - btnW/2 - gap/2, y, btnW, btnH, 0xCC9900, 0.95)
+                .setOrigin(0.5).setScrollFactor(0).setDepth(202).setStrokeStyle(2, 0xFFD700)
+                .setInteractive({ useHandCursor: true });
+            this.add.text(cx - btnW/2 - gap/2, y, 'DONATE', {
+                fontSize: fs, fontFamily: 'Arial Black, sans-serif',
+                color: '#FFFFFF', stroke: '#000', strokeThickness: 3,
+            }).setOrigin(0.5).setScrollFactor(0).setDepth(203);
+            this.tweens.add({ targets: bg1, scaleX: 1.05, scaleY: 1.05, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+            bg1.on('pointerdown', () => {
+                flag.clicked = true;
+                window.open(DONATE_URL, '_blank');
+                this.time.delayedCall(500, () => { flag.clicked = false; });
+            });
+        }
+        if (CRYPTO_URL) {
+            const bg2 = this.add.rectangle(cx + btnW/2 + gap/2, y, btnW, btnH, 0x2255AA, 0.95)
+                .setOrigin(0.5).setScrollFactor(0).setDepth(202).setStrokeStyle(2, 0x4488FF)
+                .setInteractive({ useHandCursor: true });
+            this.add.text(cx + btnW/2 + gap/2, y, 'DONATE CRYPTO', {
+                fontSize: fs, fontFamily: 'Arial Black, sans-serif',
+                color: '#FFFFFF', stroke: '#000', strokeThickness: 3,
+            }).setOrigin(0.5).setScrollFactor(0).setDepth(203);
+            this.tweens.add({ targets: bg2, scaleX: 1.05, scaleY: 1.05, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 300 });
+            bg2.on('pointerdown', () => {
+                flag.clicked = true;
+                window.open(CRYPTO_URL, '_blank');
+                this.time.delayedCall(500, () => { flag.clicked = false; });
+            });
+        }
+        return flag;
+    }
+
     showDeathScreen() {
         const ow = this.scale.width, oh = this.scale.height;
         const overlay = this.add.rectangle(ow/2, oh/2, ow, oh, 0x000000, 0.7).setScrollFactor(0).setDepth(200);
@@ -2420,32 +2459,16 @@ class GameScene extends Phaser.Scene {
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
             this.tweens.add({ targets: cont, alpha: 0.3, duration: 500, yoyo: true, repeat: -1 });
 
-            let donateClicked = false;
-            if (DONATE_URL) {
-                const btnBg = this.add.rectangle(ow/2, oh/2 + 75, 340, 44, 0xCC9900, 0.95)
-                    .setOrigin(0.5).setScrollFactor(0).setDepth(202).setStrokeStyle(3, 0xFFD700)
-                    .setInteractive({ useHandCursor: true });
-                this.add.text(ow/2, oh/2 + 75, 'ENJOYED THIS? TAP TO DONATE!', {
-                    fontSize: '16px', fontFamily: 'Arial Black, sans-serif',
-                    color: '#FFFFFF', stroke: '#000', strokeThickness: 3,
-                }).setOrigin(0.5).setScrollFactor(0).setDepth(203);
-                this.tweens.add({ targets: btnBg, scaleX: 1.05, scaleY: 1.05, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-                btnBg.on('pointerdown', () => {
-                    donateClicked = true;
-                    window.open(DONATE_URL, '_blank');
-                    this.time.delayedCall(500, () => { donateClicked = false; });
-                });
-            }
+            const flag = this._addDonateButtons(ow/2, oh/2 + 75, '14px');
 
             const doRestart = () => {
                 this.scene.restart({ lives: this.lives, score: this.score, cholesterol: this.cholesterol });
             };
             this.input.keyboard.once('keydown-SPACE', doRestart);
             this.input.once('pointerdown', () => {
-                if (donateClicked) return;
+                if (flag.clicked) return;
                 doRestart();
             });
-            // Touch jump button
             this._deathSkipTimer = this.time.addEvent({
                 delay: 100, loop: true,
                 callback: () => {
@@ -2478,28 +2501,13 @@ class GameScene extends Phaser.Scene {
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
             this.tweens.add({ targets: restart, alpha: 0.3, duration: 500, yoyo: true, repeat: -1 });
 
-            let donateClicked = false;
-            if (DONATE_URL) {
-                const btnBg = this.add.rectangle(ow/2, oh/2 + 120, 340, 48, 0xCC9900, 0.95)
-                    .setOrigin(0.5).setScrollFactor(0).setDepth(202).setStrokeStyle(3, 0xFFD700)
-                    .setInteractive({ useHandCursor: true });
-                this.add.text(ow/2, oh/2 + 120, 'ENJOYED THIS? TAP TO DONATE!', {
-                    fontSize: '18px', fontFamily: 'Arial Black, sans-serif',
-                    color: '#FFFFFF', stroke: '#000', strokeThickness: 3,
-                }).setOrigin(0.5).setScrollFactor(0).setDepth(203);
-                this.tweens.add({ targets: btnBg, scaleX: 1.05, scaleY: 1.05, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-                btnBg.on('pointerdown', () => {
-                    donateClicked = true;
-                    window.open(DONATE_URL, '_blank');
-                    this.time.delayedCall(500, () => { donateClicked = false; });
-                });
-            }
+            const flag = this._addDonateButtons(ow/2, oh/2 + 120, '16px');
 
             this.input.keyboard.once('keydown-SPACE', () => {
                 this.scene.start('Menu');
             });
             this.input.once('pointerdown', () => {
-                if (donateClicked) return;
+                if (flag.clicked) return;
                 this.scene.start('Menu');
             });
         });
@@ -2566,28 +2574,13 @@ class GameScene extends Phaser.Scene {
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
             this.tweens.add({ targets: cont, alpha: 0.3, duration: 500, yoyo: true, repeat: -1 });
 
-            let donateClicked = false;
-            if (DONATE_URL) {
-                const btnBg = this.add.rectangle(ow/2, oh/2 + 130, 340, 48, 0xCC9900, 0.95)
-                    .setOrigin(0.5).setScrollFactor(0).setDepth(202).setStrokeStyle(3, 0xFFD700)
-                    .setInteractive({ useHandCursor: true });
-                this.add.text(ow/2, oh/2 + 130, 'ENJOYED THIS? TAP TO DONATE!', {
-                    fontSize: '18px', fontFamily: 'Arial Black, sans-serif',
-                    color: '#FFFFFF', stroke: '#000', strokeThickness: 3,
-                }).setOrigin(0.5).setScrollFactor(0).setDepth(203);
-                this.tweens.add({ targets: btnBg, scaleX: 1.05, scaleY: 1.05, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-                btnBg.on('pointerdown', () => {
-                    donateClicked = true;
-                    window.open(DONATE_URL, '_blank');
-                    this.time.delayedCall(500, () => { donateClicked = false; });
-                });
-            }
+            const flag = this._addDonateButtons(ow/2, oh/2 + 130, '16px');
 
             this.input.keyboard.once('keydown-SPACE', () => {
                 this.scene.start('Menu');
             });
             this.input.once('pointerdown', () => {
-                if (donateClicked) return;
+                if (flag.clicked) return;
                 this.scene.start('Menu');
             });
         });
