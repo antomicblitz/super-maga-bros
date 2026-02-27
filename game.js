@@ -2098,7 +2098,9 @@ class GameScene extends Phaser.Scene {
 
     destroyLobbyist(enemy) {
         this.score += 250;
-        playSound(this, 'snd-stomp', SFX.stomp);
+        if (!this.shartFrozen) {
+            playSound(this, 'snd-stomp', SFX.stomp);
+        }
 
         const popup = this.add.text(enemy.x, enemy.y, '+250', {
             fontSize: '14px', fontFamily: 'Arial', fontStyle: 'bold',
