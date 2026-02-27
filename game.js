@@ -1230,15 +1230,24 @@ class SpeechScene extends Phaser.Scene {
         }
 
         // ─ Skip prompt
-        this.add.text(sw / 2, sh - 20, 'Tap or press any key to skip', {
+        this.add.text(sw / 2, sh - 20, 'Press SPACE or tap JUMP to skip', {
             fontSize: '14px', fontFamily: 'Arial, sans-serif',
             color: '#aaaaaa',
         }).setOrigin(0.5);
 
-        // ─ Skip handlers
-        this.input.keyboard.once('keydown', () => this._goToGame());
-        this.input.once('pointerdown', () => this._goToGame());
-        this._touchWasDown = false;
+        // ─ Skip handlers (jump only)
+        this.input.keyboard.on('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'KeyW' || e.code === 'ArrowUp') {
+                this._goToGame();
+            }
+        });
+        // Touch: only the JUMP button (handled via TOUCH.jump flag)
+        this._skipCheckTimer = this.time.addEvent({
+            delay: 100, loop: true,
+            callback: () => {
+                if (window.TOUCH && window.TOUCH.jump) this._goToGame();
+            },
+        });
     }
 
     _goToGame() {
@@ -1594,6 +1603,20 @@ class GameScene extends Phaser.Scene {
         this.livesText = this.add.text(sw - 16, 12, 'LIVES: 3', hudStyle).setOrigin(1, 0).setScrollFactor(0).setDepth(100);
         this.cholesterolText = this.add.text(sw / 2, 8, 'CHOLESTEROL: 0', { ...hudStyle, fontSize: '14px', color: C.gold }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(100);
         this.powerText = this.add.text(16, 36, '', { ...hudStyle, fontSize: '14px', color: '#88FF88' }).setScrollFactor(0).setDepth(100);
+
+        // ─ Keyboard controls hint (desktop only, fades out)
+        var isMobile = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+        if (!isMobile) {
+            var ctrlHint = this.add.text(sw / 2, sh - 16,
+                'ARROWS/WASD: Move   SPACE: Jump   Z: Tweet   X: Shart', {
+                fontSize: '12px', fontFamily: 'Arial, sans-serif',
+                color: '#ffffff', stroke: '#000', strokeThickness: 2,
+            }).setOrigin(0.5).setScrollFactor(0).setDepth(100).setAlpha(0.8);
+            this.tweens.add({
+                targets: ctrlHint, alpha: 0, delay: 5000, duration: 1500,
+                onComplete: () => ctrlHint.destroy(),
+            });
+        }
 
         // Cholesterol meter bar
         const barX = sw / 2 - 60, barY = 26;
