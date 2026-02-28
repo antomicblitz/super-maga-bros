@@ -4,6 +4,9 @@
 > *"Make Platforming Great Again"*
 
 A satirical 2D pixel-art platformer built with Phaser 3. Run, jump, and stomp your way across Mar-a-Lago island in this parody of a classic platformer genre. Collect classified documents, dodge the fake news media, and make it to the finish line — bigly.
+<img width="246" height="410" alt="image" src="https://github.com/user-attachments/assets/e8858d3d-a7d6-431a-9080-a1963b2cec52" /> <img width="246" height="410" alt="image" src="https://github.com/user-attachments/assets/94477169-31de-4d6c-8421-3a98f25456bb" /> <img width="246" height="410" alt="image" src="https://github.com/user-attachments/assets/3f721f9f-2c34-4be2-82a8-b2488bfc9b97" />
+
+
 
 ---
 
