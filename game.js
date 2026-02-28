@@ -814,6 +814,7 @@ class PreloadScene extends Phaser.Scene {
         try { this.load.audio('snd-coin',    'assets/audio/coin.mp3'); } catch(e) {}
         try { this.load.audio('snd-die',     'assets/audio/die.wav'); } catch(e) {}
         try { this.load.audio('snd-death-song', 'assets/audio/death-song.wav'); } catch(e) {}
+        try { this.load.audio('snd-game-over', 'assets/audio/game-over.wav'); } catch(e) {}
         try { this.load.audio('snd-win',     'assets/audio/win.wav'); } catch(e) {}
         try { this.load.audio('snd-powerup', 'assets/audio/powerup.wav'); } catch(e) {}
         try { this.load.audio('bgm',         'assets/audio/bgm-game.mp3'); } catch(e) {}
@@ -2488,6 +2489,9 @@ class GameScene extends Phaser.Scene {
     }
 
     showGameOver() {
+        if (this.cache.audio.has('snd-game-over')) {
+            try { this.sound.play('snd-game-over', { volume: 0.3 }); } catch(e) {}
+        }
         const ow = this.scale.width, oh = this.scale.height;
         const overlay = this.add.rectangle(ow/2, oh/2, ow, oh, 0x000000, 0.7).setScrollFactor(0).setDepth(200);
         overlay.setAlpha(0);
