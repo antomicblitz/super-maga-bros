@@ -813,6 +813,7 @@ class PreloadScene extends Phaser.Scene {
         try { this.load.audio('snd-stomp',   'assets/audio/stomp.wav'); } catch(e) {}
         try { this.load.audio('snd-coin',    'assets/audio/coin.mp3'); } catch(e) {}
         try { this.load.audio('snd-die',     'assets/audio/die.wav'); } catch(e) {}
+        try { this.load.audio('snd-death-song', 'assets/audio/death-song.wav'); } catch(e) {}
         try { this.load.audio('snd-win',     'assets/audio/win.wav'); } catch(e) {}
         try { this.load.audio('snd-powerup', 'assets/audio/powerup.wav'); } catch(e) {}
         try { this.load.audio('bgm',         'assets/audio/bgm-game.mp3'); } catch(e) {}
@@ -2377,6 +2378,9 @@ class GameScene extends Phaser.Scene {
         this.dead = true;
         this.lives--;
         playSound(this, 'snd-die', SFX.die);
+        if (this.cache.audio.has('snd-death-song')) {
+            try { this.sound.play('snd-death-song', { volume: 0.3 }); } catch(e) {}
+        }
         if (this.censorMusic) {
             this.censorMusic.stop();
             this.censorMusic = null;
