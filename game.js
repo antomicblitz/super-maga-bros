@@ -504,249 +504,282 @@ function genTweet() {
 const LEVEL = {
     // Ground segments [startTileX, endTileX]
     ground: [
-        // Zone 1-2 (original)
-        [0, 28],
-        [31, 52],
-        [55, 82],
-        [85, 125],
-        [128, 200],
-        // Zone 3 — medium gaps
-        [203, 230],
-        [234, 255],
-        [259, 280],
-        // Zone 4 — larger gaps
-        [285, 305],
-        [310, 325],
-        [331, 345],
-        [352, 400],
+        // Zone 1 — Intro (flat, easy, learn controls) — tiles 0-68
+        [0, 68],
+        // Zone 2 — First Gaps (2-tile gaps) — tiles 71-128
+        [71, 95],
+        [98, 128],
+        // Zone 3 — Platforming Challenge (3-tile gaps, verticality) — tiles 132-198
+        [132, 160],
+        [164, 198],
+        // Zone 4 — Mixed Terrain (varied gaps, staircase sections) — tiles 202-268
+        [202, 228],
+        [232, 250],
+        [254, 268],
+        // Zone 5 — Gauntlet (4-tile gaps, narrow land) — tiles 273-338
+        [273, 295],
+        [300, 318],
+        [323, 338],
+        // Zone 6 — Final Stretch + Staircase to Flag — tiles 342-395
+        [342, 395],
     ],
     // Platforms [tileX, pixelY, widthInTiles]
     platforms: [
-        // Section 1 – intro
-        [14, 368, 4],
-        [20, 336, 3],
-        // Wall after intro (suitcase blocker)
-        [26, 436, 1], [26, 404, 1], [26, 372, 1],
-        // Over gap 1
-        [28, 400, 3],
-        [31, 368, 3],
-        [35, 336, 3],
-        // Section 2
-        [40, 304, 4],
-        [46, 368, 3],
-        [50, 336, 3],
-        // Wall before gap 2 (corridor wall)
-        [52, 436, 1], [52, 404, 1], [52, 372, 1],
-        // Over gap 2
-        [53, 400, 3],
-        [56, 368, 3],
-        // Section 3 – climbing
-        [61, 336, 3],
-        [65, 304, 4],
-        [70, 272, 3],
-        [74, 336, 3],
-        [78, 368, 3],
-        // Wall pair forming corridor (lobbyist alley)
-        [80, 436, 1], [80, 404, 1], [80, 372, 1],
-        // Over gap 3
-        [83, 400, 3],
-        [86, 368, 3],
-        // Section 4 – challenge with enclosed areas
-        [92, 336, 4],
-        // Wall right side of platform
-        [96, 436, 1], [96, 404, 1], [96, 372, 1], [96, 340, 1],
-        [98, 304, 3],
-        [103, 272, 3],
-        // Low wall creating ground corridor
-        [106, 436, 1], [106, 404, 1],
-        [107, 336, 4],
-        [113, 368, 3],
-        // Wall before final zone 1-2 bridge
-        [116, 436, 1], [116, 404, 1], [116, 372, 1],
-        [118, 304, 4],
-        // Final area (Zone 2)
-        [125, 400, 3],
-        [128, 368, 3],
-        [133, 336, 4],
-        // Wall inside zone 2 — suitcase bounce zone
-        [138, 436, 1], [138, 404, 1], [138, 372, 1],
-        [140, 368, 5],
-        [148, 336, 3],
-        // Enclosed section — walls on both sides
-        [153, 436, 1], [153, 404, 1], [153, 372, 1],
-        [155, 304, 4],
-        [162, 368, 3],
-        [166, 436, 1], [166, 404, 1], [166, 372, 1],
-        [170, 336, 4],
-        [178, 368, 3],
-        // Zone 3 — medium difficulty with walls
-        [205, 368, 3], [210, 336, 3], [215, 304, 3],
-        [220, 368, 4],
-        // Wall pair — lobbyist bounce arena
-        [219, 436, 1], [219, 404, 1], [219, 372, 1],
-        [225, 436, 1], [225, 404, 1], [225, 372, 1],
-        [226, 336, 3],
-        [231, 400, 3], [234, 368, 3], [238, 304, 4],
-        [244, 336, 3], [249, 368, 3],
-        // Wall before gap zone
-        [253, 436, 1], [253, 404, 1],
-        [254, 400, 2], [257, 336, 3], [262, 304, 3],
-        [267, 368, 3],
-        // Enclosed corridor with ceiling
-        [270, 436, 1], [270, 404, 1], [270, 372, 1],
-        [271, 340, 7],  // ceiling over corridor
-        [272, 368, 4],
-        [278, 436, 1], [278, 404, 1], [278, 372, 1],
-        [278, 304, 3],
-        // Zone 4 — hard (narrower platforms + more walls)
-        [287, 400, 2], [290, 368, 2], [294, 304, 3],
-        // Wall with small opening
-        [299, 436, 1], [299, 404, 1],
-        [300, 336, 2], [304, 272, 2],
-        [311, 400, 2], [314, 336, 2], [318, 272, 3],
-        // Double wall — tight suitcase corridor
-        [323, 436, 1], [323, 404, 1], [323, 372, 1],
-        [324, 368, 2],
-        [327, 436, 1], [327, 404, 1], [327, 372, 1],
-        [333, 400, 2], [336, 336, 2], [340, 272, 3],
-        [345, 368, 2],
-        // Final gauntlet walls
-        [353, 436, 1], [353, 404, 1], [353, 372, 1],
-        [354, 336, 3], [360, 304, 2], [366, 368, 4],
-        [374, 336, 3],
-        [377, 436, 1], [377, 404, 1], [377, 372, 1],
-        [380, 304, 3], [388, 368, 3],
-        // End wall before flag
-        [393, 436, 1], [393, 404, 1], [393, 372, 1], [393, 340, 1],
+        // ── Zone 1 — Intro (tiles 0-68) ──
+        // Floating block row (like SMB ? blocks)
+        [8, 368, 1], [10, 368, 1], [12, 368, 1],
+        // Low step platforms
+        [18, 404, 3],
+        [24, 372, 4],
+        // High reward platform
+        [30, 304, 3],
+        // Staircase up (SMB-style ascending steps)
+        [38, 404, 2], [41, 372, 2], [44, 340, 2],
+        // Staircase down
+        [48, 340, 2], [51, 372, 2], [54, 404, 2],
+        // Block row before first gap
+        [60, 368, 4],
+
+        // ── Zone 2 — First Gaps (tiles 71-128) ──
+        // Floating platforms over gap 1 (tiles 68-71)
+        [69, 404, 2],
+        // Ascending platform series
+        [76, 372, 3], [81, 340, 3],
+        // High floating row
+        [86, 304, 4],
+        // Platforms over gap 2 (tiles 95-98)
+        [96, 400, 2],
+        // "Pipe" — tall stack (like SMB warp pipes)
+        [104, 436, 2], [104, 404, 2],
+        // Block row with gaps (hit-or-miss jumping)
+        [110, 368, 2], [114, 368, 2], [118, 368, 2],
+        // Staircase section
+        [122, 404, 2], [125, 372, 2],
+
+        // ── Zone 3 — Platforming Challenge (tiles 132-198) ──
+        // Platforms over gap (tiles 128-132)
+        [129, 404, 2],
+        // Ascending series
+        [136, 372, 3], [141, 340, 2], [145, 304, 3],
+        // Descending platforms
+        [150, 340, 2], [154, 372, 3],
+        // Bridge over gap (tiles 160-164)
+        [161, 400, 3],
+        // "Pipe" pair
+        [170, 436, 2], [170, 404, 2],
+        [178, 436, 2], [178, 404, 2],
+        // High floating row between pipes
+        [174, 336, 3],
+        // Zigzag platforms
+        [184, 372, 3], [189, 304, 3], [194, 372, 3],
+
+        // ── Zone 4 — Mixed Terrain (tiles 202-268) ──
+        // Platforms over gap (tiles 198-202)
+        [199, 400, 3],
+        // Low-high alternating blocks
+        [207, 372, 2], [211, 304, 2], [215, 372, 2],
+        // "Pipe"
+        [221, 436, 2], [221, 404, 2],
+        // Bridge over gap (tiles 228-232)
+        [229, 404, 2], [231, 368, 1],
+        // Staircase up to high section
+        [237, 404, 2], [240, 372, 2], [243, 340, 2],
+        // High platform run
+        [246, 308, 4],
+        // Bridge over gap (tiles 250-254)
+        [251, 404, 2], [253, 372, 1],
+        // Descending staircase
+        [258, 372, 2], [261, 404, 2],
+        // Block row
+        [265, 340, 3],
+
+        // ── Zone 5 — Gauntlet (tiles 273-338) ──
+        // Platforms over gap (tiles 268-273)
+        [269, 404, 2], [272, 372, 2],
+        // Tight floating platforms (need precise jumping)
+        [278, 340, 2], [282, 304, 2], [286, 340, 2],
+        // Low platforms
+        [291, 404, 3],
+        // Bridge over gap (tiles 295-300)
+        [296, 404, 2], [299, 372, 2],
+        // Rapid staircase
+        [304, 404, 1], [306, 372, 1], [308, 340, 1], [310, 308, 1],
+        // High platform run
+        [312, 308, 4],
+        // Descending
+        [317, 340, 2],
+        // Bridge over gap (tiles 318-323)
+        [319, 404, 2], [322, 372, 2],
+        // Final gauntlet platforms
+        [327, 340, 3], [332, 304, 3],
+        [336, 372, 2],
+
+        // ── Zone 6 — Final Stretch + Staircase (tiles 342-395) ──
+        // Floating blocks over flat ground
+        [347, 372, 3], [353, 340, 3],
+        // "Pipe"
+        [360, 436, 2], [360, 404, 2],
+        // High platform with reward
+        [366, 304, 3],
+        // Classic SMB end staircase (ascending to flag)
+        [375, 436, 1],
+        [376, 436, 2], [376, 404, 1],
+        [378, 436, 3], [378, 404, 2], [378, 372, 1],
+        [381, 436, 4], [381, 404, 3], [381, 372, 2], [381, 340, 1],
     ],
     // Food collectibles [pixelX, pixelY, type]
     // type: 0=bigmac (2 cholesterol pts), 1=coke (1 cholesterol pt)
     food: [
-        // Ground section 1
-        [160,436,0],[192,436,1],[256,436,1],[320,436,1],
-        // On platforms
-        [480,336,0],[512,336,1],
-        [672,304,1],[704,304,0],
-        // Over gap 1
-        [960,336,1],[1024,368,0],
-        [1120,336,1],[1152,336,1],
-        // Section 2
-        [1312,272,0],[1344,272,1],
-        [1504,336,1],[1536,336,0],
-        [1632,304,1],
-        // Over gap 2
-        [1760,368,0],[1824,336,1],
-        // Section 3
-        [1984,304,1],[2016,304,0],
-        [2112,272,1],[2144,272,1],
-        [2272,240,0],[2304,240,1],
-        // Over gap 3
-        [2688,368,0],[2752,336,1],
-        // Section 4
-        [2976,304,1],[3008,304,0],
-        [3168,272,1],[3200,240,0],
-        [3296,272,1],
-        [3424,304,0],[3456,304,1],
-        [3616,336,1],
-        [3776,272,0],[3808,272,1],
-        // Final area (Zone 2)
-        [4064,368,0],
-        [4256,336,1],[4288,336,0],
-        [4480,304,1],[4512,304,1],
-        [4736,368,0],
-        [4960,304,1],[4992,304,0],
-        [5184,368,1],
-        [5440,304,0],[5472,304,1],[5504,304,1],
-        [5696,336,0],[5728,336,1],
-        // Zone 3 — moderate food density
-        [6560,436,1],[6720,336,0],[6880,304,1],
-        [7040,272,1],[7200,368,0],[7360,336,1],
-        [7550,304,1],[7700,272,0],[7900,368,1],
-        [8100,336,1],[8300,304,0],[8500,272,1],
-        [8700,368,1],[8900,336,0],
-        // Zone 4 — sparse food, mostly cokes
-        [9200,368,1],[9500,304,1],[9800,336,0],
-        [10050,272,1],[10300,368,1],[10600,304,1],
-        [10800,272,0],[11100,336,1],[11300,304,1],
-        [11500,368,1],[11700,272,1],[11900,336,0],
-        [12100,304,1],[12300,368,1],[12500,304,1],
-        [12700,336,0],
+        // ── Zone 1 — Intro ──
+        // Ground-level trail (teaches collecting)
+        [160,436,1], [192,436,1], [224,436,1],
+        // On floating blocks
+        [272,336,0], [336,336,1],
+        // On step platforms
+        [608,340,1], [640,340,0],
+        // On staircase peak
+        [1440,308,0],
+        // Ground-level before gap
+        [1920,436,1], [1952,436,1],
+
+        // ── Zone 2 — First Gaps ──
+        // Over gap 1 (risk/reward, floating in air)
+        [2240,370,1],
+        // On ascending platforms
+        [2496,340,0], [2624,304,1],
+        // On high floating row
+        [2784,272,0], [2816,272,1],
+        // Ground after gap 2
+        [3200,436,1], [3264,436,1],
+        // Near pipe
+        [3392,372,0],
+        // On block rows
+        [3584,336,1], [3648,336,1], [3776,336,1],
+        // Staircase area
+        [3936,372,0], [4032,340,1],
+
+        // ── Zone 3 — Platforming Challenge ──
+        // Over gap
+        [4160,372,1],
+        // On ascending series
+        [4416,340,0], [4544,308,1],
+        [4640,272,0], [4672,272,1],
+        // Between pipes
+        [5568,304,0], [5600,304,1],
+        // On zigzag platforms
+        [5920,340,1], [6080,272,0], [6240,340,1],
+
+        // ── Zone 4 — Mixed Terrain ──
+        // Over gap
+        [6400,368,1],
+        // On alternating blocks
+        [6656,340,1], [6752,272,0], [6848,340,1],
+        // High platform run
+        [7904,276,0], [7936,276,1],
+        // Ground-level
+        [7424,436,1], [7520,436,1],
+        // On descending staircase
+        [8288,340,1], [8384,372,0],
+
+        // ── Zone 5 — Gauntlet ──
+        // Over gap (risk/reward)
+        [8672,372,1],
+        // On tight floating platforms
+        [8928,308,0], [9024,272,1],
+        // Ground-level
+        [9408,436,1], [9472,436,0],
+        // On rapid staircase peak
+        [9920,276,0],
+        // High platform run
+        [10048,276,1], [10112,276,1],
+        // Over gap
+        [10272,372,1],
+        // Final gauntlet
+        [10528,308,0], [10656,272,1], [10752,272,0],
+
+        // ── Zone 6 — Final Stretch ──
+        // On floating blocks
+        [11136,340,1], [11200,340,1],
+        [11328,308,0], [11360,308,1],
+        // High reward platform
+        [11744,272,0], [11776,272,1],
+        // Ground trail to flag
+        [11936,436,1], [12000,436,1], [12064,436,0],
     ],
     // Enemies [pixelX, patrolLeft, patrolRight, type]
     // type: 0=journalist, 1=scientist, 2=girl, 3=lobbyist
     enemies: [
-        // Zone 1-2 (intro — journalists/scientists + first lobbyist)
-        [520, 440, 720, 0],
-        [960, 960, 1100, 1],
-        [1400, 1280, 1520, 0],
-        [1600, 1520, 1660, 3],   // lobbyist near wall at tile 52
-        [1800, 1760, 1920, 2],
-        [2100, 1952, 2240, 1],
-        [2500, 2368, 2624, 0],
-        [2560, 2500, 2560, 3],   // lobbyist in corridor near wall at tile 80
-        [2900, 2720, 3000, 2],
-        // Section 4 — lobbyist between walls at tiles 96/106
-        [3100, 3072, 3392, 0],
-        [3200, 3072, 3392, 3],   // lobbyist in enclosed area
-        [3300, 3200, 3420, 1],
-        [3700, 3550, 3800, 0],
-        // Zone 2 — lobbyists near bounce walls
-        [4100, 4000, 4200, 2],
-        [4400, 4350, 4416, 3],   // lobbyist near wall at tile 138
-        [4500, 4416, 4600, 1],
-        [4900, 4800, 5000, 0],
-        // Enclosed section — lobbyist bouncing between walls at 153/166
-        [5000, 4896, 5312, 3],   // lobbyist in walled corridor
-        [5100, 4896, 5312, 2],
-        [5300, 5200, 5400, 2],
-        [5700, 5600, 5800, 1],
-        // Zone 3 — mixed types with lobbyists near wall arenas
-        [6600,  6496,  6800,  0],
-        [7000,  6900,  7200,  1],
-        [7050,  7008,  7200,  3],  // lobbyist in wall arena at tiles 219/225
-        [7300,  7200,  7488,  2],
-        [7700,  7488,  7900,  1],
-        [8100,  8000,  8288,  2],
-        [8500,  8288,  8700,  0],
-        // Zone 3 corridor — lobbyist trapped between walls at 270/278
-        [8680,  8640,  8896,  3],  // lobbyist in ceiling corridor
-        [8750,  8640,  8896,  1],
-        // Zone 4 — gauntlet (heavy enemies + lobbyists near walls)
-        [9200,  9120,  9400,  1],
-        [9400,  9200,  9600,  2],
-        [9580,  9568,  9600,  3],  // lobbyist near wall at tile 299
-        [9700,  9600,  9920,  2],
-        [10000, 9920,  10200, 1],
-        [10200, 10100, 10400, 2],
-        // Tight corridor lobbyist between walls at 323/327
-        [10400, 10336, 10464, 3],
-        [10600, 10500, 10800, 1],
-        [10800, 10592, 11000, 2],
-        [11100, 11000, 11264, 1],
-        // Final gauntlet walls — lobbyist at wall 353
-        [11300, 11264, 11296, 3],
-        [11400, 11264, 11600, 2],
-        [11700, 11600, 11900, 1],
-        [12000, 11900, 12200, 2],
-        // Lobbyist before final wall at 377/393
-        [12100, 12064, 12200, 3],
-        [12400, 12200, 12600, 1],
+        // ── Zone 1 — Intro (easy journalists) ──
+        [480,  320,  640,  0],    // journalist on flat ground
+        [880,  768, 1024,  0],    // journalist on flat ground
+        [1600, 1500, 1700, 0],    // journalist before staircase
+
+        // ── Zone 2 — First Gaps (introduce scientists + girls) ──
+        // ground [71,95]=px 2272-3071, [98,128]=px 3136-4127
+        // pipe at tiles 104-105 = px 3328-3391
+        [2400, 2272, 2560, 1],    // scientist on ground after gap 1
+        [2800, 2720, 2944, 0],    // journalist near high platforms
+        [3250, 3136, 3320, 2],    // girl — before pipe (stops at pipe)
+        [3700, 3400, 3840, 1],    // scientist after pipe
+        [4000, 3900, 4096, 0],    // journalist near staircase
+
+        // ── Zone 3 — Platforming Challenge (mixed types) ──
+        // ground [132,160]=px 4224-5151, [164,198]=px 5248-6367
+        // pipes at tiles 170-171=px 5440-5503, tiles 178-179=px 5696-5759
+        [4500, 4320, 4700, 1],    // scientist on ground
+        [4900, 4800, 5120, 2],    // girl on ground
+        [5350, 5248, 5430, 0],    // journalist before first pipe
+        [5600, 5510, 5690, 3],    // lobbyist between pipes (clear of both)
+        [6000, 5770, 6200, 1],    // scientist after second pipe
+        [6300, 6200, 6336, 2],    // girl on ground
+
+        // ── Zone 4 — Mixed Terrain (lobbyists introduced heavily) ──
+        // ground [202,228]=px 6464-7327, [232,250]=px 7424-8031, [254,268]=px 8128-8607
+        // pipe at tiles 221-222=px 7072-7135
+        [6600, 6464, 6800, 0],    // journalist on ground
+        [6900, 6800, 7060, 3],    // lobbyist before pipe (stops at pipe)
+        [7200, 7140, 7320, 1],    // scientist after pipe (clear of pipe)
+        [7600, 7424, 7800, 2],    // girl on second ground segment
+        [7900, 7800, 8000, 0],    // journalist
+        [8200, 8128, 8350, 3],    // lobbyist on third ground segment
+
+        // ── Zone 5 — Gauntlet (heavy enemies, all types) ──
+        // ground [273,295]=px 8736-9471, [300,318]=px 9600-10207, [323,338]=px 10336-10847
+        [8800, 8736, 8960, 1],    // scientist
+        [9100, 8960, 9280, 2],    // girl
+        [9350, 9280, 9440, 3],    // lobbyist
+        [9700, 9600, 9760, 1],    // scientist (spawn on segment [300,318])
+        [9900, 9760, 10000, 2],   // girl
+        [10100, 9920, 10200, 0],  // journalist (patrol within segment)
+        [10450, 10336, 10550, 3], // lobbyist (on segment [323,338])
+        [10600, 10550, 10700, 1], // scientist
+        [10750, 10700, 10816, 2], // girl
+
+        // ── Zone 6 — Final Stretch (last enemies before flag) ──
+        // ground [342,395]=px 10944-12671
+        // pipe at tiles 360-361=px 11520-11583, staircase starts tile 375=px 12000
+        [11100, 10944, 11300, 0], // journalist on ground
+        [11400, 11300, 11510, 2], // girl (stops before pipe)
+        [11700, 11590, 11850, 3], // lobbyist (after pipe, before staircase)
+        [11950, 11860, 11990, 1], // scientist — last enemy (before staircase)
     ],
     // Power-ups [pixelX, pixelY, type]
     // type: 0=MAGA Hat, 1=Censor Bar, 2=Classified Docs
     powerups: [
-        // Zone 1-2
-        [800,  336, 0],    // MAGA Hat — double jump before first gap
-        [1536, 272, 1],
-        [2304, 208, 2],
-        [4512, 272, 1],
-        [5472, 272, 2],
-        // Zone 3-4 rewards
-        [7200, 240, 0],    // MAGA Hat — harder platforms
-        [9500, 240, 1],    // Censor Bar — invincibility for gauntlet
-        [11500, 240, 2],   // Classified Docs — tweet-blast for final stretch
+        // Zone 1 — early MAGA Hat for double jump
+        [960,  336, 0],
+        // Zone 2 — Censor Bar for first tricky enemies
+        [3200, 304, 1],
+        // Zone 3 — Classified Docs for lobbyist encounters
+        [5200, 272, 2],
+        // Zone 4 — MAGA Hat refresh
+        [7600, 272, 0],
+        // Zone 5 — Censor Bar for gauntlet survival
+        [9500, 272, 1],
+        // Zone 6 — Classified Docs for final stretch
+        [11500, 272, 2],
     ],
-    flagX: 12500,
+    flagX: 12480,
 };
 
 // ── PRELOAD SCENE ────────────────────────────────────────────
@@ -995,12 +1028,38 @@ class MenuScene extends Phaser.Scene {
             }
         }
 
-        // Start listener — any key, click, tap, or touch-button press.
-        // If audio was locked, the first press unlocks audio & starts music;
-        // the second press actually starts the game.
+        // Start listener — first press unlocks audio and starts a 5-second
+        // countdown so the player hears the menu music before advancing.
         let needsUnlock = this.sound.locked;
         let gameStarting = false;
+        let canAdvance = !needsUnlock;  // if audio was never locked, can advance immediately
         const self = this;
+
+        // Countdown text (hidden until audio unlocked)
+        const countdownText = this.add.text(sw/2, sh - 110, '', {
+            fontSize: '16px', fontFamily: 'Arial Black, Impact, sans-serif',
+            color: C.gold, stroke: '#000', strokeThickness: 3,
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(100).setAlpha(0);
+
+        const startCountdown = () => {
+            inst.setText('');
+            let remaining = 5;
+            countdownText.setText('Starting in ' + remaining + '...').setAlpha(1);
+            self.time.addEvent({
+                delay: 1000, repeat: 4,
+                callback: () => {
+                    remaining--;
+                    if (remaining > 0) {
+                        countdownText.setText('Starting in ' + remaining + '...');
+                    } else {
+                        countdownText.setText('Press or touch anywhere to play');
+                        self.tweens.add({ targets: countdownText, alpha: 0.2, duration: 600, yoyo: true, repeat: -1 });
+                        canAdvance = true;
+                    }
+                },
+            });
+        };
+
         const handler = () => {
             if (gameStarting) return;
             if (needsUnlock) {
@@ -1008,7 +1067,14 @@ class MenuScene extends Phaser.Scene {
                 if (self.menuMusic && !self.menuMusic.isPlaying) {
                     self.menuMusic.play();
                 }
+                startCountdown();
                 // Re-register for the real start
+                self.input.keyboard.once('keydown', handler);
+                self.input.once('pointerdown', handler);
+                return;
+            }
+            if (!canAdvance) {
+                // Re-register — countdown still running
                 self.input.keyboard.once('keydown', handler);
                 self.input.once('pointerdown', handler);
                 return;
@@ -1048,6 +1114,8 @@ class SpeechScene extends Phaser.Scene {
         this.cameras.main.setBackgroundColor('#000000');
         this.cameras.main.fadeIn(300);
         this._skipping = false;
+        this._canSkip = false;
+        this.time.delayedCall(5000, () => { this._canSkip = true; });
 
         // ─ Background (500x333) scaled to fit viewport
         const bgScale = Math.min(sw / 500, sh / 333);
@@ -1233,23 +1301,36 @@ class SpeechScene extends Phaser.Scene {
             this.time.delayedCall(3000, () => { if (!this._skipping) this._goToGame(); });
         }
 
-        // ─ Skip prompt
-        this.add.text(sw / 2, sh - 20, 'Press SPACE or tap JUMP to skip', {
+        // ─ Skip prompt with countdown
+        const skipText = this.add.text(sw / 2, sh - 20, '', {
             fontSize: '14px', fontFamily: 'Arial, sans-serif',
             color: '#aaaaaa',
         }).setOrigin(0.5);
+        let skipCountdown = 5;
+        skipText.setText('Skip available in ' + skipCountdown + '...');
+        this.time.addEvent({
+            delay: 1000, repeat: 4,
+            callback: () => {
+                skipCountdown--;
+                if (skipCountdown > 0) {
+                    skipText.setText('Skip available in ' + skipCountdown + '...');
+                } else {
+                    skipText.setText('Press SPACE or tap JUMP to skip');
+                }
+            },
+        });
 
-        // ─ Skip handlers (jump only)
+        // ─ Skip handlers (only after 5-second delay)
         this.input.keyboard.on('keydown', (e) => {
+            if (!this._canSkip) return;
             if (e.code === 'Space' || e.code === 'KeyW' || e.code === 'ArrowUp') {
                 this._goToGame();
             }
         });
-        // Touch: only the JUMP button (handled via TOUCH.jump flag)
         this._skipCheckTimer = this.time.addEvent({
             delay: 100, loop: true,
             callback: () => {
-                if (window.TOUCH && window.TOUCH.jump) this._goToGame();
+                if (this._canSkip && window.TOUCH && window.TOUCH.jump) this._goToGame();
             },
         });
     }
@@ -1267,11 +1348,12 @@ class SpeechScene extends Phaser.Scene {
             this.crowdSound.stop();
         }
         this.cameras.main.fadeOut(300, 0, 0, 0);
-        this.time.delayedCall(300, () => this.scene.start('Game'));
+        this.time.delayedCall(300, () => this.scene.start('Game', { lives: 3, score: 0, cholesterol: 0 }));
     }
 
     update() {
         // Detect touch-button presses (HTML overlay buttons don't reach Phaser input)
+        if (!this._canSkip) return;
         const T = window.TOUCH;
         if (!T) return;
         const down = T.left || T.right || T.jump || T.tweet;
@@ -1641,9 +1723,80 @@ class GameScene extends Phaser.Scene {
             this.bgm = this.sound.add('bgm', { loop: true, volume: 0.3 });
             this.bgm.play();
         }
+
+        // ─ Power-up tutorial popup (shown once per fresh game, not on death restart)
+        this.tutorialShowing = false;
+        if (this.lives === 3 && this.score === 0) {
+            this.tutorialShowing = true;
+            this.physics.pause();
+
+            const ox = sw / 2, oy = sh / 2;
+            const tutGroup = [];
+
+            // Overlay
+            const oBg = this.add.rectangle(ox, oy, sw, sh, 0x000000, 0.75)
+                .setScrollFactor(0).setDepth(300);
+            tutGroup.push(oBg);
+
+            // Title
+            const tTitle = this.add.text(ox, oy - 120, 'POWER-UPS', {
+                fontSize: '28px', fontFamily: 'Arial Black, Impact, sans-serif',
+                color: C.gold, stroke: '#000', strokeThickness: 4,
+            }).setOrigin(0.5).setScrollFactor(0).setDepth(301);
+            tutGroup.push(tTitle);
+
+            // Power-up entries
+            const entries = [
+                { icon: 0xFFDD44, label: 'MAGA HAT', desc: 'Permanent double jump.\nPress jump again mid-air!' },
+                { icon: 0x222222, label: 'CENSOR BAR', desc: 'Invincible for 10 seconds.\nRun through everything!' },
+                { icon: 0xCC2222, label: 'CLASSIFIED DOCS', desc: 'Press Z to fire tweets\nfor 15 seconds!' },
+            ];
+            entries.forEach((e, i) => {
+                const ey = oy - 55 + i * 65;
+                const iconBg = this.add.rectangle(ox - 160, ey, 36, 36, e.icon, 1)
+                    .setScrollFactor(0).setDepth(301).setStrokeStyle(2, 0xFFFFFF);
+                tutGroup.push(iconBg);
+                const eName = this.add.text(ox - 135, ey - 14, e.label, {
+                    fontSize: '16px', fontFamily: 'Arial Black, sans-serif',
+                    color: '#FFFFFF', stroke: '#000', strokeThickness: 2,
+                }).setOrigin(0, 0).setScrollFactor(0).setDepth(301);
+                tutGroup.push(eName);
+                const eDesc = this.add.text(ox - 135, ey + 6, e.desc, {
+                    fontSize: '12px', fontFamily: 'Arial, sans-serif',
+                    color: '#CCCCCC', stroke: '#000', strokeThickness: 1,
+                }).setOrigin(0, 0).setScrollFactor(0).setDepth(301);
+                tutGroup.push(eDesc);
+            });
+
+            // Dismiss prompt
+            const dText = this.add.text(ox, oy + 135, _isTouchDevice ? 'TAP ANYWHERE TO START' : 'PRESS ANY KEY TO START', {
+                fontSize: '16px', fontFamily: 'Arial, sans-serif',
+                color: C.white, stroke: '#000', strokeThickness: 2,
+            }).setOrigin(0.5).setScrollFactor(0).setDepth(301);
+            this.tweens.add({ targets: dText, alpha: 0.3, duration: 500, yoyo: true, repeat: -1 });
+            tutGroup.push(dText);
+
+            const dismissTutorial = () => {
+                if (!this.tutorialShowing) return;
+                this.tutorialShowing = false;
+                tutGroup.forEach(obj => obj.destroy());
+                this.physics.resume();
+            };
+            this.input.keyboard.once('keydown', dismissTutorial);
+            this.input.once('pointerdown', dismissTutorial);
+            this._tutorialDismiss = dismissTutorial;
+        }
     }
 
     update(_time, delta) {
+        if (this.tutorialShowing) {
+            // Allow touch-button dismiss
+            const T = window.TOUCH;
+            if (T && (T.left || T.right || T.jump || T.tweet) && this._tutorialDismiss) {
+                this._tutorialDismiss();
+            }
+            return;
+        }
         if (this.dead || this.won) return;
 
         const p = this.player;
@@ -2472,7 +2625,7 @@ class GameScene extends Phaser.Scene {
             const flag = this._addDonateButtons(ow/2, oh/2 + 75, '14px');
 
             const doRestart = () => {
-                this.scene.restart({ lives: this.lives, score: this.score, cholesterol: this.cholesterol });
+                this.scene.restart({ lives: this.lives, score: 0, cholesterol: 0 });
             };
             this.input.keyboard.once('keydown-SPACE', doRestart);
             this.input.once('pointerdown', () => {
@@ -2516,7 +2669,7 @@ class GameScene extends Phaser.Scene {
 
             const flag = this._addDonateButtons(ow/2, oh/2 + 120, '16px');
 
-            const goMenu = () => { this.scene.start('Menu'); };
+            const goMenu = () => { this.scene.start('Menu', { reset: true }); };
             this.input.keyboard.once('keydown-SPACE', goMenu);
             this.input.once('pointerdown', () => {
                 if (flag.clicked) return;
@@ -2594,7 +2747,7 @@ class GameScene extends Phaser.Scene {
 
             const flag = this._addDonateButtons(ow/2, oh/2 + 130, '16px');
 
-            const goMenu = () => { this.scene.start('Menu'); };
+            const goMenu = () => { this.scene.start('Menu', { reset: true }); };
             this.input.keyboard.once('keydown-SPACE', goMenu);
             this.input.once('pointerdown', () => {
                 if (flag.clicked) return;
@@ -2641,6 +2794,20 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
+
+// ── Wake Lock — prevent mobile screen from sleeping during gameplay ──
+let _wakeLock = null;
+async function requestWakeLock() {
+    if ('wakeLock' in navigator) {
+        try { _wakeLock = await navigator.wakeLock.request('screen'); }
+        catch (e) { /* Wake Lock denied or unsupported — ignore */ }
+    }
+}
+requestWakeLock();
+// Re-acquire wake lock when tab becomes visible again (lock is released on tab hide)
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') requestWakeLock();
+});
 
 // Force canvas to top of screen on mobile (CSS media query may not match all browsers)
 if (_isMobilePortrait) {
