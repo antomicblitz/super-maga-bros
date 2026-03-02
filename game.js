@@ -794,7 +794,7 @@ class PreloadScene extends Phaser.Scene {
         this.add.rectangle(cx, cy, barMaxW + 4, 24, 0x333333);
         const bar = this.add.rectangle(barLeft, cy, 0, 20, 0xFFD700).setOrigin(0, 0.5);
         this.add.text(cx, cy - 30, 'LOADING...', {
-            fontSize: '16px', fontFamily: 'Arial Black', color: '#FFD700'
+            fontSize: '16px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold', color: '#FFD700'
         }).setOrigin(0.5);
         this.load.on('progress', v => { bar.width = barMaxW * v; });
 
@@ -978,15 +978,15 @@ class MenuScene extends Phaser.Scene {
 
             // Title shadow
             this.add.text(sw/2 + 3, 83, 'SUPER MAGA BROS.', {
-                fontSize: '48px', fontFamily: 'Arial Black, Impact, sans-serif',
+                fontSize: '48px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                 fontStyle: 'bold', color: '#000000',
             }).setOrigin(0.5);
 
             // Title text
             this.add.text(sw/2, 80, 'SUPER MAGA BROS.', {
-                fontSize: '48px', fontFamily: 'Arial Black, Impact, sans-serif',
+                fontSize: '48px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                 fontStyle: 'bold', color: C.gold,
-                stroke: C.capRed, strokeThickness: 5,
+                stroke: C.capRed, strokeThickness: 3,
             }).setOrigin(0.5);
 
             // Subtitle
@@ -1011,14 +1011,14 @@ class MenuScene extends Phaser.Scene {
 
         // "Press to play" prompt + credit (overlaid on cover image)
         const inst = this.add.text(sw/2, sh - 80, 'Press or touch anywhere to play', {
-            fontSize: '22px', fontFamily: 'Arial Black, Impact, sans-serif',
+            fontSize: '22px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
             color: C.white, stroke: C.navy, strokeThickness: 3,
         }).setOrigin(0.5);
         this.tweens.add({ targets: inst, alpha: 0.2, duration: 600, yoyo: true, repeat: -1 });
         this.add.rectangle(sw/2, sh - 48, 240, 24, 0x000000, 0.6).setOrigin(0.5);
         this.add.text(sw/2, sh - 48, 'created by Antonio Lamb', {
-            fontSize: '15px', fontFamily: 'Arial Black, Impact, sans-serif',
-            color: '#FFFFFF', stroke: '#000', strokeThickness: 4,
+            fontSize: '15px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
+            color: '#FFFFFF', stroke: '#000', strokeThickness: 2,
         }).setOrigin(0.5);
 
         // Menu background music
@@ -1038,7 +1038,7 @@ class MenuScene extends Phaser.Scene {
 
         // Countdown text (hidden until audio unlocked)
         const countdownText = this.add.text(sw/2, sh - 110, '', {
-            fontSize: '16px', fontFamily: 'Arial Black, Impact, sans-serif',
+            fontSize: '16px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
             color: C.gold, stroke: '#000', strokeThickness: 3,
         }).setOrigin(0.5).setScrollFactor(0).setDepth(100).setAlpha(0);
 
@@ -1743,8 +1743,8 @@ class GameScene extends Phaser.Scene {
 
             // Title
             const tTitle = this.add.text(ox, oy - 140, 'POWER-UPS & ABILITIES', {
-                fontSize: '26px', fontFamily: 'Arial Black, Impact, sans-serif',
-                color: C.gold, stroke: '#000', strokeThickness: 4,
+                fontSize: '26px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
+                color: C.gold, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(301);
             tutGroup.push(tTitle);
 
@@ -1775,7 +1775,7 @@ class GameScene extends Phaser.Scene {
                 icon.setDisplaySize(40, 40).setScrollFactor(0).setDepth(302);
                 tutGroup.push(icon);
                 const eName = this.add.text(ox - 130, ey - 10, e.label, {
-                    fontSize: '16px', fontFamily: 'Arial Black, sans-serif',
+                    fontSize: '16px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                     color: '#FFFFFF', stroke: '#000', strokeThickness: 2,
                 }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(302);
                 tutGroup.push(eName);
@@ -2104,7 +2104,7 @@ class GameScene extends Phaser.Scene {
 
         const popupMsg = type === 0 ? 'DOUBLE JUMP!' : pt.name + '!';
         const popup = this.add.text(powerup.x, powerup.y, popupMsg, {
-            fontSize: '12px', fontFamily: 'Arial Black', fontStyle: 'bold',
+            fontSize: '12px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold', fontStyle: 'bold',
             color: '#88FF88', stroke: '#000', strokeThickness: 2,
         }).setOrigin(0.5).setDepth(50);
         this.tweens.add({
@@ -2176,7 +2176,7 @@ class GameScene extends Phaser.Scene {
 
         const popup = this.add.text(enemy.x, enemy.y - 10,
             '+' + bonus + ' CHAIN!', {
-            fontSize: '13px', fontFamily: 'Arial Black',
+            fontSize: '13px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
             color: '#FF6666', stroke: '#000', strokeThickness: 2,
         }).setOrigin(0.5).setDepth(50);
         this.tweens.add({
@@ -2224,7 +2224,7 @@ class GameScene extends Phaser.Scene {
                 this.score += 200;
                 const popup = this.add.text(slidingCase.x, slidingCase.y,
                     '+200 CAUGHT!', {
-                    fontSize: '13px', fontFamily: 'Arial Black',
+                    fontSize: '13px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                     color: '#FFD700', stroke: '#000', strokeThickness: 2,
                 }).setOrigin(0.5).setDepth(50);
                 this.tweens.add({
@@ -2250,7 +2250,7 @@ class GameScene extends Phaser.Scene {
 
         const popup = this.add.text(slidingCase.x, slidingCase.y,
             '+500 BIGLY!', {
-            fontSize: '16px', fontFamily: 'Arial Black',
+            fontSize: '16px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
             color: '#FFD700', stroke: '#000', strokeThickness: 3,
         }).setOrigin(0.5).setDepth(50);
         this.tweens.add({
@@ -2391,7 +2391,7 @@ class GameScene extends Phaser.Scene {
         }
 
         const cashPopup = this.add.text(x, y, '+CASH!', {
-            fontSize: '16px', fontFamily: 'Arial Black',
+            fontSize: '16px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
             color: '#FFD700', stroke: '#000', strokeThickness: 3,
         }).setOrigin(0.5).setDepth(50);
         this.tweens.add({
@@ -2590,7 +2590,7 @@ class GameScene extends Phaser.Scene {
 
         // Tagline above buttons
         this.add.text(cx, y - btnH / 2 - 18, 'Enjoyed the game? Fund open science!', {
-            fontSize: '13px', fontFamily: 'Arial Black, sans-serif',
+            fontSize: '13px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
             color: C.gold, stroke: '#000', strokeThickness: 3,
         }).setOrigin(0.5).setScrollFactor(0).setDepth(203);
 
@@ -2599,7 +2599,7 @@ class GameScene extends Phaser.Scene {
                 .setOrigin(0.5).setScrollFactor(0).setDepth(202).setStrokeStyle(3, 0xFFDD44)
                 .setInteractive({ useHandCursor: true });
             this.add.text(cx - btnW/2 - gap/2, y - 6, '\u2764 SUPPORT US', {
-                fontSize: fs, fontFamily: 'Arial Black, sans-serif',
+                fontSize: fs, fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                 color: '#FFFFFF', stroke: '#000', strokeThickness: 3,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(203);
             this.add.text(cx - btnW/2 - gap/2, y + 10, 'Tap here to donate', {
@@ -2618,7 +2618,7 @@ class GameScene extends Phaser.Scene {
                 .setOrigin(0.5).setScrollFactor(0).setDepth(202).setStrokeStyle(3, 0x66AAFF)
                 .setInteractive({ useHandCursor: true });
             this.add.text(cx + btnW/2 + gap/2, y - 6, '\u20BF CRYPTO', {
-                fontSize: fs, fontFamily: 'Arial Black, sans-serif',
+                fontSize: fs, fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                 color: '#FFFFFF', stroke: '#000', strokeThickness: 3,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(203);
             this.add.text(cx + btnW/2 + gap/2, y + 10, 'Tap here to donate', {
@@ -2647,8 +2647,8 @@ class GameScene extends Phaser.Scene {
 
         this.time.delayedCall(400, () => {
             this.add.text(ow/2, oh/2 - 30, 'LIVES: ' + this.lives, {
-                fontSize: '32px', fontFamily: 'Arial Black, Impact, sans-serif',
-                color: C.white, stroke: '#000', strokeThickness: 4,
+                fontSize: '32px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
+                color: C.white, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
             const cont = this.add.text(ow/2, oh/2 + 20, _isTouchDevice ? 'TAP JUMP TO CONTINUE' : 'PRESS SPACE TO CONTINUE', {
@@ -2694,12 +2694,12 @@ class GameScene extends Phaser.Scene {
 
         this.time.delayedCall(500, () => {
             this.add.text(ow/2, oh/2 - 40, 'GAME OVER', {
-                fontSize: '48px', fontFamily: 'Arial Black, Impact, sans-serif',
-                color: C.capRed, stroke: '#000', strokeThickness: 5,
+                fontSize: '48px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
+                color: C.capRed, stroke: '#000', strokeThickness: 3,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
             this.add.text(ow/2, oh/2 + 20, 'FINAL SCORE: ' + this.score, {
-                fontSize: '22px', fontFamily: 'Arial Black, Impact, sans-serif',
+                fontSize: '22px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                 color: C.gold, stroke: '#000', strokeThickness: 3,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
@@ -2771,17 +2771,17 @@ class GameScene extends Phaser.Scene {
 
         this.time.delayedCall(400, () => {
             this.add.text(ow/2, oh/2 - 60, 'LEVEL COMPLETE!', {
-                fontSize: '42px', fontFamily: 'Arial Black, Impact, sans-serif',
-                color: C.gold, stroke: C.capRed, strokeThickness: 5,
+                fontSize: '42px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
+                color: C.gold, stroke: C.capRed, strokeThickness: 3,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
             this.add.text(ow/2, oh/2, 'SCORE: ' + this.score, {
-                fontSize: '26px', fontFamily: 'Arial Black, Impact, sans-serif',
+                fontSize: '26px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                 color: C.white, stroke: '#000', strokeThickness: 3,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
             this.add.text(ow/2, oh/2 + 40, 'CHOLESTEROL: ' + this.cholesterol, {
-                fontSize: '20px', fontFamily: 'Arial Black, Impact, sans-serif',
+                fontSize: '20px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                 color: C.gold, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
