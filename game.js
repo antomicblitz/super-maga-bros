@@ -1646,6 +1646,8 @@ class GameScene extends Phaser.Scene {
         this.physics.add.overlap(this.player, this.flag, this.reachFlag, null, this);
         this.physics.add.overlap(this.player, this.powerupGroup, this.collectPowerUp, null, this);
         this.physics.add.overlap(this.tweetGroup, this.enemyGroup, this.tweetHitEnemy, null, this);
+        this.physics.add.collider(this.tweetGroup, this.groundGroup, (tweet) => { if (tweet.active) tweet.destroy(); });
+        this.physics.add.collider(this.tweetGroup, this.platformGroup, (tweet) => { if (tweet.active) tweet.destroy(); });
 
         this.physics.add.collider(this.caseGroup, this.groundGroup);
         this.physics.add.collider(this.caseGroup, this.platformGroup);
@@ -1938,8 +1940,8 @@ class GameScene extends Phaser.Scene {
         });
 
         // ─ Parallax (mobile only — disabled on desktop to prevent black bar)
+        const camX = this.cameras.main.scrollX;
         if (_isTouchDevice) {
-            const camX = this.cameras.main.scrollX;
             this.farHills.tilePositionX = camX * 0.15;
             this.nearHills.tilePositionX = camX * 0.35;
         }
