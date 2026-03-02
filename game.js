@@ -766,18 +766,18 @@ const LEVEL = {
     // Power-ups [pixelX, pixelY, type]
     // type: 0=MAGA Hat, 1=Censor Bar, 2=Classified Docs
     powerups: [
-        // Zone 1 — early MAGA Hat for double jump
-        [960,  336, 0],
-        // Zone 2 — Censor Bar for first tricky enemies
-        [3200, 304, 1],
-        // Zone 3 — Classified Docs for lobbyist encounters
-        [5200, 272, 2],
-        // Zone 4 — MAGA Hat refresh
-        [7600, 272, 0],
-        // Zone 5 — Censor Bar for gauntlet survival
-        [9500, 272, 1],
-        // Zone 6 — Classified Docs for final stretch
-        [11500, 272, 2],
+        // Zone 1 — MAGA Hat above high platform [30, 304, 3] (tiles 30-32, px 960-1055)
+        [1008, 268, 0],
+        // Zone 2 — Censor Bar above high row [86, 304, 4] (tiles 86-89, px 2752-2879)
+        [2816, 268, 1],
+        // Zone 3 — Classified Docs above high platform [145, 304, 3] (tiles 145-147, px 4640-4735)
+        [4688, 268, 2],
+        // Zone 4 — MAGA Hat above high run [246, 308, 4] (tiles 246-249, px 7872-7967)
+        [7920, 272, 0],
+        // Zone 5 — Censor Bar above high run [312, 308, 4] (tiles 312-315, px 9984-10079)
+        [10016, 272, 1],
+        // Zone 6 — Classified Docs above high platform [366, 304, 3] (tiles 366-368, px 11712-11807)
+        [11760, 268, 2],
     ],
     flagX: 12480,
 };
@@ -1015,9 +1015,10 @@ class MenuScene extends Phaser.Scene {
             color: C.white, stroke: C.navy, strokeThickness: 3,
         }).setOrigin(0.5);
         this.tweens.add({ targets: inst, alpha: 0.2, duration: 600, yoyo: true, repeat: -1 });
-        this.add.text(sw/2, sh - 50, 'created by Antonio Lamb', {
-            fontSize: '14px', fontFamily: 'Arial, sans-serif',
-            color: C.gold, stroke: '#000', strokeThickness: 2,
+        this.add.rectangle(sw/2, sh - 48, 240, 24, 0x000000, 0.6).setOrigin(0.5);
+        this.add.text(sw/2, sh - 48, 'created by Antonio Lamb', {
+            fontSize: '15px', fontFamily: 'Arial Black, Impact, sans-serif',
+            color: '#FFFFFF', stroke: '#000', strokeThickness: 4,
         }).setOrigin(0.5);
 
         // Menu background music
@@ -1115,7 +1116,7 @@ class SpeechScene extends Phaser.Scene {
         this.cameras.main.fadeIn(300);
         this._skipping = false;
         this._canSkip = false;
-        this.time.delayedCall(5000, () => { this._canSkip = true; });
+        this.time.delayedCall(10000, () => { this._canSkip = true; });
 
         // ─ Background (500x333) scaled to fit viewport
         const bgScale = Math.min(sw / 500, sh / 333);
@@ -1306,10 +1307,10 @@ class SpeechScene extends Phaser.Scene {
             fontSize: '14px', fontFamily: 'Arial, sans-serif',
             color: '#aaaaaa',
         }).setOrigin(0.5);
-        let skipCountdown = 5;
+        let skipCountdown = 10;
         skipText.setText('Skip available in ' + skipCountdown + '...');
         this.time.addEvent({
-            delay: 1000, repeat: 4,
+            delay: 1000, repeat: 9,
             callback: () => {
                 skipCountdown--;
                 if (skipCountdown > 0) {
@@ -1745,23 +1746,30 @@ class GameScene extends Phaser.Scene {
             }).setOrigin(0.5).setScrollFactor(0).setDepth(301);
             tutGroup.push(tTitle);
 
-            // Power-up entries
+            // Power-up entries with actual sprites
+            const AL = window.ASSETS_LOADED || {};
+            const powerExt = T.powerExt;
             const entries = [
-                { icon: 0xFFDD44, label: 'MAGA HAT', desc: 'Permanent double jump.\nPress jump again mid-air!' },
-                { icon: 0x222222, label: 'CENSOR BAR', desc: 'Invincible for 10 seconds.\nRun through everything!' },
-                { icon: 0xCC2222, label: 'CLASSIFIED DOCS', desc: 'Press Z to fire tweets\nfor 15 seconds!' },
+                { texKey: AL.hat ? 'hat-ext' : (powerExt ? 'powerups-ext' : 'powerup0'), frame: powerExt ? 0 : undefined,
+                  label: 'MAGA HAT', desc: 'Permanent double jump.\nPress jump again mid-air!' },
+                { texKey: AL.bar ? 'bar-ext' : (powerExt ? 'powerups-ext' : 'powerup1'), frame: powerExt ? 1 : undefined,
+                  label: 'CENSOR BAR', desc: 'Invincible for 10 seconds.\nRun through everything!' },
+                { texKey: AL.classifiedDocs ? 'classified-docs-ext' : (powerExt ? 'powerups-ext' : 'powerup2'), frame: powerExt ? 2 : undefined,
+                  label: 'CLASSIFIED DOCS', desc: 'Press Z to fire tweets\nfor 15 seconds!' },
             ];
             entries.forEach((e, i) => {
                 const ey = oy - 55 + i * 65;
-                const iconBg = this.add.rectangle(ox - 160, ey, 36, 36, e.icon, 1)
-                    .setScrollFactor(0).setDepth(301).setStrokeStyle(2, 0xFFFFFF);
-                tutGroup.push(iconBg);
-                const eName = this.add.text(ox - 135, ey - 14, e.label, {
+                const icon = (e.frame !== undefined)
+                    ? this.add.sprite(ox - 160, ey, e.texKey, e.frame)
+                    : this.add.image(ox - 160, ey, e.texKey);
+                icon.setDisplaySize(40, 40).setScrollFactor(0).setDepth(301);
+                tutGroup.push(icon);
+                const eName = this.add.text(ox - 130, ey - 14, e.label, {
                     fontSize: '16px', fontFamily: 'Arial Black, sans-serif',
                     color: '#FFFFFF', stroke: '#000', strokeThickness: 2,
                 }).setOrigin(0, 0).setScrollFactor(0).setDepth(301);
                 tutGroup.push(eName);
-                const eDesc = this.add.text(ox - 135, ey + 6, e.desc, {
+                const eDesc = this.add.text(ox - 130, ey + 6, e.desc, {
                     fontSize: '12px', fontFamily: 'Arial, sans-serif',
                     color: '#CCCCCC', stroke: '#000', strokeThickness: 1,
                 }).setOrigin(0, 0).setScrollFactor(0).setDepth(301);
@@ -2642,8 +2650,15 @@ class GameScene extends Phaser.Scene {
     }
 
     showGameOver() {
+        let gameOverSound = null;
+        let canSkipGameOver = true;
         if (this.cache.audio.has('snd-game-over')) {
-            try { this.sound.play('snd-game-over', { volume: 0.3 }); } catch(e) {}
+            try {
+                gameOverSound = this.sound.add('snd-game-over', { volume: 0.3 });
+                gameOverSound.play();
+                canSkipGameOver = false;
+                gameOverSound.once('complete', () => { canSkipGameOver = true; });
+            } catch(e) {}
         }
         const ow = this.scale.width, oh = this.scale.height;
         const overlay = this.add.rectangle(ow/2, oh/2, ow, oh, 0x000000, 0.7).setScrollFactor(0).setDepth(200);
@@ -2669,9 +2684,13 @@ class GameScene extends Phaser.Scene {
 
             const flag = this._addDonateButtons(ow/2, oh/2 + 120, '16px');
 
-            const goMenu = () => { this.scene.start('Menu', { reset: true }); };
-            this.input.keyboard.once('keydown-SPACE', goMenu);
-            this.input.once('pointerdown', () => {
+            const goMenu = () => {
+                if (!canSkipGameOver) return;
+                if (gameOverSound && gameOverSound.isPlaying) gameOverSound.stop();
+                this.scene.start('Menu', { reset: true });
+            };
+            this.input.keyboard.on('keydown-SPACE', goMenu);
+            this.input.on('pointerdown', () => {
                 if (flag.clicked) return;
                 goMenu();
             });
