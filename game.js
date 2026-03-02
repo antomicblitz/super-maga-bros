@@ -1405,7 +1405,7 @@ class GameScene extends Phaser.Scene {
             this.skyImg = this.add.image(0, GROUND_Y + TILE, skyKey)
                 .setOrigin(0, 1)           // anchor bottom-left
                 .setScale(bgScale)
-                .setScrollFactor(0.03, 0)  // slow horizontal parallax, fixed vertical
+                .setScrollFactor(_isTouchDevice ? 0.03 : 0, 0)  // parallax on mobile only; disabled on desktop to prevent black bar
                 .setDepth(-10);
         } else {
             // Procedural sky: tileSprite for seamless tiling
@@ -1937,10 +1937,12 @@ class GameScene extends Phaser.Scene {
             }
         });
 
-        // ─ Parallax
-        const camX = this.cameras.main.scrollX;
-        this.farHills.tilePositionX = camX * 0.15;
-        this.nearHills.tilePositionX = camX * 0.35;
+        // ─ Parallax (mobile only — disabled on desktop to prevent black bar)
+        if (_isTouchDevice) {
+            const camX = this.cameras.main.scrollX;
+            this.farHills.tilePositionX = camX * 0.15;
+            this.nearHills.tilePositionX = camX * 0.35;
+        }
 
         // ─ Censor bar follows player + sparkle
         if (this.censorBar && this.censorBar.visible) {
