@@ -981,19 +981,19 @@ class MenuScene extends Phaser.Scene {
             // Title shadow
             this.add.text(sw/2 + 3, 83, 'SUPER MAGA BROS.', {
                 fontSize: '48px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
-                fontStyle: 'bold', color: '#000000',
+                color: '#000000',
             }).setOrigin(0.5);
 
             // Title text
             this.add.text(sw/2, 80, 'SUPER MAGA BROS.', {
                 fontSize: '48px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
-                fontStyle: 'bold', color: C.gold,
+                color: C.gold,
                 stroke: C.capRed, strokeThickness: 2,
             }).setOrigin(0.5);
 
             // Subtitle
             this.add.text(sw/2, 130, 'MAKE PLATFORMING GREAT AGAIN', {
-                fontSize: '14px', fontFamily: 'Arial, sans-serif',
+                fontSize: '14px', fontFamily: 'Arial, Helvetica, sans-serif',
                 fontStyle: 'bold', color: C.white,
             }).setOrigin(0.5);
 
@@ -1239,7 +1239,7 @@ class SpeechScene extends Phaser.Scene {
             bubbleX, textTopY,
             speechText, {
             fontSize: speechFontSize + 'px',
-            fontFamily: 'Arial, sans-serif',
+            fontFamily: 'Arial, Helvetica, sans-serif',
             color: '#000000',
             wordWrap: { width: bubbleW - padX * 2 },
             lineSpacing: 2,
@@ -1306,7 +1306,7 @@ class SpeechScene extends Phaser.Scene {
 
         // ─ Skip prompt with countdown
         const skipText = this.add.text(sw / 2, sh - 20, '', {
-            fontSize: '14px', fontFamily: 'Arial, sans-serif',
+            fontSize: '14px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
             color: '#aaaaaa',
         }).setOrigin(0.5);
         let skipCountdown = 10;
@@ -1700,7 +1700,7 @@ class GameScene extends Phaser.Scene {
         if (!isMobile) {
             var ctrlHint = this.add.text(sw / 2, sh - 16,
                 'ARROWS/WASD: Move   SPACE: Jump   Z: Tweet   X: Shart', {
-                fontSize: '12px', fontFamily: 'Arial, sans-serif',
+                fontSize: '12px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                 color: '#ffffff', stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(100).setAlpha(0.8);
             this.tweens.add({
@@ -1782,7 +1782,7 @@ class GameScene extends Phaser.Scene {
                 }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(302);
                 tutGroup.push(eName);
                 const eDesc = this.add.text(ox - 130, ey + 12, e.desc, {
-                    fontSize: '12px', fontFamily: 'Arial, sans-serif',
+                    fontSize: '13px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                     color: '#CCCCCC', stroke: '#000', strokeThickness: 1,
                 }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(302);
                 tutGroup.push(eDesc);
@@ -1790,7 +1790,7 @@ class GameScene extends Phaser.Scene {
 
             // Dismiss prompt
             const dText = this.add.text(ox, oy + 155, _isTouchDevice ? 'TAP ANYWHERE TO START' : 'PRESS ANY KEY TO START', {
-                fontSize: '16px', fontFamily: 'Arial, sans-serif',
+                fontSize: '18px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                 color: C.white, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(301);
             this.tweens.add({ targets: dText, alpha: 0.3, duration: 500, yoyo: true, repeat: -1 });
@@ -2639,7 +2639,7 @@ class GameScene extends Phaser.Scene {
             });
         }
         this.add.text(cx, y + btnH / 2 + 10, 'Lambda Biolab \u2022 Open Science for Everyone', {
-            fontSize: '11px', fontFamily: 'Arial, sans-serif',
+            fontSize: '12px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
             color: '#cccccc', stroke: '#000', strokeThickness: 2,
         }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(201);
         return flag;
@@ -2652,18 +2652,18 @@ class GameScene extends Phaser.Scene {
         this.tweens.add({ targets: overlay, alpha: 1, duration: 400 });
 
         this.time.delayedCall(400, () => {
-            this.add.text(ow/2, oh/2 - 30, 'LIVES: ' + this.lives, {
+            this.add.text(ow/2, oh/2 - 40, 'LIVES: ' + this.lives, {
                 fontSize: '32px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                 color: C.white, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
-            const cont = this.add.text(ow/2, oh/2 + 20, _isTouchDevice ? 'TAP JUMP TO CONTINUE' : 'PRESS SPACE TO CONTINUE', {
-                fontSize: '16px', fontFamily: 'Arial, sans-serif',
+            const cont = this.add.text(ow/2, oh/2 + 10, _isTouchDevice ? 'TAP JUMP TO CONTINUE' : 'PRESS SPACE TO CONTINUE', {
+                fontSize: '20px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                 color: C.white, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
             this.tweens.add({ targets: cont, alpha: 0.3, duration: 500, yoyo: true, repeat: -1 });
 
-            const flag = this._addDonateButtons(ow/2, oh/2 + 75, '14px');
+            const flag = this._addDonateButtons(ow/2, oh/2 + 100, '14px');
 
             const doRestart = () => {
                 this.scene.restart({ lives: this.lives, score: 0, cholesterol: 0 });
@@ -2699,23 +2699,23 @@ class GameScene extends Phaser.Scene {
         this.tweens.add({ targets: overlay, alpha: 1, duration: 500 });
 
         this.time.delayedCall(500, () => {
-            this.add.text(ow/2, oh/2 - 40, 'GAME OVER', {
+            this.add.text(ow/2, oh/2 - 50, 'GAME OVER', {
                 fontSize: '48px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                 color: C.capRed, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
-            this.add.text(ow/2, oh/2 + 20, 'FINAL SCORE: ' + this.score, {
+            this.add.text(ow/2, oh/2 + 10, 'FINAL SCORE: ' + this.score, {
                 fontSize: '22px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                 color: C.gold, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
-            const restart = this.add.text(ow/2, oh/2 + 70, _isTouchDevice ? 'TAP JUMP TO TRY AGAIN' : 'PRESS SPACE TO TRY AGAIN', {
-                fontSize: '18px', fontFamily: 'Arial, sans-serif',
+            const restart = this.add.text(ow/2, oh/2 + 60, _isTouchDevice ? 'TAP JUMP TO TRY AGAIN' : 'PRESS SPACE TO TRY AGAIN', {
+                fontSize: '20px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                 color: C.white, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
             this.tweens.add({ targets: restart, alpha: 0.3, duration: 500, yoyo: true, repeat: -1 });
 
-            const flag = this._addDonateButtons(ow/2, oh/2 + 160, '16px');
+            const flag = this._addDonateButtons(ow/2, oh/2 + 155, '16px');
 
             const goMenu = () => {
                 if (!canSkipGameOver) return;
@@ -2776,28 +2776,28 @@ class GameScene extends Phaser.Scene {
         this.tweens.add({ targets: overlay, alpha: 1, duration: 500 });
 
         this.time.delayedCall(400, () => {
-            this.add.text(ow/2, oh/2 - 60, 'LEVEL COMPLETE!', {
+            this.add.text(ow/2, oh/2 - 85, 'LEVEL COMPLETE!', {
                 fontSize: '42px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                 color: C.gold, stroke: C.capRed, strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
-            this.add.text(ow/2, oh/2, 'SCORE: ' + this.score, {
+            this.add.text(ow/2, oh/2 - 25, 'SCORE: ' + this.score, {
                 fontSize: '26px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                 color: C.white, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
-            this.add.text(ow/2, oh/2 + 40, 'CHOLESTEROL: ' + this.cholesterol, {
+            this.add.text(ow/2, oh/2 + 15, 'CHOLESTEROL: ' + this.cholesterol, {
                 fontSize: '20px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                 color: C.gold, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
-            const cont = this.add.text(ow/2, oh/2 + 90, _isTouchDevice ? 'TAP JUMP FOR MENU' : 'PRESS SPACE FOR MENU', {
-                fontSize: '18px', fontFamily: 'Arial, sans-serif',
+            const cont = this.add.text(ow/2, oh/2 + 55, _isTouchDevice ? 'TAP JUMP FOR MENU' : 'PRESS SPACE FOR MENU', {
+                fontSize: '20px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                 color: C.white, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
             this.tweens.add({ targets: cont, alpha: 0.3, duration: 500, yoyo: true, repeat: -1 });
 
-            const flag = this._addDonateButtons(ow/2, oh/2 + 130, '16px');
+            const flag = this._addDonateButtons(ow/2, oh/2 + 150, '16px');
 
             const goMenu = () => { this.scene.start('Menu', { reset: true }); };
             this.input.keyboard.once('keydown-SPACE', goMenu);
