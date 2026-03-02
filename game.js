@@ -1772,15 +1772,15 @@ class GameScene extends Phaser.Scene {
                     : this.add.image(ox - 160, ey, e.texKey);
                 icon.setDisplaySize(40, 40).setScrollFactor(0).setDepth(302);
                 tutGroup.push(icon);
-                const eName = this.add.text(ox - 130, ey - 14, e.label, {
+                const eName = this.add.text(ox - 130, ey - 10, e.label, {
                     fontSize: '16px', fontFamily: 'Arial Black, sans-serif',
                     color: '#FFFFFF', stroke: '#000', strokeThickness: 2,
-                }).setOrigin(0, 0).setScrollFactor(0).setDepth(302);
+                }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(302);
                 tutGroup.push(eName);
-                const eDesc = this.add.text(ox - 130, ey + 6, e.desc, {
+                const eDesc = this.add.text(ox - 130, ey + 12, e.desc, {
                     fontSize: '12px', fontFamily: 'Arial, sans-serif',
                     color: '#CCCCCC', stroke: '#000', strokeThickness: 1,
-                }).setOrigin(0, 0).setScrollFactor(0).setDepth(302);
+                }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(302);
                 tutGroup.push(eDesc);
             });
 
