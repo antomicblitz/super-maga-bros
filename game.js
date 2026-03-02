@@ -988,7 +988,7 @@ class MenuScene extends Phaser.Scene {
             this.add.text(sw/2, 80, 'SUPER MAGA BROS.', {
                 fontSize: '48px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                 fontStyle: 'bold', color: C.gold,
-                stroke: C.capRed, strokeThickness: 3,
+                stroke: C.capRed, strokeThickness: 2,
             }).setOrigin(0.5);
 
             // Subtitle
@@ -1014,7 +1014,7 @@ class MenuScene extends Phaser.Scene {
         // "Press to play" prompt + credit (overlaid on cover image)
         const inst = this.add.text(sw/2, sh - 80, 'Press or touch anywhere to play', {
             fontSize: '22px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
-            color: C.white, stroke: C.navy, strokeThickness: 3,
+            color: C.white, stroke: C.navy, strokeThickness: 2,
         }).setOrigin(0.5);
         this.tweens.add({ targets: inst, alpha: 0.2, duration: 600, yoyo: true, repeat: -1 });
         this.add.rectangle(sw/2, sh - 48, 240, 24, 0x000000, 0.6).setOrigin(0.5);
@@ -1041,7 +1041,7 @@ class MenuScene extends Phaser.Scene {
         // Countdown text (hidden until audio unlocked)
         const countdownText = this.add.text(sw/2, sh - 110, '', {
             fontSize: '16px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
-            color: C.gold, stroke: '#000', strokeThickness: 3,
+            color: C.gold, stroke: '#000', strokeThickness: 2,
         }).setOrigin(0.5).setScrollFactor(0).setDepth(100).setAlpha(0);
 
         const startCountdown = () => {
@@ -2257,7 +2257,7 @@ class GameScene extends Phaser.Scene {
         const popup = this.add.text(slidingCase.x, slidingCase.y,
             '+500 BIGLY!', {
             fontSize: '16px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
-            color: '#FFD700', stroke: '#000', strokeThickness: 3,
+            color: '#FFD700', stroke: '#000', strokeThickness: 2,
         }).setOrigin(0.5).setDepth(50);
         this.tweens.add({
             targets: popup, y: popup.y - 40, alpha: 0, duration: 800,
@@ -2398,7 +2398,7 @@ class GameScene extends Phaser.Scene {
 
         const cashPopup = this.add.text(x, y, '+CASH!', {
             fontSize: '16px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
-            color: '#FFD700', stroke: '#000', strokeThickness: 3,
+            color: '#FFD700', stroke: '#000', strokeThickness: 2,
         }).setOrigin(0.5).setDepth(50);
         this.tweens.add({
             targets: cashPopup, y: cashPopup.y - 40, alpha: 0, duration: 800,
@@ -2597,7 +2597,7 @@ class GameScene extends Phaser.Scene {
         // Tagline above buttons
         this.add.text(cx, y - btnH / 2 - 18, 'Enjoyed the game? Fund open science!', {
             fontSize: '13px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
-            color: C.gold, stroke: '#000', strokeThickness: 3,
+            color: C.gold, stroke: '#000', strokeThickness: 2,
         }).setOrigin(0.5).setScrollFactor(0).setDepth(203);
 
         if (DONATE_URL) {
@@ -2606,10 +2606,10 @@ class GameScene extends Phaser.Scene {
                 .setInteractive({ useHandCursor: true });
             this.add.text(cx - btnW/2 - gap/2, y - 6, '\u2764 SUPPORT US', {
                 fontSize: fs, fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
-                color: '#FFFFFF', stroke: '#000', strokeThickness: 3,
+                color: '#FFFFFF', stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(203);
             this.add.text(cx - btnW/2 - gap/2, y + 10, 'Tap here to donate', {
-                fontSize: '9px', fontFamily: 'Arial, sans-serif',
+                fontSize: '11px', fontFamily: 'Arial, Helvetica, sans-serif',
                 color: '#FFEECC', stroke: '#000', strokeThickness: 1,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(203);
             this.tweens.add({ targets: bg1, scaleX: 1.06, scaleY: 1.06, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
@@ -2625,10 +2625,10 @@ class GameScene extends Phaser.Scene {
                 .setInteractive({ useHandCursor: true });
             this.add.text(cx + btnW/2 + gap/2, y - 6, '\u20BF CRYPTO', {
                 fontSize: fs, fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
-                color: '#FFFFFF', stroke: '#000', strokeThickness: 3,
+                color: '#FFFFFF', stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(203);
             this.add.text(cx + btnW/2 + gap/2, y + 10, 'Tap here to donate', {
-                fontSize: '9px', fontFamily: 'Arial, sans-serif',
+                fontSize: '11px', fontFamily: 'Arial, Helvetica, sans-serif',
                 color: '#CCDEFF', stroke: '#000', strokeThickness: 1,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(203);
             this.tweens.add({ targets: bg2, scaleX: 1.06, scaleY: 1.06, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 250 });
@@ -2701,12 +2701,12 @@ class GameScene extends Phaser.Scene {
         this.time.delayedCall(500, () => {
             this.add.text(ow/2, oh/2 - 40, 'GAME OVER', {
                 fontSize: '48px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
-                color: C.capRed, stroke: '#000', strokeThickness: 3,
+                color: C.capRed, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
             this.add.text(ow/2, oh/2 + 20, 'FINAL SCORE: ' + this.score, {
                 fontSize: '22px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
-                color: C.gold, stroke: '#000', strokeThickness: 3,
+                color: C.gold, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
             const restart = this.add.text(ow/2, oh/2 + 70, _isTouchDevice ? 'TAP JUMP TO TRY AGAIN' : 'PRESS SPACE TO TRY AGAIN', {
@@ -2778,12 +2778,12 @@ class GameScene extends Phaser.Scene {
         this.time.delayedCall(400, () => {
             this.add.text(ow/2, oh/2 - 60, 'LEVEL COMPLETE!', {
                 fontSize: '42px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
-                color: C.gold, stroke: C.capRed, strokeThickness: 3,
+                color: C.gold, stroke: C.capRed, strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
             this.add.text(ow/2, oh/2, 'SCORE: ' + this.score, {
                 fontSize: '26px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
-                color: C.white, stroke: '#000', strokeThickness: 3,
+                color: C.white, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
             this.add.text(ow/2, oh/2 + 40, 'CHOLESTEROL: ' + this.cholesterol, {
