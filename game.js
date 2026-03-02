@@ -71,7 +71,7 @@ const SFX = {
 };
 
 // ── Audio helper (tries external asset, falls back to Web Audio) ─
-const SOUND_VOLUME = { 'snd-jump': 0.15, 'snd-tweet': 0.25, 'snd-coin': 0.25 };
+const SOUND_VOLUME = { 'snd-jump': 0.15, 'snd-tweet': 0.25, 'snd-coin': 0.25, 'snd-maga-hat': 0.3, 'snd-shart-ready': 0.3 };
 function playSound(scene, key, fallbackFn) {
     if (scene.cache.audio.has(key)) {
         const vol = SOUND_VOLUME[key] !== undefined ? SOUND_VOLUME[key] : 1;
@@ -854,6 +854,8 @@ class PreloadScene extends Phaser.Scene {
         try { this.load.audio('bgmMenu',     'assets/audio/bgm-menu.mp3'); } catch(e) {}
         try { this.load.audio('bgm-censor',  'assets/audio/bgm-censor.mp3'); } catch(e) {}
         try { this.load.audio('snd-shart',   'assets/audio/shart.wav'); } catch(e) {}
+        try { this.load.audio('snd-maga-hat', 'assets/audio/maga-hat.mp3'); } catch(e) {}
+        try { this.load.audio('snd-shart-ready', 'assets/audio/shart-powerup.wav'); } catch(e) {}
         try { this.load.audio('snd-tweet',   'assets/audio/tweet.wav'); } catch(e) {}
         try { this.load.audio('speechAudio', 'assets/audio/trump-speech.mp3'); } catch(e) {}
         try { this.load.audio('hailChief', 'assets/audio/hail-the-chief.mp3'); } catch(e) {}
@@ -2051,7 +2053,10 @@ class GameScene extends Phaser.Scene {
         food.destroy();
         this.cholesterol += pts;
         this.score += pts * 50;
-        if (this.cholesterol >= 50) this.earthquakeReady = true;
+        if (this.cholesterol >= 50 && !this.earthquakeReady) {
+            this.earthquakeReady = true;
+            playSound(this, 'snd-shart-ready', SFX.powerup);
+        }
         playSound(this, 'snd-coin', SFX.coin);
 
         const popup = this.add.text(food.x, food.y, '+' + pts, {
@@ -2080,6 +2085,7 @@ class GameScene extends Phaser.Scene {
             this.canDoubleJump = true;
             this.powerTimer = 0;
             player.setTint(0xFFDD44);
+            playSound(this, 'snd-maga-hat', SFX.powerup);
         } else if (type === 1) {
             // Censor Bar: 10s invincibility (independent timer)
             this.invincible = true;
@@ -2104,7 +2110,7 @@ class GameScene extends Phaser.Scene {
 
         const popupMsg = type === 0 ? 'DOUBLE JUMP!' : pt.name + '!';
         const popup = this.add.text(powerup.x, powerup.y, popupMsg, {
-            fontSize: '12px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold', fontStyle: 'bold',
+            fontSize: '12px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
             color: '#88FF88', stroke: '#000', strokeThickness: 2,
         }).setOrigin(0.5).setDepth(50);
         this.tweens.add({
