@@ -1749,30 +1749,35 @@ class GameScene extends Phaser.Scene {
             // Power-up entries with actual sprites
             const AL = window.ASSETS_LOADED || {};
             const powerExt = T.powerExt;
+            const tweetCtrl = _isTouchDevice ? 'Tap TWEET button' : 'Press Z';
             const entries = [
                 { texKey: AL.hat ? 'hat-ext' : (powerExt ? 'powerups-ext' : 'powerup0'), frame: powerExt ? 0 : undefined,
-                  label: 'MAGA HAT', desc: 'Permanent double jump.\nPress jump again mid-air!' },
+                  label: 'MAGA HAT', desc: 'Permanent double jump.\nTap jump again mid-air!' },
                 { texKey: AL.bar ? 'bar-ext' : (powerExt ? 'powerups-ext' : 'powerup1'), frame: powerExt ? 1 : undefined,
                   label: 'CENSOR BAR', desc: 'Invincible for 10 seconds.\nRun through everything!' },
                 { texKey: AL.classifiedDocs ? 'classified-docs-ext' : (powerExt ? 'powerups-ext' : 'powerup2'), frame: powerExt ? 2 : undefined,
-                  label: 'CLASSIFIED DOCS', desc: 'Press Z to fire tweets\nfor 15 seconds!' },
+                  label: 'CLASSIFIED DOCS', desc: tweetCtrl + ' to fire tweets\nfor 15 seconds!' },
             ];
             entries.forEach((e, i) => {
                 const ey = oy - 55 + i * 65;
+                // White backing circle so dark sprites (censor bar) are visible
+                const iconBg = this.add.circle(ox - 160, ey, 24, 0xFFFFFF, 0.25)
+                    .setScrollFactor(0).setDepth(301);
+                tutGroup.push(iconBg);
                 const icon = (e.frame !== undefined)
                     ? this.add.sprite(ox - 160, ey, e.texKey, e.frame)
                     : this.add.image(ox - 160, ey, e.texKey);
-                icon.setDisplaySize(40, 40).setScrollFactor(0).setDepth(301);
+                icon.setDisplaySize(40, 40).setScrollFactor(0).setDepth(302);
                 tutGroup.push(icon);
                 const eName = this.add.text(ox - 130, ey - 14, e.label, {
                     fontSize: '16px', fontFamily: 'Arial Black, sans-serif',
                     color: '#FFFFFF', stroke: '#000', strokeThickness: 2,
-                }).setOrigin(0, 0).setScrollFactor(0).setDepth(301);
+                }).setOrigin(0, 0).setScrollFactor(0).setDepth(302);
                 tutGroup.push(eName);
                 const eDesc = this.add.text(ox - 130, ey + 6, e.desc, {
                     fontSize: '12px', fontFamily: 'Arial, sans-serif',
                     color: '#CCCCCC', stroke: '#000', strokeThickness: 1,
-                }).setOrigin(0, 0).setScrollFactor(0).setDepth(301);
+                }).setOrigin(0, 0).setScrollFactor(0).setDepth(302);
                 tutGroup.push(eDesc);
             });
 
@@ -2574,16 +2579,23 @@ class GameScene extends Phaser.Scene {
     _addDonateButtons(cx, y, fontSize) {
         const flag = { clicked: false };
         const fs = fontSize || '16px';
-        const btnW = 165, btnH = 40, gap = 10;
+        const btnW = 170, btnH = 44, gap = 10;
+
+        // Tagline above buttons
+        this.add.text(cx, y - btnH / 2 - 18, 'Enjoyed the game? Fund open science!', {
+            fontSize: '13px', fontFamily: 'Arial Black, sans-serif',
+            color: C.gold, stroke: '#000', strokeThickness: 3,
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(203);
+
         if (DONATE_URL) {
-            const bg1 = this.add.rectangle(cx - btnW/2 - gap/2, y, btnW, btnH, 0xCC9900, 0.95)
-                .setOrigin(0.5).setScrollFactor(0).setDepth(202).setStrokeStyle(2, 0xFFD700)
+            const bg1 = this.add.rectangle(cx - btnW/2 - gap/2, y, btnW, btnH, 0xDD8800, 1)
+                .setOrigin(0.5).setScrollFactor(0).setDepth(202).setStrokeStyle(3, 0xFFDD44)
                 .setInteractive({ useHandCursor: true });
-            this.add.text(cx - btnW/2 - gap/2, y, 'DONATE', {
+            this.add.text(cx - btnW/2 - gap/2, y - 2, '\u2764 SUPPORT US', {
                 fontSize: fs, fontFamily: 'Arial Black, sans-serif',
                 color: '#FFFFFF', stroke: '#000', strokeThickness: 3,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(203);
-            this.tweens.add({ targets: bg1, scaleX: 1.05, scaleY: 1.05, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+            this.tweens.add({ targets: bg1, scaleX: 1.06, scaleY: 1.06, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
             bg1.on('pointerdown', () => {
                 flag.clicked = true;
                 window.open(DONATE_URL, '_blank');
@@ -2591,23 +2603,23 @@ class GameScene extends Phaser.Scene {
             });
         }
         if (CRYPTO_URL) {
-            const bg2 = this.add.rectangle(cx + btnW/2 + gap/2, y, btnW, btnH, 0x2255AA, 0.95)
-                .setOrigin(0.5).setScrollFactor(0).setDepth(202).setStrokeStyle(2, 0x4488FF)
+            const bg2 = this.add.rectangle(cx + btnW/2 + gap/2, y, btnW, btnH, 0x2255CC, 1)
+                .setOrigin(0.5).setScrollFactor(0).setDepth(202).setStrokeStyle(3, 0x66AAFF)
                 .setInteractive({ useHandCursor: true });
-            this.add.text(cx + btnW/2 + gap/2, y, 'DONATE CRYPTO', {
+            this.add.text(cx + btnW/2 + gap/2, y - 2, '\u20BF CRYPTO', {
                 fontSize: fs, fontFamily: 'Arial Black, sans-serif',
                 color: '#FFFFFF', stroke: '#000', strokeThickness: 3,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(203);
-            this.tweens.add({ targets: bg2, scaleX: 1.05, scaleY: 1.05, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 300 });
+            this.tweens.add({ targets: bg2, scaleX: 1.06, scaleY: 1.06, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 250 });
             bg2.on('pointerdown', () => {
                 flag.clicked = true;
                 window.open(CRYPTO_URL, '_blank');
                 this.time.delayedCall(500, () => { flag.clicked = false; });
             });
         }
-        this.add.text(cx, y + btnH / 2 + 14, 'Support open science at Lamda Biolab', {
-            fontSize: '12px', fontFamily: 'Arial, sans-serif',
-            color: '#aaaaaa', stroke: '#000', strokeThickness: 2,
+        this.add.text(cx, y + btnH / 2 + 10, 'Lambda Biolab \u2022 Open Science for Everyone', {
+            fontSize: '11px', fontFamily: 'Arial, sans-serif',
+            color: '#cccccc', stroke: '#000', strokeThickness: 2,
         }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(201);
         return flag;
     }
