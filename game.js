@@ -1687,7 +1687,7 @@ class GameScene extends Phaser.Scene {
         this.xKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X);
 
         // ─ HUD
-        const hudStyle = { fontSize: '18px', fontFamily: 'Arial Black, Impact, sans-serif', color: C.white, stroke: '#000', strokeThickness: 3 };
+        const hudStyle = { fontSize: '18px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold', color: C.white, stroke: '#000', strokeThickness: 2 };
         this.scoreText = this.add.text(16, 12, 'SCORE: 0', hudStyle).setScrollFactor(0).setDepth(100);
         this.livesText = this.add.text(sw - 16, 12, 'LIVES: 3', hudStyle).setOrigin(1, 0).setScrollFactor(0).setDepth(100);
         this.cholesterolText = this.add.text(sw / 2, 8, 'CHOLESTEROL: 0', { ...hudStyle, fontSize: '14px', color: C.gold }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(100);
@@ -2598,9 +2598,13 @@ class GameScene extends Phaser.Scene {
             const bg1 = this.add.rectangle(cx - btnW/2 - gap/2, y, btnW, btnH, 0xDD8800, 1)
                 .setOrigin(0.5).setScrollFactor(0).setDepth(202).setStrokeStyle(3, 0xFFDD44)
                 .setInteractive({ useHandCursor: true });
-            this.add.text(cx - btnW/2 - gap/2, y - 2, '\u2764 SUPPORT US', {
+            this.add.text(cx - btnW/2 - gap/2, y - 6, '\u2764 SUPPORT US', {
                 fontSize: fs, fontFamily: 'Arial Black, sans-serif',
                 color: '#FFFFFF', stroke: '#000', strokeThickness: 3,
+            }).setOrigin(0.5).setScrollFactor(0).setDepth(203);
+            this.add.text(cx - btnW/2 - gap/2, y + 10, 'Tap here to donate', {
+                fontSize: '9px', fontFamily: 'Arial, sans-serif',
+                color: '#FFEECC', stroke: '#000', strokeThickness: 1,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(203);
             this.tweens.add({ targets: bg1, scaleX: 1.06, scaleY: 1.06, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
             bg1.on('pointerdown', () => {
@@ -2613,9 +2617,13 @@ class GameScene extends Phaser.Scene {
             const bg2 = this.add.rectangle(cx + btnW/2 + gap/2, y, btnW, btnH, 0x2255CC, 1)
                 .setOrigin(0.5).setScrollFactor(0).setDepth(202).setStrokeStyle(3, 0x66AAFF)
                 .setInteractive({ useHandCursor: true });
-            this.add.text(cx + btnW/2 + gap/2, y - 2, '\u20BF CRYPTO', {
+            this.add.text(cx + btnW/2 + gap/2, y - 6, '\u20BF CRYPTO', {
                 fontSize: fs, fontFamily: 'Arial Black, sans-serif',
                 color: '#FFFFFF', stroke: '#000', strokeThickness: 3,
+            }).setOrigin(0.5).setScrollFactor(0).setDepth(203);
+            this.add.text(cx + btnW/2 + gap/2, y + 10, 'Tap here to donate', {
+                fontSize: '9px', fontFamily: 'Arial, sans-serif',
+                color: '#CCDEFF', stroke: '#000', strokeThickness: 1,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(203);
             this.tweens.add({ targets: bg2, scaleX: 1.06, scaleY: 1.06, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 250 });
             bg2.on('pointerdown', () => {
