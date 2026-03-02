@@ -981,29 +981,34 @@ class DisclaimerScene extends Phaser.Scene {
             color: '#FFFFFF', align: 'center', lineSpacing: 4,
         }).setOrigin(0.5);
 
-        const prompt = this.add.text(sw / 2, sh * 0.88,
-            _isTouchDevice ? 'TAP TO CONTINUE' : 'PRESS SPACE TO CONTINUE', {
+        const prompt = this.add.text(sw / 2, sh * 0.88, '', {
             fontSize: '14px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
             color: '#aaaaaa',
-        }).setOrigin(0.5);
-        this.tweens.add({ targets: prompt, alpha: 0.3, duration: 500, yoyo: true, repeat: -1 });
+        }).setOrigin(0.5).setAlpha(0);
 
+        let canAdvance = false;
         let advanced = false;
         const advance = () => {
-            if (advanced) return;
+            if (!canAdvance || advanced) return;
             advanced = true;
             this.cameras.main.fadeOut(300);
             this.time.delayedCall(300, () => this.scene.start('Menu'));
         };
 
-        this.input.keyboard.once('keydown-SPACE', advance);
-        this.input.once('pointerdown', advance);
+        // After 10 seconds, show the prompt and enable skipping
+        this.time.delayedCall(10000, () => {
+            canAdvance = true;
+            prompt.setText(_isTouchDevice ? 'TAP TO CONTINUE' : 'PRESS SPACE TO CONTINUE');
+            prompt.setAlpha(1);
+            this.tweens.add({ targets: prompt, alpha: 0.3, duration: 500, yoyo: true, repeat: -1 });
+        });
+
+        this.input.keyboard.on('keydown-SPACE', advance);
+        this.input.on('pointerdown', advance);
         this.time.addEvent({
             delay: 100, loop: true,
             callback: () => { if (window.TOUCH && window.TOUCH.jump) advance(); },
         });
-
-        this.time.delayedCall(5000, advance);
     }
 }
 
