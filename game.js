@@ -948,7 +948,62 @@ class BootScene extends Phaser.Scene {
             powerExt:  !!AL.powerups,
         };
 
-        this.scene.start('Menu');
+        this.scene.start('Disclaimer');
+    }
+}
+
+// ── DISCLAIMER SCENE ────────────────────────────────────────
+class DisclaimerScene extends Phaser.Scene {
+    constructor() { super('Disclaimer'); }
+    create() {
+        const sw = this.scale.width, sh = this.scale.height;
+        this.cameras.main.setBackgroundColor('#000000');
+        this.cameras.main.fadeIn(300);
+
+        this.add.text(sw / 2, sh * 0.22, 'DISCLAIMER', {
+            fontSize: '28px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
+            color: '#FFD700', stroke: '#000', strokeThickness: 2,
+        }).setOrigin(0.5);
+
+        this.add.text(sw / 2, sh * 0.52, [
+            'This game is a work of satire and fiction.',
+            'All characters, events, and scenarios are fictional',
+            'and intended solely for comedic and entertainment purposes.',
+            '',
+            'This game is not affiliated with, endorsed by, or',
+            'associated with any real person, organization, or entity',
+            '...as far as we are allowed to know.',
+            '',
+            'Protected under the First Amendment',
+            'and principles of free expression.',
+        ].join('\n'), {
+            fontSize: '16px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
+            color: '#FFFFFF', align: 'center', lineSpacing: 4,
+        }).setOrigin(0.5);
+
+        const prompt = this.add.text(sw / 2, sh * 0.88,
+            _isTouchDevice ? 'TAP TO CONTINUE' : 'PRESS SPACE TO CONTINUE', {
+            fontSize: '14px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
+            color: '#aaaaaa',
+        }).setOrigin(0.5);
+        this.tweens.add({ targets: prompt, alpha: 0.3, duration: 500, yoyo: true, repeat: -1 });
+
+        let advanced = false;
+        const advance = () => {
+            if (advanced) return;
+            advanced = true;
+            this.cameras.main.fadeOut(300);
+            this.time.delayedCall(300, () => this.scene.start('Menu'));
+        };
+
+        this.input.keyboard.once('keydown-SPACE', advance);
+        this.input.once('pointerdown', advance);
+        this.time.addEvent({
+            delay: 100, loop: true,
+            callback: () => { if (window.TOUCH && window.TOUCH.jump) advance(); },
+        });
+
+        this.time.delayedCall(5000, advance);
     }
 }
 
@@ -2838,7 +2893,7 @@ const config = {
             debug: false,
         },
     },
-    scene: [PreloadScene, BootScene, MenuScene, SpeechScene, GameScene],
+    scene: [PreloadScene, BootScene, DisclaimerScene, MenuScene, SpeechScene, GameScene],
     scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: _isMobilePortrait ? Phaser.Scale.NO_CENTER : Phaser.Scale.CENTER_BOTH,
