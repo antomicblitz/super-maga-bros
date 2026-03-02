@@ -966,13 +966,13 @@ class DisclaimerScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         this.add.text(sw / 2, sh * 0.52, [
-            'This game is a work of satire and fiction.',
+            'This game is a work of satire and fiction',
+            '...as far as we are allowed to know.',
             'All characters, events, and scenarios are fictional',
             'and intended solely for comedic and entertainment purposes.',
             '',
             'This game is not affiliated with, endorsed by, or',
-            'associated with any real person, organization, or entity',
-            '...as far as we are allowed to know.',
+            'associated with any real person, organization, or entity.',
             '',
             'Protected under the First Amendment',
             'and principles of free expression.',
