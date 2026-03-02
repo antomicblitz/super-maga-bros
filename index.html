@@ -275,6 +275,7 @@
             function bind(id, key) {
                 var btn = document.getElementById(id);
                 if (!btn) return;
+                var origShadow = btn.style.boxShadow;
                 btn.addEventListener('touchstart', function(e) {
                     e.preventDefault();
                     window.TOUCH[key] = true;
@@ -285,13 +286,13 @@
                     e.preventDefault();
                     window.TOUCH[key] = false;
                     btn.style.transform = '';
-                    btn.style.boxShadow = '';
+                    btn.style.boxShadow = origShadow;
                 }, { passive: false });
                 btn.addEventListener('touchcancel', function(e) {
                     e.preventDefault();
                     window.TOUCH[key] = false;
                     btn.style.transform = '';
-                    btn.style.boxShadow = '';
+                    btn.style.boxShadow = origShadow;
                 }, { passive: false });
             }
 
