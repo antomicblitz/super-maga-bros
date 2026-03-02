@@ -1740,8 +1740,8 @@ class GameScene extends Phaser.Scene {
             tutGroup.push(oBg);
 
             // Title
-            const tTitle = this.add.text(ox, oy - 120, 'POWER-UPS', {
-                fontSize: '28px', fontFamily: 'Arial Black, Impact, sans-serif',
+            const tTitle = this.add.text(ox, oy - 140, 'POWER-UPS & ABILITIES', {
+                fontSize: '26px', fontFamily: 'Arial Black, Impact, sans-serif',
                 color: C.gold, stroke: '#000', strokeThickness: 4,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(301);
             tutGroup.push(tTitle);
@@ -1750,6 +1750,7 @@ class GameScene extends Phaser.Scene {
             const AL = window.ASSETS_LOADED || {};
             const powerExt = T.powerExt;
             const tweetCtrl = _isTouchDevice ? 'Tap TWEET button' : 'Press Z';
+            const shartCtrl = _isTouchDevice ? 'Tap SHART button' : 'Press X';
             const entries = [
                 { texKey: AL.hat ? 'hat-ext' : (powerExt ? 'powerups-ext' : 'powerup0'), frame: powerExt ? 0 : undefined,
                   label: 'MAGA HAT', desc: 'Permanent double jump.\nTap jump again mid-air!' },
@@ -1757,9 +1758,11 @@ class GameScene extends Phaser.Scene {
                   label: 'CENSOR BAR', desc: 'Invincible for 10 seconds.\nRun through everything!' },
                 { texKey: AL.classifiedDocs ? 'classified-docs-ext' : (powerExt ? 'powerups-ext' : 'powerup2'), frame: powerExt ? 2 : undefined,
                   label: 'CLASSIFIED DOCS', desc: tweetCtrl + ' to fire tweets\nfor 15 seconds!' },
+                { texKey: AL.playerShart ? 'player-shart' : 'player', frame: undefined,
+                  label: 'SHART', desc: shartCtrl + ' when cholesterol \u226550.\nShockwave kills nearby enemies!' },
             ];
             entries.forEach((e, i) => {
-                const ey = oy - 55 + i * 65;
+                const ey = oy - 75 + i * 55;
                 // White backing circle so dark sprites (censor bar) are visible
                 const iconBg = this.add.circle(ox - 160, ey, 24, 0xFFFFFF, 0.25)
                     .setScrollFactor(0).setDepth(301);
@@ -1782,7 +1785,7 @@ class GameScene extends Phaser.Scene {
             });
 
             // Dismiss prompt
-            const dText = this.add.text(ox, oy + 135, _isTouchDevice ? 'TAP ANYWHERE TO START' : 'PRESS ANY KEY TO START', {
+            const dText = this.add.text(ox, oy + 155, _isTouchDevice ? 'TAP ANYWHERE TO START' : 'PRESS ANY KEY TO START', {
                 fontSize: '16px', fontFamily: 'Arial, sans-serif',
                 color: C.white, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(301);
@@ -2694,7 +2697,7 @@ class GameScene extends Phaser.Scene {
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
             this.tweens.add({ targets: restart, alpha: 0.3, duration: 500, yoyo: true, repeat: -1 });
 
-            const flag = this._addDonateButtons(ow/2, oh/2 + 120, '16px');
+            const flag = this._addDonateButtons(ow/2, oh/2 + 160, '16px');
 
             const goMenu = () => {
                 if (!canSkipGameOver) return;
