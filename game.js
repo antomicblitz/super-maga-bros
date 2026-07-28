@@ -500,10 +500,14 @@ function genTweet() {
     return cv;
 }
 
-// ── Level Data ───────────────────────────────────���──────────
-const LEVEL = {
+// ── Level Data ───────────────────────────────────────────────
+// LEVEL is loaded at runtime from level.json (see GameScene.preload).
+// FALLBACK_LEVEL preserves the original hardcoded data so the game still runs
+// if level.json is missing or malformed — useful for offline play and tests.
+let LEVEL = null;
+const FALLBACK_LEVEL = {
     // Ground segments [startTileX, endTileX]
-    ground: [
+ground: [
         // Zone 1 — Intro (flat, easy, learn controls) — tiles 0-68
         [0, 68],
         // Zone 2 — First Gaps (2-tile gaps) — tiles 71-128
@@ -1431,6 +1435,12 @@ class SpeechScene extends Phaser.Scene {
 class GameScene extends Phaser.Scene {
     constructor() { super('Game'); }
 
+    preload() {
+        // External level data (default: from level.json; falls back to FALLBACK_LEVEL).
+        // Silently ignore missing-file errors — FALLBACK_LEVEL keeps the game playable offline.
+        try { this.load.json('level', 'level.json'); } catch (e) {}
+    }
+
     init(data) {
         this.score = data.score || 0;
         this.lives = data.lives !== undefined ? data.lives : 3;
@@ -1451,6 +1461,10 @@ class GameScene extends Phaser.Scene {
     }
 
     create() {
+        // Resolve LEVEL: prefer the level.json loaded in preload() (designer-edited),
+        // fall back to FALLBACK_LEVEL (kept inline for offline play and tests).
+        const json = this.cache.json.get('level');
+        LEVEL = (json && typeof json === 'object') ? json : FALLBACK_LEVEL;
         this.totalFood = LEVEL.food.length;
         this.dead = false;
         this.won = false;
@@ -1653,7 +1667,8 @@ class GameScene extends Phaser.Scene {
 
         // ─ Player
         const pk = T.player || 'player';
-        this.player = this.physics.add.sprite(80, GROUND_Y - 48, pk, 0);
+        const [pStartX, pStartY] = LEVEL.playerStart || [80, GROUND_Y - 48];
+        this.player = this.physics.add.sprite(pStartX, pStartY, pk, 0);
         this.player.setSize(20, 40).setOffset(6, 8);
         this.player.setCollideWorldBounds(false);
         this.player.setBounce(0);
