@@ -60,7 +60,7 @@ assets/ui/hud-icons.png — 96×32px, 3 icons at 32×32: life, star, power-up sl
 | bgm-menu.mp3 | MP3 128kbps stereo | 30s loop |
 
 ## Game Constants (do not change)
-GW=800, GH=500, TILE=32, WORLD_W=6400, WORLD_H=600, GROUND_Y=468
+GW=800, GH=500, TILE=32, WORLD_W=12800, WORLD_H=600, GROUND_Y=468
 
 ## Enemy Types
 0 = journalist  (speed: 60px/s, score: 200)
@@ -115,3 +115,27 @@ Z = fire tweet-blast (Classified Docs power-up active) —
 - Never delete existing level data (LEVEL object) without instruction
 - Always test that scene transitions work: PreloadScene→BootScene→MenuScene→GameScene
 - When adding new features, add them to the appropriate scene only
+
+## Level Data — edit level.json, not game.js
+- The playable level is loaded at runtime from `level.json` (sibling to `index.html`).
+  `GameScene.preload()` calls `this.load.json('level', 'level.json')`; `create()` assigns
+  `LEVEL = this.cache.json.get('level') || FALLBACK_LEVEL`.
+- `FALLBACK_LEVEL` in `game.js:508` is the original hardcoded data, kept verbatim so the
+  game still runs offline if `level.json` is missing or malformed.
+- **Editing a level:** use `editor.html` (sibling to `index.html`). Run a static server
+  (`npx serve .` or `python3 -m http.server 8080`), open `http://localhost/editor.html`,
+  paint, click `Download level.json`, then place the file next to `index.html` and reload.
+- **Level schema** (one JSON object, all fields required — defaults applied by
+  `editor.html`'s `normaliseLevel()` if missing):
+  - `tile`, `worldW`, `worldH`, `groundY`, `playerStart: [x, y]`
+  - `ground`: `[[startTileX, endTileX], …]` (inclusive tile indices)
+  - `platforms`: `[[tileX, pixelY, widthInTiles], …]`
+  - `food`: `[[pixelX, pixelY, type], …]` (type 0 = Big Mac, 1 = Coke)
+  - `enemies`: `[[pixelX, patrolLeftPx, patrolRightPx, type], …]` (type 0-3)
+  - `powerups`: `[[pixelX, pixelY, type], …]` (type 0 = MAGA Hat, 1 = Censor Bar, 2 = Classified Docs)
+  - `flagX`: pixelX of the goal flag
+- When updating dimensions, keep the editor and game.js constants in sync: editor hardcodes
+  `TILE=32, WORLD_W=12800, WORLD_H=600, GROUND_Y=468` to match `game.js:7-9`.
+- The boot/config sprite generators and ProceduralSFX in `game.js` still work whether the
+  level came from JSON or `FALLBACK_LEVEL` — the JSON roundtrip is invisible to the rest
+  of the engine.

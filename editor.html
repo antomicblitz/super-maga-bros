@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Super MAGA Bros — Level Editor</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --panel: #252540;
+    --panel-hi: #2f2f55;
+    --line: #3a3a5e;
+    --ink: #e4e4f4;
+    --muted: #9999bb;
+    --accent: #FFD700;
+    --accent-d: #CC9900;
+    --danger: #CC2222;
+    --danger-d: #991111;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--bg); color: var(--ink); overflow: hidden; }
+  #app { display: grid; grid-template-rows: 44px 1fr 36px; height: 100%; }
+  header { display: flex; align-items: center; padding: 0 16px; background: var(--panel);
+    border-bottom: 1px solid var(--line); gap: 16px; }
+  header h1 { font-size: 14px; font-weight: 600; margin: 0; color: var(--accent); }
+  header .spacer { flex: 1; }
+  button.btn { background: var(--panel-hi); color: var(--ink); border: 1px solid var(--line);
+    padding: 6px 12px; border-radius: 3px; cursor: pointer; font: inherit; }
+  button.btn:hover { background: var(--line); }
+  button.btn.primary { background: var(--accent); color: #000; border-color: var(--accent-d); font-weight: 600; }
+  button.btn.primary:hover { background: var(--accent-d); }
+  button.btn.danger { background: var(--danger); color: #fff; border-color: var(--danger-d); }
+  main { display: grid; grid-template-columns: 200px 1fr; overflow: hidden; }
+  aside#palette { background: var(--panel); border-right: 1px solid var(--line); padding: 8px;
+    overflow-y: auto; }
+  aside#palette h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--muted); margin: 8px 0 4px; }
+  .tool { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 3px;
+    cursor: pointer; border: 1px solid transparent; margin-bottom: 2px; user-select: none; }
+  .tool:hover { background: var(--panel-hi); }
+  .tool.selected { background: var(--panel-hi); border-color: var(--accent); }
+  .tool .swatch { width: 24px; height: 24px; border-radius: 2px; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
+  .tool .label { font-size: 12px; }
+  .tool .hint { font-size: 10px; color: var(--muted); margin-left: auto; }
+  section#canvas-wrap { position: relative; background: #0a0a18; overflow: hidden; }
+  canvas#cv { display: block; width: 100%; height: 100%; cursor: crosshair; }
+  footer { display: flex; align-items: center; padding: 0 12px; background: var(--panel);
+    border-top: 1px solid var(--line); gap: 12px; font-size: 11px; color: var(--muted); }
+  footer .pill { background: var(--bg); padding: 2px 8px; border-radius: 9px; border: 1px solid var(--line); }
+  footer .spacer { flex: 1; }
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex;
+    align-items: center; justify-content: center; z-index: 100; }
+  .modal-bg.hidden { display: none; }
+  .modal { background: var(--panel); border: 1px solid var(--line); border-radius: 4px;
+    padding: 16px; min-width: 480px; max-width: 90vw; max-height: 80vh; display: flex; flex-direction: column; gap: 8px; }
+  .modal h3 { margin: 0; color: var(--accent); }
+  .modal textarea { flex: 1; min-height: 280px; background: var(--bg); color: var(--ink);
+    border: 1px solid var(--line); padding: 8px; font: 11px/1.4 ui-monospace, "SF Mono", "Cascadia Code", monospace; }
+  .modal-buttons { display: flex; gap: 8px; justify-content: flex-end; }
+  .info { padding: 8px; background: var(--bg); border-radius: 3px; font-size: 11px;
+    color: var(--muted); border: 1px solid var(--line); margin-top: 8px; }
+  kbd { background: #444; padding: 1px 5px; border-radius: 2px; font: 10px ui-monospace, monospace;
+    color: #fff; border: 1px solid #666; }
+  .row { display: flex; align-items: center; gap: 6px; padding: 4px 0; }
+  .row input[type="number"], .row input[type="text"] { background: var(--bg); color: var(--ink);
+    border: 1px solid var(--line); padding: 3px 6px; border-radius: 2px; font: inherit; width: 90px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>SUPER MAGA BROS — LEVEL EDITOR</h1>
+    <span class="spacer"></span>
+    <button class="btn" id="btn-load">Load level.json</button>
+    <button class="btn" id="btn-download">Download level.json</button>
+    <button class="btn" id="btn-showjson">Show JSON</button>
+    <button class="btn" id="btn-help">?</button>
+  </header>
+  <main>
+    <aside id="palette">
+      <h2>Tools</h2>
+      <div class="tool selected" data-tool="ground"><div class="swatch" style="background:#8B6914"></div>
+        <span class="label">Ground</span><span class="hint">click+drag</span></div>
+      <div class="tool" data-tool="platform"><div class="swatch" style="background:#B84A28"></div>
+        <span class="label">Platform</span><span class="hint">click+drag</span></div>
+      <div class="tool" data-tool="food"><div class="swatch" id="sw-food"></div>
+        <span class="label">Food</span><span class="hint">1/2</span></div>
+      <div class="tool" data-tool="enemy"><div class="swatch" id="sw-enemy"></div>
+        <span class="label">Enemy</span><span class="hint">0-3</span></div>
+      <div class="tool" data-tool="powerup"><div class="swatch" id="sw-power"></div>
+        <span class="label">Power-up</span><span class="hint">1-3</span></div>
+      <div class="tool" data-tool="flag"><div class="swatch" style="background:repeating-linear-gradient(0deg,#888,#888 4px,#fff 4px,#fff 8px)"></div>
+        <span class="label">Flag</span><span class="hint">click</span></div>
+      <div class="tool" data-tool="spawn"><div class="swatch" style="background:#4CAF50"></div>
+        <span class="label">Spawn</span><span class="hint">click</span></div>
+      <div class="tool" data-tool="erase"><div class="swatch" style="background:#999"></div>
+        <span class="label">Erase</span><span class="hint">click</span></div>
+
+      <h2>Sub-types</h2>
+      <div id="subtype-info" class="info">Pick a tool.</div>
+
+      <h2>Counts</h2>
+      <div id="counts" class="info"></div>
+
+      <h2>Tips</h2>
+      <div class="info">
+        <div><kbd>0</kbd><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> cycle sub-type</div>
+        <div><kbd>Shift</kbd>+click = erase</div>
+        <div><kbd>RMB</kbd> drag = pan, <kbd>wheel</kbd> = zoom</div>
+        <div><kbd>Home</kbd> = reset view</div>
+      </div>
+    </aside>
+    <section id="canvas-wrap">
+      <canvas id="cv"></canvas>
+    </section>
+  </main>
+  <footer>
+    <span class="pill" id="coord">world: 0, 0</span>
+    <span class="pill" id="tool-name">tool: ground</span>
+    <span class="pill" id="zoom-lvl">zoom: 30%</span>
+    <span class="spacer"></span>
+    <span id="status">ready</span>
+  </footer>
+</div>
+
+<div id="json-modal" class="modal-bg hidden">
+  <div class="modal">
+    <h3>level.json</h3>
+    <textarea id="json-out" readonly></textarea>
+    <div class="modal-buttons">
+      <button class="btn" id="btn-copy-json">Copy</button>
+      <button class="btn primary" id="btn-close-json">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="help-modal" class="modal-bg hidden">
+  <div class="modal" style="min-width:520px;">
+    <h3>How to use</h3>
+    <div style="font-size:12px; line-height:1.6;">
+      <p><b>Tools</b> (left palette):
+        <ul style="margin:4px 0 12px 16px; padding:0;">
+          <li><b>Ground</b> — click+drag horizontally across the ground row to mark a segment.</li>
+          <li><b>Platform</b> — click+drag any direction to draw a brick platform.</li>
+          <li><b>Food</b> — click to drop. <kbd>1</kbd>=coke, <kbd>2</kbd>=bigmac.</li>
+          <li><b>Enemy</b> — click to spawn. Patrol defaults to ±64px. Press <kbd>0</kbd>–<kbd>3</kbd> for type:
+            journalist/scientist/girl/lobbyist.</li>
+          <li><b>Power-up</b> — click. <kbd>1</kbd>=MAGA Hat, <kbd>2</kbd>=Censor Bar, <kbd>3</kbd>=Classified Docs.</li>
+          <li><b>Flag</b> — click to set flag X position.</li>
+          <li><b>Spawn</b> — click to set player start.</li>
+          <li><b>Erase</b> — click an existing object to remove it.</li>
+        </ul>
+      </p>
+      <p><b>Save flow</b>:
+        <ol style="margin:4px 0 12px 16px; padding:0;">
+          <li>Click <b>Download level.json</b> to save.</li>
+          <li>Put the file next to <code>index.html</code> and <code>game.js</code>.</li>
+          <li>Reload the game — <code>GameScene.preload()</code> loads it automatically.</li>
+        </ol>
+      </p>
+      <p><b>Edit patterns</b>:
+        <ul style="margin:4px 0 0 16px; padding:0;">
+          <li><b>Shift</b>+click = erase (any tool).</li>
+          <li><b>Right-mouse drag</b> = pan.</li>
+          <li><b>Mouse wheel</b> = zoom (centered on cursor).</li>
+          <li><b>Home</b> = reset view.</li>
+          <li>The game keeps a <code>FALLBACK_LEVEL</code> literal in <code>game.js</code>; if <code>level.json</code> is missing, the game still runs.</li>
+        </ul>
+      </p>
+    </div>
+    <div class="modal-buttons">
+      <button class="btn primary" id="btn-close-help">Got it</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ── Constants (must match game.js:11-14) ────────────────────
+const TILE = 32, WORLD_W = 12800, WORLD_H = 600, GROUND_Y = 468;
+
+// ── Sub-type catalogues (must match game.js:21-26, 627, 768) ─
+const ENEMY_TYPES = [
+  { name: 'journalist', color: '#4488FF', speed: 60,  score: 200 },
+  { name: 'scientist',  color: '#44AA44', speed: 80,  score: 300 },
+  { name: 'girl',       color: '#FF88CC', speed: 100, score: 150 },
+  { name: 'lobbyist',   color: '#FFAA00', speed: 55,  score: 250 },
+];
+const FOOD_TYPES = [
+  { name: 'bigmac', color: '#CC0000' },
+  { name: 'coke',   color: '#7B3F00' },
+];
+const POWERUP_TYPES = [
+  { name: 'MAGA Hat',         color: '#CC2222' },
+  { name: 'Censor Bar',       color: '#111111' },
+  { name: 'Classified Docs',  color: '#996633' },
+];
+
+// ── Sub-type state (cycled with 0-3) ────────────────────────
+let foodSub = 1;     // default: coke (matches level.json's high count of "1")
+let enemySub = 0;    // default: journalist
+let powerSub = 0;    // default: MAGA Hat
+
+// ── Subtype swatches — kept in sync with current selection ─
+function updateSubSwatches() {
+  document.getElementById('sw-food').style.background = FOOD_TYPES[foodSub].color;
+  document.getElementById('sw-enemy').style.background = ENEMY_TYPES[enemySub].color;
+  document.getElementById('sw-power').style.background = POWERUP_TYPES[powerSub].color;
+}
+function updateSubtypeInfo() {
+  const map = { food: FOOD_TYPES, enemy: ENEMY_TYPES, powerup: POWERUP_TYPES };
+  const idx = { food: foodSub, enemy: enemySub, powerup: powerSub };
+  const t = state.tool;
+  const el = document.getElementById('subtype-info');
+  if (!map[t]) {
+    el.textContent = (t === 'ground' || t === 'platform') ? 'No sub-type.' :
+                     (t === 'flag' || t === 'spawn') ? 'Single target.' :
+                     'Click an existing object to remove it.';
+    return;
+  }
+  const e = map[t][idx[t]];
+  el.innerHTML = `<div class="row"><div class="swatch" style="background:${e.color};width:18px;height:18px;border:1px solid #555"></div>
+    <span style="margin-left:6px">${e.name}</span></div>
+    Press <kbd>${t==='food'?'1':'2'}</kbd> or <kbd>3</kbd> to cycle.`;
+}
+
+// ── Editor state ────────────────────────────────────────────
+let state = {
+  level: null,
+  tool: 'ground',
+  view: { x: 0, y: 0, zoom: 0.3 },
+  drag: null,   // { kind: 'pan'|'paint', startX, startY, startView, ... }
+};
+
+// ── Persistence hooks ──────────────────────────────────────
+function emptyLevel() {
+  return {
+    tile: TILE,
+    worldW: WORLD_W,
+    worldH: WORLD_H,
+    groundY: GROUND_Y,
+    playerStart: [80, GROUND_Y - 48],
+    ground: [], platforms: [], food: [], enemies: [], powerups: [],
+    flagX: WORLD_W - TILE * 2,
+  };
+}
+
+function normaliseLevel(l) {
+  // Defensive: ensure every field exists with the right shape.
+  const e = emptyLevel();
+  if (!l || typeof l !== 'object') return e;
+  e.tile = l.tile || TILE;
+  e.worldW = l.worldW || WORLD_W;
+  e.worldH = l.worldH || WORLD_H;
+  e.groundY = l.groundY || GROUND_Y;
+  if (Array.isArray(l.playerStart) && l.playerStart.length === 2) e.playerStart = l.playerStart;
+  if (Array.isArray(l.ground)) e.ground = l.ground.slice();
+  if (Array.isArray(l.platforms)) e.platforms = l.platforms.slice();
+  if (Array.isArray(l.food)) e.food = l.food.slice();
+  if (Array.isArray(l.enemies)) e.enemies = l.enemies.slice();
+  if (Array.isArray(l.powerups)) e.powerups = l.powerups.slice();
+  if (typeof l.flagX === 'number') e.flagX = l.flagX;
+  return e;
+}
+
+async function loadFromUrl(url) {
+  try {
+    const r = await fetch(url, { cache: 'no-cache' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const json = await r.json();
+    state.level = normaliseLevel(json);
+    setStatus('Loaded ' + url);
+  } catch (err) {
+    setStatus('Failed to load ' + url + ' (' + err.message + ') — using empty level');
+    state.level = emptyLevel();
+  }
+}
+
+function downloadJson() {
+  const json = JSON.stringify(state.level, null, 4);
+  const blob = new Blob([json], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'level.json';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 100);
+  setStatus('Downloaded level.json');
+}
+
+function showJson() {
+  const json = JSON.stringify(state.level, null, 4);
+  document.getElementById('json-out').value = json;
+  document.getElementById('json-modal').classList.remove('hidden');
+}
+
+async function loadFromFile() {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = '.json,application/json';
+  inp.onchange = async () => {
+    if (!inp.files || !inp.files[0]) return;
+    const text = await inp.files[0].text();
+    try {
+      state.level = normaliseLevel(JSON.parse(text));
+      setStatus('Loaded ' + inp.files[0].name);
+      requestDraw();
+    } catch (err) {
+      setStatus('Bad JSON: ' + err.message);
+    }
+  };
+  inp.click();
+}
+
+// ── Canvas / rendering ────────────────────────────────────
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+
+function resizeCanvas() {
+  const r = cv.getBoundingClientRect();
+  // Backing-store size accounting for DPR.
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = Math.max(1, Math.floor(r.width * dpr));
+  cv.height = Math.max(1, Math.floor(r.height * dpr));
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  requestDraw();
+}
+window.addEventListener('resize', resizeCanvas);
+
+let drawScheduled = false;
+function requestDraw() {
+  if (drawScheduled) return;
+  drawScheduled = true;
+  requestAnimationFrame(() => { drawScheduled = false; draw(); });
+}
+
+function clientToWorld(px, py) {
+  const r = cv.getBoundingClientRect();
+  const cx = px - r.left, cy = py - r.top;
+  const v = state.view;
+  return [v.x + cx / v.zoom, v.y + cy / v.zoom];
+}
+
+function worldToClient(wx, wy) {
+  const r = cv.getBoundingClientRect();
+  const v = state.view;
+  return [r.left + (wx - v.x) * v.zoom, r.top + (wy - v.y) * v.zoom];
+}
+
+function clampView() {
+  const v = state.view;
+  const r = cv.getBoundingClientRect();
+  const visW = r.width / v.zoom, visH = r.height / v.zoom;
+  v.x = Math.max(0, Math.min(v.x, Math.max(0, WORLD_W - visW)));
+  v.y = Math.max(0, Math.min(v.y, Math.max(0, WORLD_H - visH)));
+}
+
+function draw() {
+  const r = cv.getBoundingClientRect();
+  const W = r.width, H = r.height;
+  ctx.clearRect(0, 0, W, H);
+  const v = state.view;
+
+  // Background grid (every 32 px).
+  ctx.fillStyle = '#0e0e22';
+  ctx.fillRect(0, 0, W, H);
+
+  // Tile grid (small).
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  const startX = Math.floor(v.x / TILE) * TILE;
+  const endX = v.x + W / v.zoom;
+  for (let x = startX; x <= endX; x += TILE) {
+    const [cx] = worldToClient(x, 0);
+    ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, H); ctx.stroke();
+  }
+  for (let y = 0; y <= WORLD_H; y += TILE) {
+    const [, cy] = worldToClient(0, y);
+    ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.stroke();
+  }
+
+  // Zone-band stripes (every 64 tiles — visual divider).
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  for (let x = 0; x <= WORLD_W; x += TILE * 64) {
+    const [cx] = worldToClient(x, 0);
+    ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, H); ctx.stroke();
+  }
+
+  // Ground row band (highlighted).
+  const [, gyTop] = worldToClient(0, GROUND_Y);
+  const [, gyBot] = worldToClient(0, GROUND_Y + TILE);
+  ctx.fillStyle = 'rgba(60, 176, 67, 0.15)';
+  ctx.fillRect(0, gyTop, W, gyBot - gyTop);
+
+  // Ground segments.
+  for (const [s, e] of state.level.ground) {
+    const [x1] = worldToClient(s * TILE, 0);
+    const [x2] = worldToClient((e + 1) * TILE, 0);
+    const w = x2 - x1, h = gyBot - gyTop;
+    ctx.fillStyle = '#3CB043';   // grass
+    ctx.fillRect(x1, gyTop, w, 4);
+    ctx.fillStyle = '#8B6914';   // dirt
+    ctx.fillRect(x1, gyTop + 4, w, h - 4);
+    ctx.strokeStyle = '#2E8B36';
+    ctx.strokeRect(x1, gyTop, w, h);
+  }
+
+  // Platforms.
+  for (const [tx, py, tw] of state.level.platforms) {
+    const [x1, y1] = worldToClient(tx * TILE, py);
+    const [x2, y2] = worldToClient((tx + tw) * TILE, py + TILE);
+    const w = x2 - x1, h = y2 - y1;
+    ctx.fillStyle = '#B84A28';
+    ctx.fillRect(x1, y1, w, h);
+    ctx.strokeStyle = '#8B3A1F';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x1, y1, w, h);
+    // brick lines.
+    ctx.beginPath();
+    ctx.moveTo(x1, y1); ctx.lineTo(x2, y1);
+    ctx.moveTo(x1 + w / 2, y1); ctx.lineTo(x1 + w / 2, y2);
+    ctx.stroke();
+  }
+
+  // Food.
+  for (const [fx, fy, t] of state.level.food) {
+    const [cx, cy] = worldToClient(fx, fy);
+    const r = Math.max(3, 10 * v.zoom);
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = FOOD_TYPES[t] ? FOOD_TYPES[t].color : '#888';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Power-ups.
+  for (const [px, py, t] of state.level.powerups) {
+    const [cx, cy] = worldToClient(px, py);
+    const size = Math.max(6, 24 * v.zoom);
+    const x = cx - size / 2, y = cy - size / 2;
+    ctx.fillStyle = POWERUP_TYPES[t] ? POWERUP_TYPES[t].color : '#888';
+    ctx.fillRect(x, y, size, size);
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x, y, size, size);
+    // label
+    if (v.zoom >= 0.4) {
+      ctx.fillStyle = '#fff';
+      ctx.font = `${Math.max(8, 10 * v.zoom)}px ui-monospace, monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(t === 0 ? 'H' : t === 1 ? 'C' : 'D', cx, cy + 4);
+    }
+  }
+
+  // Enemies.
+  for (const [ex, eL, eR, t] of state.level.enemies) {
+    const [cx, cy] = worldToClient(ex, GROUND_Y - 18);
+    const [lxp] = worldToClient(eL, 0);
+    const [rxp] = worldToClient(eR, 0);
+    // patrol range line
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(lxp, cy); ctx.lineTo(rxp, cy);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    const size = Math.max(6, 24 * v.zoom);
+    ctx.fillStyle = ENEMY_TYPES[t] ? ENEMY_TYPES[t].color : '#888';
+    ctx.fillRect(cx - size / 2, cy - size / 2, size, size);
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(cx - size / 2, cy - size / 2, size, size);
+    if (v.zoom >= 0.4) {
+      ctx.fillStyle = '#000';
+      ctx.font = `bold ${Math.max(8, 10 * v.zoom)}px ui-monospace, monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(t, cx, cy + 4);
+    }
+  }
+
+  // Flag.
+  {
+    const [cx] = worldToClient(state.level.flagX, 0);
+    const [bx] = worldToClient(state.level.flagX, GROUND_Y);
+    ctx.strokeStyle = '#888';
+    ctx.lineWidth = 2 * v.zoom;
+    ctx.beginPath();
+    ctx.moveTo(cx, GROUND_Y - 80 * v.zoom > 4 ? bx - 80 * v.zoom : 4);
+    ctx.lineTo(cx, GROUND_Y);
+    ctx.stroke();
+    // pole top dot.
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.arc(cx, GROUND_Y - 80 * v.zoom, Math.max(2, 4 * v.zoom), 0, Math.PI * 2);
+    ctx.fill();
+    // checkered flag.
+    const flagW = 16 * v.zoom, flagH = 12 * v.zoom;
+    const flagX = cx, flagY = GROUND_Y - 80 * v.zoom;
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(flagX, flagY, flagW, flagH);
+    ctx.fillStyle = '#444';
+    for (let row = 0; row < 2; row++)
+      for (let col = 0; col < 4; col++)
+        if ((row + col) & 1)
+          ctx.fillRect(flagX + col * (flagW / 4), flagY + row * (flagH / 2), flagW / 4, flagH / 2);
+  }
+
+  // Player spawn.
+  {
+    const [cx, cy] = worldToClient(state.level.playerStart[0], state.level.playerStart[1]);
+    const r = Math.max(6, 12 * v.zoom);
+    ctx.fillStyle = 'rgba(76,175,80,0.4)';
+    ctx.beginPath(); ctx.arc(cx, cy, r + 4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#4CAF50';
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${Math.max(8, 10 * v.zoom)}px ui-monospace, monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillText('P', cx, cy + 4);
+  }
+
+  // In-progress drag preview.
+  if (state.drag && state.drag.kind === 'paint') {
+    const d = state.drag;
+    const [x1, y1] = worldToClient(d.wx1, d.wy1);
+    const [x2, y2] = worldToClient(d.wx2, d.wy2);
+    ctx.strokeStyle = 'rgba(255,215,0,0.8)';
+    ctx.lineWidth = 2;
+    if (d.tool === 'ground') {
+      // horizontal band preview on the ground row.
+      const [, gy] = worldToClient(0, GROUND_Y);
+      const minX = Math.min(x1, x2), maxX = Math.max(x1, x2);
+      ctx.strokeRect(minX, gy, maxX - minX, TILE * v.zoom);
+    } else if (d.tool === 'platform') {
+      const minX = Math.min(x1, x2), maxX = Math.max(x1, x2);
+      const minY = Math.min(y1, y2), maxY = Math.max(y1, y2);
+      ctx.strokeRect(minX, minY, maxX - minX, maxY - minY);
+    }
+  }
+
+  // HUD pills.
+  document.getElementById('zoom-lvl').textContent = 'zoom: ' + Math.round(v.zoom * 100) + '%';
+  document.getElementById('tool-name').textContent = 'tool: ' + state.tool;
+}
+
+// ── Object operations ─────────────────────────────────────
+function placeObject(wx, wy, opts = {}) {
+  const L = state.level;
+  switch (state.tool) {
+    case 'ground':
+      // Click+drag handles this; single click ignored (tool requires drag).
+      return;
+    case 'platform': {
+      const tx = Math.floor(wx / TILE);
+      const py = Math.floor(wy / TILE) * TILE;
+      L.platforms.push([tx, py, 1]);
+      break;
+    }
+    case 'food':
+      L.food.push([Math.round(wx / TILE) * TILE + TILE / 2, Math.round(wy / TILE) * TILE + TILE / 2, foodSub]);
+      break;
+    case 'enemy': {
+      const px = Math.round(wx / TILE) * TILE + TILE / 2;
+      const halfPatrol = 2 * TILE;
+      L.enemies.push([px, px - halfPatrol, px + halfPatrol, enemySub]);
+      break;
+    }
+    case 'powerup':
+      L.powerups.push([Math.round(wx / TILE) * TILE + TILE / 2, Math.round(wy / TILE) * TILE + TILE / 2, powerSub]);
+      break;
+    case 'flag':
+      L.flagX = Math.round(wx / TILE) * TILE;
+      break;
+    case 'spawn':
+      L.playerStart = [Math.round(wx / TILE) * TILE + TILE / 2, Math.round(wy / TILE) * TILE + TILE / 2];
+      break;
+    case 'erase':
+      eraseAt(wx, wy);
+      break;
+  }
+  updateCounts();
+}
+
+function eraseAt(wx, wy) {
+  const L = state.level;
+  // ground segments
+  const tileX = Math.floor(wx / TILE);
+  L.ground = L.ground.filter(([s, e]) => !(tileX >= s && tileX <= e));
+  // platforms
+  L.platforms = L.platforms.filter(([tx, py, w]) => !(tileX >= tx && tileX < tx + w && Math.floor(wy / TILE) * TILE === py));
+  // food
+  L.food = L.food.filter(([fx, fy]) => Math.hypot(fx - wx, fy - wy) > 16);
+  // enemies
+  L.enemies = L.enemies.filter(([ex, , , ]) => Math.abs(ex - wx) > 16 || Math.abs((GROUND_Y - 18) - wy) > 16);
+  // powerups
+  L.powerups = L.powerups.filter(([px, py]) => Math.hypot(px - wx, py - wy) > 16);
+  // flag & spawn have their own click handlers (handled there).
+  updateCounts();
+}
+
+function updateCounts() {
+  const L = state.level;
+  document.getElementById('counts').innerHTML =
+    `ground: ${L.ground.length} segs<br>` +
+    `platforms: ${L.platforms.length}<br>` +
+    `food: ${L.food.length}<br>` +
+    `enemies: ${L.enemies.length}<br>` +
+    `powerups: ${L.powerups.length}<br>` +
+    `flagX: ${L.flagX}<br>` +
+    `spawn: (${L.playerStart[0]}, ${L.playerStart[1]})`;
+}
+
+// ── Pointer / wheel handlers ──────────────────────────────
+function onPointerDown(e) {
+  if (e.button === 2) { e.preventDefault(); startPan(e); return; } // pan
+  const [wx, wy] = clientToWorld(e.clientX, e.clientY);
+  const t = state.tool;
+  if (e.shiftKey || t === 'erase') {
+    placeObject(wx, wy, { erase: true });
+    requestDraw();
+    return;
+  }
+  if (t === 'flag') {
+    state.level.flagX = Math.round(wx / TILE) * TILE;
+    updateCounts();
+    requestDraw();
+    return;
+  }
+  if (t === 'spawn') {
+    state.level.playerStart = [
+      Math.round(wx / TILE) * TILE + TILE / 2,
+      Math.round(wy / TILE) * TILE + TILE / 2,
+    ];
+    updateCounts();
+    requestDraw();
+    return;
+  }
+  // Drawing tools (ground, platform) start a drag.
+  if (t === 'ground' || t === 'platform') {
+    state.drag = {
+      kind: 'paint', tool: t,
+      wx1: wx, wy1: wy, wx2: wx, wy2: wy,
+    };
+    requestDraw();
+    return;
+  }
+  // Single-click placement (food/enemy/powerup).
+  placeObject(wx, wy);
+  requestDraw();
+}
+
+function onPointerMove(e) {
+  const [wx, wy] = clientToWorld(e.clientX, e.clientY);
+  document.getElementById('coord').textContent =
+    'world: ' + Math.round(wx) + ', ' + Math.round(wy);
+  if (!state.drag) return;
+  if (state.drag.kind === 'pan') {
+    const dx = e.clientX - state.drag.startX, dy = e.clientY - state.drag.startY;
+    state.view.x = state.drag.startViewX - dx / state.view.zoom;
+    state.view.y = state.drag.startViewY - dy / state.view.zoom;
+    clampView();
+    requestDraw();
+    return;
+  }
+  if (state.drag.kind === 'paint') {
+    state.drag.wx2 = wx; state.drag.wy2 = wy;
+    requestDraw();
+  }
+}
+
+function onPointerUp(e) {
+  if (!state.drag) return;
+  const d = state.drag;
+  state.drag = null;
+  if (d.kind === 'paint' && (d.tool === 'ground' || d.tool === 'platform')) {
+    commitPaintDrag(d);
+  }
+  requestDraw();
+}
+
+function commitPaintDrag(d) {
+  const L = state.level;
+  if (d.tool === 'ground') {
+    const a = Math.min(d.wx1, d.wx2), b = Math.max(d.wx1, d.wx2);
+    let s = Math.floor(a / TILE), e = Math.floor(b / TILE);
+    if (e - s < 1) e = s + 1;
+    s = Math.max(0, s); e = Math.min(Math.floor(WORLD_W / TILE) - 1, e);
+    // Merge with existing segments (union).
+    L.ground.push([s, e]);
+    L.ground = mergeGroundSegments(L.ground);
+  } else if (d.tool === 'platform') {
+    const a = Math.min(d.wx1, d.wx2), b = Math.max(d.wx1, d.wx2);
+    const c = Math.min(d.wy1, d.wy2), d2 = Math.max(d.wy1, d.wy2);
+    const tx = Math.floor(a / TILE), tx2 = Math.floor(b / TILE);
+    const tw = Math.max(1, tx2 - tx + 1);
+    const py = Math.floor(c / TILE) * TILE;
+    L.platforms.push([tx, py, tw]);
+  }
+  updateCounts();
+}
+
+function mergeGroundSegments(segs) {
+  if (segs.length < 2) return segs;
+  const sorted = segs.slice().sort((a, b) => a[0] - b[0]);
+  const out = [sorted[0]];
+  for (let i = 1; i < sorted.length; i++) {
+    const last = out[out.length - 1], cur = sorted[i];
+    if (cur[0] <= last[1] + 1) last[1] = Math.max(last[1], cur[1]);
+    else out.push(cur);
+  }
+  return out;
+}
+
+function startPan(e) {
+  state.drag = {
+    kind: 'pan',
+    startX: e.clientX, startY: e.clientY,
+    startViewX: state.view.x, startViewY: state.view.y,
+  };
+}
+
+function onWheel(e) {
+  e.preventDefault();
+  const r = cv.getBoundingClientRect();
+  const cx = e.clientX - r.left, cy = e.clientY - r.top;
+  const [wx, wy] = clientToWorld(e.clientX, e.clientY);
+  // 1.15x per notch; clamp.
+  const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+  const v = state.view;
+  const newZoom = Math.max(0.1, Math.min(8, v.zoom * factor));
+  v.zoom = newZoom;
+  // re-anchor so cursor stays under the same world point.
+  v.x = wx - cx / newZoom;
+  v.y = wy - cy / newZoom;
+  clampView();
+  requestDraw();
+}
+
+// ── Tool / subtype selection ──────────────────────────────
+function selectTool(t) {
+  state.tool = t;
+  document.querySelectorAll('.tool').forEach(el => {
+    el.classList.toggle('selected', el.dataset.tool === t);
+  });
+  updateSubtypeInfo();
+  document.getElementById('tool-name').textContent = 'tool: ' + t;
+  cv.style.cursor = (t === 'erase') ? 'pointer' : 'crosshair';
+  requestDraw();
+}
+
+// ── Bindings ──────────────────────────────────────────────
+function setStatus(s) { document.getElementById('status').textContent = s; }
+
+function bindUI() {
+  document.querySelectorAll('.tool').forEach(el => {
+    el.addEventListener('click', () => selectTool(el.dataset.tool));
+  });
+  document.getElementById('btn-load').addEventListener('click', loadFromFile);
+  document.getElementById('btn-download').addEventListener('click', downloadJson);
+  document.getElementById('btn-showjson').addEventListener('click', showJson);
+  document.getElementById('btn-help').addEventListener('click', () =>
+    document.getElementById('help-modal').classList.remove('hidden'));
+  document.getElementById('btn-close-help').addEventListener('click', () =>
+    document.getElementById('help-modal').classList.add('hidden'));
+  document.getElementById('btn-close-json').addEventListener('click', () =>
+    document.getElementById('json-modal').classList.add('hidden'));
+  document.getElementById('btn-copy-json').addEventListener('click', () => {
+    const ta = document.getElementById('json-out');
+    ta.select();
+    document.execCommand('copy');
+    setStatus('JSON copied to clipboard');
+  });
+
+  cv.addEventListener('contextmenu', e => e.preventDefault());
+  cv.addEventListener('pointerdown', onPointerDown);
+  cv.addEventListener('pointermove', onPointerMove);
+  cv.addEventListener('pointerup', onPointerUp);
+  cv.addEventListener('pointerleave', onPointerUp);
+  cv.addEventListener('wheel', onWheel, { passive: false });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+    if (e.key >= '0' && e.key <= '9') {
+      // Sub-type keys.
+      const n = +e.key;
+      if (state.tool === 'food' && n < FOOD_TYPES.length) foodSub = n;
+      else if (state.tool === 'enemy' && n < ENEMY_TYPES.length) enemySub = n;
+      else if (state.tool === 'powerup' && n < POWERUP_TYPES.length) powerSub = n;
+      else if (state.tool === 'ground') foodSub = enemySub = powerSub = 0;
+      if (n < 4 || state.tool === 'ground') {
+        updateSubSwatches();
+        updateSubtypeInfo();
+      }
+      return;
+    }
+    if (e.key === 'Home') {
+      // Reset view to full-world.
+      const r = cv.getBoundingClientRect();
+      state.view.zoom = Math.min(r.width / WORLD_W, r.height / WORLD_H);
+      state.view.x = (WORLD_W - r.width / state.view.zoom) / 2;
+      state.view.y = (WORLD_H - r.height / state.view.zoom) / 2;
+      clampView();
+      requestDraw();
+      return;
+    }
+    if (e.key === 's' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); downloadJson(); return; }
+    if (e.key === 'Escape') {
+      state.drag = null;
+      requestDraw();
+      return;
+    }
+  });
+}
+
+// ── Boot ──────────────────────────────────────────────────
+async function init() {
+  state.level = emptyLevel();
+  bindUI();
+  resizeCanvas();
+  updateSubSwatches();
+  updateSubtypeInfo();
+  // Try to load the existing level.json from the same directory.
+  // If it fails (file:// or 404), keep an empty level — user can load via toolbar.
+  await loadFromUrl('level.json');
+  fitView();
+  updateCounts();
+  requestDraw();
+}
+
+function fitView() {
+  const r = cv.getBoundingClientRect();
+  const fit = Math.min(r.width / WORLD_W, r.height / WORLD_H);
+  state.view.zoom = Math.min(0.5, fit);  // cap at 50% so the world fits visually.
+  state.view.x = (WORLD_W - r.width / state.view.zoom) / 2;
+  state.view.y = (WORLD_H - r.height / state.view.zoom) / 2;
+  clampView();
+}
+
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
