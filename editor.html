@@ -16,38 +16,50 @@
     --accent-d: #CC9900;
     --danger: #CC2222;
     --danger-d: #991111;
+    --ok: #4CAF50;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; height: 100%; font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
     background: var(--bg); color: var(--ink); overflow: hidden; }
   #app { display: grid; grid-template-rows: 44px 1fr 36px; height: 100%; }
   header { display: flex; align-items: center; padding: 0 16px; background: var(--panel);
-    border-bottom: 1px solid var(--line); gap: 16px; }
-  header h1 { font-size: 14px; font-weight: 600; margin: 0; color: var(--accent); }
+    border-bottom: 1px solid var(--line); gap: 8px; }
+  header h1 { font-size: 14px; font-weight: 600; margin: 0; color: var(--accent); margin-right: 12px; }
   header .spacer { flex: 1; }
   button.btn { background: var(--panel-hi); color: var(--ink); border: 1px solid var(--line);
     padding: 6px 12px; border-radius: 3px; cursor: pointer; font: inherit; }
   button.btn:hover { background: var(--line); }
+  button.btn:disabled { opacity: 0.4; cursor: default; }
   button.btn.primary { background: var(--accent); color: #000; border-color: var(--accent-d); font-weight: 600; }
   button.btn.primary:hover { background: var(--accent-d); }
   button.btn.danger { background: var(--danger); color: #fff; border-color: var(--danger-d); }
-  main { display: grid; grid-template-columns: 200px 1fr; overflow: hidden; }
+  main { display: grid; grid-template-columns: 240px 1fr; overflow: hidden; }
   aside#palette { background: var(--panel); border-right: 1px solid var(--line); padding: 8px;
     overflow-y: auto; }
   aside#palette h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
-    color: var(--muted); margin: 8px 0 4px; }
-  .tool { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 3px;
+    color: var(--muted); margin: 12px 0 4px; padding-bottom: 2px; border-bottom: 1px solid var(--line); }
+  .tool, .lvl-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 3px;
     cursor: pointer; border: 1px solid transparent; margin-bottom: 2px; user-select: none; }
-  .tool:hover { background: var(--panel-hi); }
-  .tool.selected { background: var(--panel-hi); border-color: var(--accent); }
+  .tool:hover, .lvl-row:hover { background: var(--panel-hi); }
+  .tool.selected, .lvl-row.selected { background: var(--panel-hi); border-color: var(--accent); }
   .tool .swatch { width: 24px; height: 24px; border-radius: 2px; border: 1px solid rgba(255,255,255,0.1); flex-shrink: 0; }
   .tool .label { font-size: 12px; }
   .tool .hint { font-size: 10px; color: var(--muted); margin-left: auto; }
+  .lvl-row .lvl-index { width: 22px; color: var(--muted); font: 10px ui-monospace, monospace; text-align: right; }
+  .lvl-row .lvl-name { flex: 1; background: transparent; border: none; color: var(--ink);
+    font: inherit; padding: 2px 4px; min-width: 0; }
+  .lvl-row .lvl-name:focus { background: var(--bg); outline: 1px solid var(--accent); border-radius: 2px; }
+  .lvl-row.selected .lvl-name { color: var(--accent); }
+  .lvl-row .lvl-del { background: none; border: none; color: var(--muted); cursor: pointer; padding: 0 4px; }
+  .lvl-row .lvl-del:hover { color: var(--danger); }
   section#canvas-wrap { position: relative; background: #0a0a18; overflow: hidden; }
   canvas#cv { display: block; width: 100%; height: 100%; cursor: crosshair; }
+  canvas#cv.sel-cursor { cursor: pointer; }
   footer { display: flex; align-items: center; padding: 0 12px; background: var(--panel);
-    border-top: 1px solid var(--line); gap: 12px; font-size: 11px; color: var(--muted); }
+    border-top: 1px solid var(--line); gap: 8px; font-size: 11px; color: var(--muted); }
   footer .pill { background: var(--bg); padding: 2px 8px; border-radius: 9px; border: 1px solid var(--line); }
+  footer .pill.warn { background: rgba(204,34,34,0.15); border-color: var(--danger); color: #ff8888; font-weight: 600; }
+  footer .pill.ok { background: rgba(76,175,80,0.15); border-color: var(--ok); color: #88dd88; }
   footer .spacer { flex: 1; }
   .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex;
     align-items: center; justify-content: center; z-index: 100; }
@@ -59,31 +71,52 @@
     border: 1px solid var(--line); padding: 8px; font: 11px/1.4 ui-monospace, "SF Mono", "Cascadia Code", monospace; }
   .modal-buttons { display: flex; gap: 8px; justify-content: flex-end; }
   .info { padding: 8px; background: var(--bg); border-radius: 3px; font-size: 11px;
-    color: var(--muted); border: 1px solid var(--line); margin-top: 8px; }
+    color: var(--muted); border: 1px solid var(--line); margin-top: 4px; }
+  .info.empty { color: var(--muted); font-style: italic; }
+  .info.warn { background: rgba(204,34,34,0.15); border-color: var(--danger); color: #ffaaaa; }
   kbd { background: #444; padding: 1px 5px; border-radius: 2px; font: 10px ui-monospace, monospace;
     color: #fff; border: 1px solid #666; }
-  .row { display: flex; align-items: center; gap: 6px; padding: 4px 0; }
-  .row input[type="number"], .row input[type="text"] { background: var(--bg); color: var(--ink);
-    border: 1px solid var(--line); padding: 3px 6px; border-radius: 2px; font: inherit; width: 90px; }
+  .row { display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 12px; }
+  .row label { min-width: 80px; color: var(--muted); }
+  .row input[type="number"], .row input[type="text"], .row select { background: var(--bg); color: var(--ink);
+    border: 1px solid var(--line); padding: 3px 6px; border-radius: 2px; font: inherit; width: 80px; }
+  .row select { width: 110px; }
+  .section-actions { display: flex; gap: 4px; align-items: center; margin-top: 4px; }
+  .section-actions .btn { padding: 4px 8px; font-size: 11px; }
+  .undo-redo-btns { display: inline-flex; gap: 0; }
+  .undo-redo-btns .btn { border-radius: 0; padding: 4px 8px; font-size: 11px; }
+  .undo-redo-btns .btn:first-child { border-top-left-radius: 3px; border-bottom-left-radius: 3px; }
+  .undo-redo-btns .btn:last-child { border-top-right-radius: 3px; border-bottom-right-radius: 3px; border-left: none; }
 </style>
 </head>
 <body>
 <div id="app">
   <header>
     <h1>SUPER MAGA BROS — LEVEL EDITOR</h1>
-    <span class="spacer"></span>
-    <button class="btn" id="btn-load">Load level.json</button>
+    <div class="undo-redo-btns">
+      <button class="btn" id="btn-undo" title="Undo (Cmd/Ctrl+Z)">↶ Undo</button>
+      <button class="btn" id="btn-redo" title="Redo (Cmd/Ctrl+Shift+Z)">↷ Redo</button>
+    </div>
+    <button class="btn" id="btn-load" title="Load from file">Load…</button>
     <button class="btn" id="btn-download">Download level.json</button>
     <button class="btn" id="btn-showjson">Show JSON</button>
+    <span class="spacer"></span>
+    <span class="spacer"></span>
     <button class="btn" id="btn-help">?</button>
   </header>
   <main>
     <aside id="palette">
+      <h2>Levels</h2>
+      <div id="levels-list"></div>
+      <div class="section-actions">
+        <button class="btn" id="btn-new-level" title="Add a new level after this one">+ New Level</button>
+      </div>
+
       <h2>Tools</h2>
       <div class="tool selected" data-tool="ground"><div class="swatch" style="background:#8B6914"></div>
-        <span class="label">Ground</span><span class="hint">click+drag</span></div>
+        <span class="label">Ground</span><span class="hint">drag</span></div>
       <div class="tool" data-tool="platform"><div class="swatch" style="background:#B84A28"></div>
-        <span class="label">Platform</span><span class="hint">click+drag</span></div>
+        <span class="label">Platform</span><span class="hint">drag</span></div>
       <div class="tool" data-tool="food"><div class="swatch" id="sw-food"></div>
         <span class="label">Food</span><span class="hint">1/2</span></div>
       <div class="tool" data-tool="enemy"><div class="swatch" id="sw-enemy"></div>
@@ -94,21 +127,28 @@
         <span class="label">Flag</span><span class="hint">click</span></div>
       <div class="tool" data-tool="spawn"><div class="swatch" style="background:#4CAF50"></div>
         <span class="label">Spawn</span><span class="hint">click</span></div>
+      <div class="tool" data-tool="select"><div class="swatch" style="background:repeating-conic-gradient(#444 0% 25%,#eee 0% 50%) 0 0/12px 12px"></div>
+        <span class="label">Select</span><span class="hint">click</span></div>
       <div class="tool" data-tool="erase"><div class="swatch" style="background:#999"></div>
         <span class="label">Erase</span><span class="hint">click</span></div>
 
-      <h2>Sub-types</h2>
+      <h2>Sub-type</h2>
       <div id="subtype-info" class="info">Pick a tool.</div>
+
+      <h2>Inspector</h2>
+      <div id="inspector" class="info empty">Nothing selected.<br><br>Click an existing object with the <b>Select</b> tool (or shift-click while in another tool).</div>
 
       <h2>Counts</h2>
       <div id="counts" class="info"></div>
 
       <h2>Tips</h2>
       <div class="info">
-        <div><kbd>0</kbd><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> cycle sub-type</div>
+        <div><kbd>0</kbd>-<kbd>3</kbd> cycle sub-type</div>
         <div><kbd>Shift</kbd>+click = erase</div>
         <div><kbd>RMB</kbd> drag = pan, <kbd>wheel</kbd> = zoom</div>
         <div><kbd>Home</kbd> = reset view</div>
+        <div><kbd>Cmd/Ctrl</kbd>+<kbd>Z</kbd> undo, <kbd>⇧Z</kbd> redo</div>
+        <div><kbd>Del</kbd> deletes selection</div>
       </div>
     </aside>
     <section id="canvas-wrap">
@@ -116,9 +156,12 @@
     </section>
   </main>
   <footer>
+    <span class="pill" id="level-pill">Level 1 of 1</span>
     <span class="pill" id="coord">world: 0, 0</span>
     <span class="pill" id="tool-name">tool: ground</span>
     <span class="pill" id="zoom-lvl">zoom: 30%</span>
+    <span class="pill" id="warn-ground" hidden>NO GROUND — player falls!</span>
+    <span class="pill" id="sel-pill" hidden>selected: —</span>
     <span class="spacer"></span>
     <span id="status">ready</span>
   </footer>
@@ -136,36 +179,48 @@
 </div>
 
 <div id="help-modal" class="modal-bg hidden">
-  <div class="modal" style="min-width:520px;">
+  <div class="modal" style="min-width:540px;">
     <h3>How to use</h3>
     <div style="font-size:12px; line-height:1.6;">
-      <p><b>Tools</b> (left palette):
+      <p><b>Levels</b> (top of palette):
+        <ul style="margin:4px 0 12px 16px; padding:0;">
+          <li>Click a level name to switch the editor's current level.</li>
+          <li>Double-click the name to rename it.</li>
+          <li>Click the <b>×</b> on a row to delete that level (cannot delete the last one).</li>
+          <li>Click <b>+ New Level</b> to add a level after the current one (with a default empty layout).</li>
+        </ul>
+      </p>
+      <p><b>Tools</b>:
         <ul style="margin:4px 0 12px 16px; padding:0;">
           <li><b>Ground</b> — click+drag horizontally across the ground row to mark a segment.</li>
           <li><b>Platform</b> — click+drag any direction to draw a brick platform.</li>
           <li><b>Food</b> — click to drop. <kbd>1</kbd>=coke, <kbd>2</kbd>=bigmac.</li>
-          <li><b>Enemy</b> — click to spawn. Patrol defaults to ±64px. Press <kbd>0</kbd>–<kbd>3</kbd> for type:
+          <li><b>Enemy</b> — click to spawn. Patrol defaults to ±64px. <kbd>0</kbd>–<kbd>3</kbd> for type:
             journalist/scientist/girl/lobbyist.</li>
           <li><b>Power-up</b> — click. <kbd>1</kbd>=MAGA Hat, <kbd>2</kbd>=Censor Bar, <kbd>3</kbd>=Classified Docs.</li>
           <li><b>Flag</b> — click to set flag X position.</li>
           <li><b>Spawn</b> — click to set player start.</li>
+          <li><b>Select</b> — click an existing object to edit it in the Inspector panel.</li>
           <li><b>Erase</b> — click an existing object to remove it.</li>
         </ul>
       </p>
-      <p><b>Save flow</b>:
-        <ol style="margin:4px 0 12px 16px; padding:0;">
-          <li>Click <b>Download level.json</b> to save.</li>
-          <li>Put the file next to <code>index.html</code> and <code>game.js</code>.</li>
-          <li>Reload the game — <code>GameScene.preload()</code> loads it automatically.</li>
-        </ol>
+      <p><b>Snap conventions</b>: all coordinates snap to the 32-px tile grid.
+        <ul style="margin:4px 0 12px 16px; padding:0;">
+          <li>Food / enemies / powerups: top-left of a tile.</li>
+          <li>Flag: left edge of a tile.</li>
+          <li>Player start: top-left of a tile.</li>
+          <li>Ground: inclusive tile indices.</li>
+        </ul>
       </p>
+      <p><b>Undo / Redo</b>: <kbd>Cmd/Ctrl</kbd>+<kbd>Z</kbd> undo, <kbd>Cmd/Ctrl</kbd>+<kbd>⇧</kbd>+<kbd>Z</kbd> (or <kbd>Y</kbd>) redo.
+        Every place, erase, drag, level add/delete, and inspector change is on the stack.</p>
       <p><b>Edit patterns</b>:
         <ul style="margin:4px 0 0 16px; padding:0;">
           <li><b>Shift</b>+click = erase (any tool).</li>
           <li><b>Right-mouse drag</b> = pan.</li>
           <li><b>Mouse wheel</b> = zoom (centered on cursor).</li>
           <li><b>Home</b> = reset view.</li>
-          <li>The game keeps a <code>FALLBACK_LEVEL</code> literal in <code>game.js</code>; if <code>level.json</code> is missing, the game still runs.</li>
+          <li>The game reads the same JSON via <code>GameScene.preload()</code>; missing <code>level.json</code> falls back to a hardcoded <code>FALLBACK_LEVEL</code> in <code>game.js</code>.</li>
         </ul>
       </p>
     </div>
@@ -178,10 +233,10 @@
 <script>
 'use strict';
 
-// ── Constants (must match game.js:11-14) ────────────────────
+// ── Constants (must match game.js:7-9) ─────────────────────
 const TILE = 32, WORLD_W = 12800, WORLD_H = 600, GROUND_Y = 468;
 
-// ── Sub-type catalogues (must match game.js:21-26, 627, 768) ─
+// ── Sub-type catalogues (must match game.js:21-26) ───────
 const ENEMY_TYPES = [
   { name: 'journalist', color: '#4488FF', speed: 60,  score: 200 },
   { name: 'scientist',  color: '#44AA44', speed: 80,  score: 300 },
@@ -198,63 +253,37 @@ const POWERUP_TYPES = [
   { name: 'Classified Docs',  color: '#996633' },
 ];
 
-// ── Sub-type state (cycled with 0-3) ────────────────────────
-let foodSub = 1;     // default: coke (matches level.json's high count of "1")
-let enemySub = 0;    // default: journalist
-let powerSub = 0;    // default: MAGA Hat
+// ── Sub-type state (cycled with 0-3) ──────────────────────
+let foodSub = 1, enemySub = 0, powerSub = 0;
 
-// ── Subtype swatches — kept in sync with current selection ─
-function updateSubSwatches() {
-  document.getElementById('sw-food').style.background = FOOD_TYPES[foodSub].color;
-  document.getElementById('sw-enemy').style.background = ENEMY_TYPES[enemySub].color;
-  document.getElementById('sw-power').style.background = POWERUP_TYPES[powerSub].color;
-}
-function updateSubtypeInfo() {
-  const map = { food: FOOD_TYPES, enemy: ENEMY_TYPES, powerup: POWERUP_TYPES };
-  const idx = { food: foodSub, enemy: enemySub, powerup: powerSub };
-  const t = state.tool;
-  const el = document.getElementById('subtype-info');
-  if (!map[t]) {
-    el.textContent = (t === 'ground' || t === 'platform') ? 'No sub-type.' :
-                     (t === 'flag' || t === 'spawn') ? 'Single target.' :
-                     'Click an existing object to remove it.';
-    return;
-  }
-  const e = map[t][idx[t]];
-  el.innerHTML = `<div class="row"><div class="swatch" style="background:${e.color};width:18px;height:18px;border:1px solid #555"></div>
-    <span style="margin-left:6px">${e.name}</span></div>
-    Press <kbd>${t==='food'?'1':'2'}</kbd> or <kbd>3</kbd> to cycle.`;
-}
-
-// ── Editor state ────────────────────────────────────────────
+// ── Editor state ──────────────────────────────────────────
+const SCHEMA_VERSION = 2;
+const MAX_UNDO = 100;
 let state = {
-  level: null,
+  levels: [],          // array of normalised level objects
+  levelIndex: 0,
   tool: 'ground',
   view: { x: 0, y: 0, zoom: 0.3 },
-  drag: null,   // { kind: 'pan'|'paint', startX, startY, startView, ... }
+  drag: null,
+  selected: null,      // { kind, index } into the CURRENT level's data
+  undoStack: [],
+  redoStack: [],
 };
 
-// ── Persistence hooks ──────────────────────────────────────
-function emptyLevel() {
+// ── Persistence ───────────────────────────────────────────
+function emptyLevel(name) {
   return {
-    tile: TILE,
-    worldW: WORLD_W,
-    worldH: WORLD_H,
-    groundY: GROUND_Y,
-    playerStart: [80, GROUND_Y - 48],
+    name: name || 'New Level',
+    playerStart: [TILE, GROUND_Y - TILE * 2],   // tile 1 left edge, 2 above ground row
     ground: [], platforms: [], food: [], enemies: [], powerups: [],
-    flagX: WORLD_W - TILE * 2,
+    flagX: WORLD_W - TILE * 10,
   };
 }
 
-function normaliseLevel(l) {
-  // Defensive: ensure every field exists with the right shape.
-  const e = emptyLevel();
+function normaliseLevel(l, fallbackName) {
+  const e = emptyLevel(fallbackName);
   if (!l || typeof l !== 'object') return e;
-  e.tile = l.tile || TILE;
-  e.worldW = l.worldW || WORLD_W;
-  e.worldH = l.worldH || WORLD_H;
-  e.groundY = l.groundY || GROUND_Y;
+  if (typeof l.name === 'string') e.name = l.name;
   if (Array.isArray(l.playerStart) && l.playerStart.length === 2) e.playerStart = l.playerStart;
   if (Array.isArray(l.ground)) e.ground = l.ground.slice();
   if (Array.isArray(l.platforms)) e.platforms = l.platforms.slice();
@@ -265,21 +294,76 @@ function normaliseLevel(l) {
   return e;
 }
 
+// Accept either the multi-level schema ({ levels: [...] })
+// or the legacy single-level schema (the old shape with no "levels" wrapper).
+function normaliseRoot(data) {
+  if (data && Array.isArray(data.levels) && data.levels.length) {
+    return {
+      levels: data.levels.map((l, i) => normaliseLevel(l, 'Level ' + (i + 1))),
+      currentLevel: (typeof data.currentLevel === 'number'
+        && data.currentLevel < data.levels.length) ? data.currentLevel : 0,
+    };
+  }
+  // Legacy single-level: wrap as level 1.
+  return { levels: [normaliseLevel(data, 'Level 1')], currentLevel: 0 };
+}
+
+function currentLevel() {
+  if (!state.levels.length) {
+    state.levels = [emptyLevel('Level 1')];
+    state.levelIndex = 0;
+  }
+  return state.levels[state.levelIndex];
+}
+
+function setLevels(newLevels, newIndex = 0) {
+  state.levels = newLevels;
+  state.levelIndex = Math.min(Math.max(0, newIndex), newLevels.length - 1);
+  state.selected = null;
+  state.undoStack = [];
+  state.redoStack = [];
+  renderLevels();
+  refreshInspector();
+  updateAll();
+}
+
 async function loadFromUrl(url) {
   try {
     const r = await fetch(url, { cache: 'no-cache' });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const json = await r.json();
-    state.level = normaliseLevel(json);
-    setStatus('Loaded ' + url);
+    const norm = normaliseRoot(json);
+    setLevels(norm.levels, norm.currentLevel);
+    setStatus('Loaded ' + url + ' (' + norm.levels.length + ' level' + (norm.levels.length !== 1 ? 's' : '') + ')');
   } catch (err) {
-    setStatus('Failed to load ' + url + ' (' + err.message + ') — using empty level');
-    state.level = emptyLevel();
+    setStatus('Failed to load ' + url + ' (' + err.message + ') — starting from empty');
+    setLevels([emptyLevel('Level 1')], 0);
   }
 }
 
+function serializeRoot() {
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    tile: TILE,
+    worldW: WORLD_W,
+    worldH: WORLD_H,
+    groundY: GROUND_Y,
+    currentLevel: state.levelIndex,
+    levels: state.levels.map(l => ({
+      name: l.name,
+      playerStart: l.playerStart.slice(),
+      ground: l.ground.slice(),
+      platforms: l.platforms.slice(),
+      food: l.food.slice(),
+      enemies: l.enemies.slice(),
+      powerups: l.powerups.slice(),
+      flagX: l.flagX,
+    })),
+  };
+}
+
 function downloadJson() {
-  const json = JSON.stringify(state.level, null, 4);
+  const json = JSON.stringify(serializeRoot(), null, 4);
   const blob = new Blob([json], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -287,12 +371,12 @@ function downloadJson() {
   document.body.appendChild(a);
   a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 100);
-  setStatus('Downloaded level.json');
+  setStatus('Downloaded level.json (' + state.levels.length + ' level' +
+    (state.levels.length !== 1 ? 's' : '') + ')');
 }
 
 function showJson() {
-  const json = JSON.stringify(state.level, null, 4);
-  document.getElementById('json-out').value = json;
+  document.getElementById('json-out').value = JSON.stringify(serializeRoot(), null, 4);
   document.getElementById('json-modal').classList.remove('hidden');
 }
 
@@ -303,14 +387,62 @@ async function loadFromFile() {
     if (!inp.files || !inp.files[0]) return;
     const text = await inp.files[0].text();
     try {
-      state.level = normaliseLevel(JSON.parse(text));
-      setStatus('Loaded ' + inp.files[0].name);
-      requestDraw();
+      const data = JSON.parse(text);
+      const norm = normaliseRoot(data);
+      setLevels(norm.levels, norm.currentLevel);
+      setStatus('Loaded ' + inp.files[0].name + ' (' + norm.levels.length + ' level' +
+        (norm.levels.length !== 1 ? 's' : '') + ')');
     } catch (err) {
       setStatus('Bad JSON: ' + err.message);
     }
   };
   inp.click();
+}
+
+// ── Undo / Redo ───────────────────────────────────────────
+function snapshot() {
+  // Deep-ish copy via JSON; ~1-2 KB per level × N levels, fine for MAX_UNDO depth.
+  return JSON.stringify({
+    levels: state.levels,
+    levelIndex: state.levelIndex,
+    selected: state.selected,
+  });
+}
+function restore(snap) {
+  const data = JSON.parse(snap);
+  state.levels = data.levels;
+  state.levelIndex = data.levelIndex;
+  state.selected = data.selected;
+}
+
+function commit(label) {
+  state.undoStack.push(snapshot());
+  if (state.undoStack.length > MAX_UNDO) state.undoStack.shift();
+  state.redoStack = [];
+}
+
+function undo() {
+  if (!state.undoStack.length) return;
+  state.redoStack.push(snapshot());
+  restore(state.undoStack.pop());
+  renderLevels();
+  refreshInspector();
+  updateAll();
+  setStatus('Undo');
+}
+function redo() {
+  if (!state.redoStack.length) return;
+  state.undoStack.push(snapshot());
+  restore(state.redoStack.pop());
+  renderLevels();
+  refreshInspector();
+  updateAll();
+  setStatus('Redo');
+}
+
+function updateUndoRedoButtons() {
+  document.getElementById('btn-undo').disabled = state.undoStack.length === 0;
+  document.getElementById('btn-redo').disabled = state.redoStack.length === 0;
 }
 
 // ── Canvas / rendering ────────────────────────────────────
@@ -319,7 +451,6 @@ const ctx = cv.getContext('2d');
 
 function resizeCanvas() {
   const r = cv.getBoundingClientRect();
-  // Backing-store size accounting for DPR.
   const dpr = window.devicePixelRatio || 1;
   cv.width = Math.max(1, Math.floor(r.width * dpr));
   cv.height = Math.max(1, Math.floor(r.height * dpr));
@@ -341,13 +472,11 @@ function clientToWorld(px, py) {
   const v = state.view;
   return [v.x + cx / v.zoom, v.y + cy / v.zoom];
 }
-
 function worldToClient(wx, wy) {
   const r = cv.getBoundingClientRect();
   const v = state.view;
   return [r.left + (wx - v.x) * v.zoom, r.top + (wy - v.y) * v.zoom];
 }
-
 function clampView() {
   const v = state.view;
   const r = cv.getBoundingClientRect();
@@ -361,12 +490,12 @@ function draw() {
   const W = r.width, H = r.height;
   ctx.clearRect(0, 0, W, H);
   const v = state.view;
+  const L = currentLevel();
 
-  // Background grid (every 32 px).
   ctx.fillStyle = '#0e0e22';
   ctx.fillRect(0, 0, W, H);
 
-  // Tile grid (small).
+  // tile grid
   ctx.strokeStyle = 'rgba(255,255,255,0.04)';
   ctx.lineWidth = 1;
   const startX = Math.floor(v.x / TILE) * TILE;
@@ -379,35 +508,33 @@ function draw() {
     const [, cy] = worldToClient(0, y);
     ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(W, cy); ctx.stroke();
   }
-
-  // Zone-band stripes (every 64 tiles — visual divider).
   ctx.strokeStyle = 'rgba(255,255,255,0.06)';
   for (let x = 0; x <= WORLD_W; x += TILE * 64) {
     const [cx] = worldToClient(x, 0);
     ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, H); ctx.stroke();
   }
 
-  // Ground row band (highlighted).
+  // ground band
   const [, gyTop] = worldToClient(0, GROUND_Y);
   const [, gyBot] = worldToClient(0, GROUND_Y + TILE);
   ctx.fillStyle = 'rgba(60, 176, 67, 0.15)';
   ctx.fillRect(0, gyTop, W, gyBot - gyTop);
 
-  // Ground segments.
-  for (const [s, e] of state.level.ground) {
+  // ground segments
+  for (const [s, e] of L.ground) {
     const [x1] = worldToClient(s * TILE, 0);
     const [x2] = worldToClient((e + 1) * TILE, 0);
     const w = x2 - x1, h = gyBot - gyTop;
-    ctx.fillStyle = '#3CB043';   // grass
+    ctx.fillStyle = '#3CB043';
     ctx.fillRect(x1, gyTop, w, 4);
-    ctx.fillStyle = '#8B6914';   // dirt
+    ctx.fillStyle = '#8B6914';
     ctx.fillRect(x1, gyTop + 4, w, h - 4);
     ctx.strokeStyle = '#2E8B36';
     ctx.strokeRect(x1, gyTop, w, h);
   }
 
-  // Platforms.
-  for (const [tx, py, tw] of state.level.platforms) {
+  // platforms
+  for (const [tx, py, tw] of L.platforms) {
     const [x1, y1] = worldToClient(tx * TILE, py);
     const [x2, y2] = worldToClient((tx + tw) * TILE, py + TILE);
     const w = x2 - x1, h = y2 - y1;
@@ -416,15 +543,14 @@ function draw() {
     ctx.strokeStyle = '#8B3A1F';
     ctx.lineWidth = 1;
     ctx.strokeRect(x1, y1, w, h);
-    // brick lines.
     ctx.beginPath();
     ctx.moveTo(x1, y1); ctx.lineTo(x2, y1);
     ctx.moveTo(x1 + w / 2, y1); ctx.lineTo(x1 + w / 2, y2);
     ctx.stroke();
   }
 
-  // Food.
-  for (const [fx, fy, t] of state.level.food) {
+  // food
+  for (const [fx, fy, t] of L.food) {
     const [cx, cy] = worldToClient(fx, fy);
     const r = Math.max(3, 10 * v.zoom);
     ctx.beginPath();
@@ -436,8 +562,8 @@ function draw() {
     ctx.stroke();
   }
 
-  // Power-ups.
-  for (const [px, py, t] of state.level.powerups) {
+  // powerups
+  for (const [px, py, t] of L.powerups) {
     const [cx, cy] = worldToClient(px, py);
     const size = Math.max(6, 24 * v.zoom);
     const x = cx - size / 2, y = cy - size / 2;
@@ -446,7 +572,6 @@ function draw() {
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 1;
     ctx.strokeRect(x, y, size, size);
-    // label
     if (v.zoom >= 0.4) {
       ctx.fillStyle = '#fff';
       ctx.font = `${Math.max(8, 10 * v.zoom)}px ui-monospace, monospace`;
@@ -455,19 +580,15 @@ function draw() {
     }
   }
 
-  // Enemies.
-  for (const [ex, eL, eR, t] of state.level.enemies) {
+  // enemies
+  for (const [ex, eL, eR, t] of L.enemies) {
     const [cx, cy] = worldToClient(ex, GROUND_Y - 18);
     const [lxp] = worldToClient(eL, 0);
     const [rxp] = worldToClient(eR, 0);
-    // patrol range line
     ctx.strokeStyle = 'rgba(255,255,255,0.2)';
     ctx.setLineDash([3, 3]);
-    ctx.beginPath();
-    ctx.moveTo(lxp, cy); ctx.lineTo(rxp, cy);
-    ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(lxp, cy); ctx.lineTo(rxp, cy); ctx.stroke();
     ctx.setLineDash([]);
-
     const size = Math.max(6, 24 * v.zoom);
     ctx.fillStyle = ENEMY_TYPES[t] ? ENEMY_TYPES[t].color : '#888';
     ctx.fillRect(cx - size / 2, cy - size / 2, size, size);
@@ -482,36 +603,33 @@ function draw() {
     }
   }
 
-  // Flag.
+  // flag
   {
-    const [cx] = worldToClient(state.level.flagX, 0);
-    const [bx] = worldToClient(state.level.flagX, GROUND_Y);
+    const [cx] = worldToClient(L.flagX, 0);
     ctx.strokeStyle = '#888';
     ctx.lineWidth = 2 * v.zoom;
     ctx.beginPath();
-    ctx.moveTo(cx, GROUND_Y - 80 * v.zoom > 4 ? bx - 80 * v.zoom : 4);
+    ctx.moveTo(cx, Math.max(4, GROUND_Y - 80 * v.zoom));
     ctx.lineTo(cx, GROUND_Y);
     ctx.stroke();
-    // pole top dot.
     ctx.fillStyle = '#FFD700';
     ctx.beginPath();
     ctx.arc(cx, GROUND_Y - 80 * v.zoom, Math.max(2, 4 * v.zoom), 0, Math.PI * 2);
     ctx.fill();
-    // checkered flag.
     const flagW = 16 * v.zoom, flagH = 12 * v.zoom;
-    const flagX = cx, flagY = GROUND_Y - 80 * v.zoom;
+    const flagY = GROUND_Y - 80 * v.zoom;
     ctx.fillStyle = '#fff';
-    ctx.fillRect(flagX, flagY, flagW, flagH);
+    ctx.fillRect(cx, flagY, flagW, flagH);
     ctx.fillStyle = '#444';
     for (let row = 0; row < 2; row++)
       for (let col = 0; col < 4; col++)
         if ((row + col) & 1)
-          ctx.fillRect(flagX + col * (flagW / 4), flagY + row * (flagH / 2), flagW / 4, flagH / 2);
+          ctx.fillRect(cx + col * (flagW / 4), flagY + row * (flagH / 2), flagW / 4, flagH / 2);
   }
 
-  // Player spawn.
+  // spawn
   {
-    const [cx, cy] = worldToClient(state.level.playerStart[0], state.level.playerStart[1]);
+    const [cx, cy] = worldToClient(L.playerStart[0], L.playerStart[1]);
     const r = Math.max(6, 12 * v.zoom);
     ctx.fillStyle = 'rgba(76,175,80,0.4)';
     ctx.beginPath(); ctx.arc(cx, cy, r + 4, 0, Math.PI * 2); ctx.fill();
@@ -525,7 +643,22 @@ function draw() {
     ctx.fillText('P', cx, cy + 4);
   }
 
-  // In-progress drag preview.
+  // selection ring
+  if (state.selected) {
+    const sel = state.selected;
+    const [x, y, w, h, draw] = selectionBounds(L, sel);
+    if (x !== null) {
+      const [cx, cy] = worldToClient(x, y);
+      const [cx2, cy2] = worldToClient(x + w, y + h);
+      ctx.strokeStyle = '#FFD700';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 3]);
+      ctx.strokeRect(cx, cy, cx2 - cx, cy2 - cy);
+      ctx.setLineDash([]);
+    }
+  }
+
+  // paint drag preview
   if (state.drag && state.drag.kind === 'paint') {
     const d = state.drag;
     const [x1, y1] = worldToClient(d.wx1, d.wy1);
@@ -533,7 +666,6 @@ function draw() {
     ctx.strokeStyle = 'rgba(255,215,0,0.8)';
     ctx.lineWidth = 2;
     if (d.tool === 'ground') {
-      // horizontal band preview on the ground row.
       const [, gy] = worldToClient(0, GROUND_Y);
       const minX = Math.min(x1, x2), maxX = Math.max(x1, x2);
       ctx.strokeRect(minX, gy, maxX - minX, TILE * v.zoom);
@@ -544,42 +676,89 @@ function draw() {
     }
   }
 
-  // HUD pills.
+  // HUD pills
   document.getElementById('zoom-lvl').textContent = 'zoom: ' + Math.round(v.zoom * 100) + '%';
   document.getElementById('tool-name').textContent = 'tool: ' + state.tool;
 }
 
-// ── Object operations ─────────────────────────────────────
-function placeObject(wx, wy, opts = {}) {
-  const L = state.level;
-  switch (state.tool) {
-    case 'ground':
-      // Click+drag handles this; single click ignored (tool requires drag).
-      return;
+function selectionBounds(L, sel) {
+  switch (sel.kind) {
+    case 'food':
+    case 'powerup': {
+      const arr = sel.kind === 'food' ? L.food : L.powerups;
+      const obj = arr[sel.index];
+      if (!obj) return [null, null, null, null, false];
+      const [, , r = 12] = ENEMY_TYPES; // unused
+      const pad = 16;
+      return [obj[0] - pad, obj[1] - pad, 2 * pad, 2 * pad, true];
+    }
+    case 'enemy': {
+      const e = L.enemies[sel.index];
+      if (!e) return [null];
+      const [ex, eL, eR] = e;
+      const minX = Math.min(ex, eL, eR) - 8;
+      const maxX = Math.max(ex, eL, eR) + 8;
+      return [minX, GROUND_Y - 32, maxX - minX, 32, true];
+    }
     case 'platform': {
-      const tx = Math.floor(wx / TILE);
-      const py = Math.floor(wy / TILE) * TILE;
+      const p = L.platforms[sel.index];
+      if (!p) return [null];
+      const [tx, py, tw] = p;
+      return [tx * TILE, py, tw * TILE, TILE, true];
+    }
+    case 'ground': {
+      const g = L.ground[sel.index];
+      if (!g) return [null];
+      const [s, e] = g;
+      return [s * TILE, GROUND_Y, (e - s + 1) * TILE, TILE, true];
+    }
+  }
+  return [null];
+}
+
+// ── Object operations ────────────────────────────────────
+function snapOrigin(wx, wy) {
+  // Tile-grid snap: top-left corner of a tile. Matches the original level.json convention.
+  const x = Math.max(0, Math.min(WORLD_W - TILE, Math.floor(wx / TILE) * TILE));
+  const y = Math.max(0, Math.min(WORLD_H - TILE, Math.floor(wy / TILE) * TILE));
+  return [x, y];
+}
+
+function placeObject(wx, wy) {
+  const L = currentLevel();
+  switch (state.tool) {
+    case 'ground': return;     // drag-only
+    case 'select': return selectAt(wx, wy);  // handled in onPointerDown
+    case 'platform': {
+      const tx = Math.max(0, Math.min(Math.floor(WORLD_W / TILE) - 1, Math.floor(wx / TILE)));
+      const [px, py] = snapOrigin(wx, wy);
       L.platforms.push([tx, py, 1]);
       break;
     }
-    case 'food':
-      L.food.push([Math.round(wx / TILE) * TILE + TILE / 2, Math.round(wy / TILE) * TILE + TILE / 2, foodSub]);
-      break;
-    case 'enemy': {
-      const px = Math.round(wx / TILE) * TILE + TILE / 2;
-      const halfPatrol = 2 * TILE;
-      L.enemies.push([px, px - halfPatrol, px + halfPatrol, enemySub]);
+    case 'food': {
+      const [px, py] = snapOrigin(wx, wy);
+      L.food.push([px, py, foodSub]);
       break;
     }
-    case 'powerup':
-      L.powerups.push([Math.round(wx / TILE) * TILE + TILE / 2, Math.round(wy / TILE) * TILE + TILE / 2, powerSub]);
+    case 'enemy': {
+      const [px, py] = snapOrigin(wx, wy);
+      const halfPatrol = 2 * TILE;
+      L.enemies.push([px + TILE / 2, px - halfPatrol, px + TILE + halfPatrol, enemySub]);
       break;
+    }
+    case 'powerup': {
+      const [px, py] = snapOrigin(wx, wy);
+      L.powerups.push([px, py, powerSub]);
+      break;
+    }
     case 'flag':
-      L.flagX = Math.round(wx / TILE) * TILE;
+      L.flagX = Math.max(0, Math.min(WORLD_W - TILE, Math.floor(wx / TILE) * TILE));
       break;
-    case 'spawn':
-      L.playerStart = [Math.round(wx / TILE) * TILE + TILE / 2, Math.round(wy / TILE) * TILE + TILE / 2];
+    case 'spawn': {
+      const [px, py] = snapOrigin(wx, wy);
+      L.playerStart = [px, py];
       break;
+    }
     case 'erase':
       eraseAt(wx, wy);
       break;
@@ -587,25 +766,148 @@ function placeObject(wx, wy, opts = {}) {
   updateCounts();
 }
 
-function eraseAt(wx, wy) {
-  const L = state.level;
-  // ground segments
-  const tileX = Math.floor(wx / TILE);
-  L.ground = L.ground.filter(([s, e]) => !(tileX >= s && tileX <= e));
+function selectAt(wx, wy) {
+  const L = currentLevel();
+  // Priority: top-most (last drawn first), hit-test by proximity.
+  const RADIUS = 18;
+
+  // ground segments (lower priority)
+  for (let i = L.ground.length - 1; i >= 0; i--) {
+    const [s, e] = L.ground[i];
+    if (wx >= s * TILE && wx <= (e + 1) * TILE && wy >= GROUND_Y && wy <= GROUND_Y + TILE) {
+      state.selected = { kind: 'ground', index: i };
+      refreshInspector();
+      updateSelectionPill();
+      return;
+    }
+  }
   // platforms
-  L.platforms = L.platforms.filter(([tx, py, w]) => !(tileX >= tx && tileX < tx + w && Math.floor(wy / TILE) * TILE === py));
-  // food
-  L.food = L.food.filter(([fx, fy]) => Math.hypot(fx - wx, fy - wy) > 16);
+  for (let i = L.platforms.length - 1; i >= 0; i--) {
+    const [tx, py, tw] = L.platforms[i];
+    const x1 = tx * TILE, x2 = (tx + tw) * TILE;
+    const y1 = py, y2 = py + TILE;
+    if (wx >= x1 && wx <= x2 && wy >= y1 && wy <= y2) {
+      state.selected = { kind: 'platform', index: i };
+      refreshInspector();
+      updateSelectionPill();
+      return;
+    }
+  }
   // enemies
-  L.enemies = L.enemies.filter(([ex, , , ]) => Math.abs(ex - wx) > 16 || Math.abs((GROUND_Y - 18) - wy) > 16);
+  for (let i = L.enemies.length - 1; i >= 0; i--) {
+    const [ex] = L.enemies[i];
+    const cy = GROUND_Y - 18;
+    if (Math.abs(ex - wx) <= RADIUS && Math.abs(cy - wy) <= RADIUS) {
+      state.selected = { kind: 'enemy', index: i };
+      refreshInspector();
+      updateSelectionPill();
+      return;
+    }
+  }
   // powerups
-  L.powerups = L.powerups.filter(([px, py]) => Math.hypot(px - wx, py - wy) > 16);
-  // flag & spawn have their own click handlers (handled there).
+  for (let i = L.powerups.length - 1; i >= 0; i--) {
+    const [px, py] = L.powerups[i];
+    if (Math.hypot(px - wx, py - wy) <= RADIUS) {
+      state.selected = { kind: 'powerup', index: i };
+      refreshInspector();
+      updateSelectionPill();
+      return;
+    }
+  }
+  // food
+  for (let i = L.food.length - 1; i >= 0; i--) {
+    const [fx, fy] = L.food[i];
+    if (Math.hypot(fx - wx, fy - wy) <= RADIUS) {
+      state.selected = { kind: 'food', index: i };
+      refreshInspector();
+      updateSelectionPill();
+      return;
+    }
+  }
+  // nothing hit
+  state.selected = null;
+  refreshInspector();
+  updateSelectionPill();
+}
+
+function eraseAt(wx, wy) {
+  const L = currentLevel();
+  const RADIUS = 18;
+
+  // top-most first
+  for (let i = L.powerups.length - 1; i >= 0; i--) {
+    const [px, py] = L.powerups[i];
+    if (Math.hypot(px - wx, py - wy) <= RADIUS) {
+      L.powerups.splice(i, 1);
+      updateCounts();
+      return;
+    }
+  }
+  for (let i = L.food.length - 1; i >= 0; i--) {
+    const [fx, fy] = L.food[i];
+    if (Math.hypot(fx - wx, fy - wy) <= RADIUS) {
+      L.food.splice(i, 1);
+      updateCounts();
+      return;
+    }
+  }
+  for (let i = L.enemies.length - 1; i >= 0; i--) {
+    const [ex] = L.enemies[i];
+    const cy = GROUND_Y - 18;
+    if (Math.abs(ex - wx) <= RADIUS && Math.abs(cy - wy) <= RADIUS) {
+      L.enemies.splice(i, 1);
+      updateCounts();
+      return;
+    }
+  }
+  for (let i = L.platforms.length - 1; i >= 0; i--) {
+    const [tx, , tw] = L.platforms[i];
+    const x1 = tx * TILE, x2 = (tx + tw) * TILE;
+    if (wx >= x1 - RADIUS && wx <= x2 + RADIUS && Math.abs(wy - (groundTopAt(L, wx))) <= TILE) {
+      L.platforms.splice(i, 1);
+      updateCounts();
+      return;
+    }
+  }
+  const tileX = Math.floor(wx / TILE);
+  for (let i = L.ground.length - 1; i >= 0; i--) {
+    const [s, e] = L.ground[i];
+    if (tileX >= s && tileX <= e) {
+      L.ground.splice(i, 1);
+      updateCounts();
+      return;
+    }
+  }
+}
+
+function groundTopAt(L, wx) {
+  // Find top of ground/platform stack at pixel column wx (used only for erase); returns GROUND_Y if nothing.
+  const tileX = Math.floor(wx / TILE);
+  for (const [tx, py, tw] of L.platforms) {
+    if (tileX >= tx && tileX < tx + tw) return py;
+  }
+  for (const [s] of L.ground) {
+    if (s === tileX) return GROUND_Y;
+  }
+  return GROUND_Y;
+}
+
+function deleteSelected() {
+  if (!state.selected) return;
+  const L = currentLevel();
+  const arr = (L[propNameForKind(state.selected.kind)] || []);
+  arr.splice(state.selected.index, 1);
+  state.selected = null;
+  refreshInspector();
+  updateSelectionPill();
   updateCounts();
+}
+function propNameForKind(kind) {
+  return { food: 'food', powerup: 'powerups', enemy: 'enemies', platform: 'platforms', ground: 'ground' }[kind];
 }
 
 function updateCounts() {
-  const L = state.level;
+  const L = currentLevel();
   document.getElementById('counts').innerHTML =
     `ground: ${L.ground.length} segs<br>` +
     `platforms: ${L.platforms.length}<br>` +
@@ -614,43 +916,228 @@ function updateCounts() {
     `powerups: ${L.powerups.length}<br>` +
     `flagX: ${L.flagX}<br>` +
     `spawn: (${L.playerStart[0]}, ${L.playerStart[1]})`;
+
+  // warnings
+  const warn = document.getElementById('warn-ground');
+  warn.hidden = L.ground.length > 0;
+}
+
+function updateSelectionPill() {
+  const pill = document.getElementById('sel-pill');
+  if (!state.selected) { pill.hidden = true; return; }
+  pill.hidden = false;
+  pill.textContent = 'selected: ' + state.selected.kind + ' #' + state.selected.index;
+}
+
+// ── Inspector panel ────────────────────────────────────────
+function refreshInspector() {
+  const el = document.getElementById('inspector');
+  if (!state.selected) {
+    el.className = 'info empty';
+    el.innerHTML = 'Nothing selected.<br><br>Click an existing object with the <b>Select</b> tool (or shift-click while in another tool).';
+    return;
+  }
+  const L = currentLevel();
+  const sel = state.selected;
+  const kind = sel.kind;
+  const arr = L[propNameForKind(kind)];
+  const obj = arr[sel.index];
+  if (!obj) {
+    state.selected = null;
+    refreshInspector();
+    return;
+  }
+  el.className = 'info';
+  let html = `<div class="row" style="justify-content:space-between"><b>${kind}</b><span style="color:var(--muted)">#${sel.index}</span></div>`;
+  switch (kind) {
+    case 'food':
+      html += `<div class="row"><label>type</label>
+        <select onchange="onFoodTypeChange(${sel.index}, this.value)">
+          ${FOOD_TYPES.map((t, i) =>
+            `<option value="${i}" ${i === obj[2] ? 'selected' : ''}>${i} — ${t.name}</option>`).join('')}
+        </select></div>`;
+      html += `<div class="row"><label>x</label><input type="number" value="${obj[0]}" onchange="onFoodXChange(${sel.index}, this.value)"></div>`;
+      html += `<div class="row"><label>y</label><input type="number" value="${obj[1]}" onchange="onFoodYChange(${sel.index}, this.value)"></div>`;
+      break;
+    case 'powerup':
+      html += `<div class="row"><label>type</label>
+        <select onchange="onPowerTypeChange(${sel.index}, this.value)">
+          ${POWERUP_TYPES.map((t, i) =>
+            `<option value="${i}" ${i === obj[2] ? 'selected' : ''}>${i} — ${t.name}</option>`).join('')}
+        </select></div>`;
+      html += `<div class="row"><label>x</label><input type="number" value="${obj[0]}" onchange="onPowerXChange(${sel.index}, this.value)"></div>`;
+      html += `<div class="row"><label>y</label><input type="number" value="${obj[1]}" onchange="onPowerYChange(${sel.index}, this.value)"></div>`;
+      break;
+    case 'enemy': {
+      const [ex, eL, eR, et] = obj;
+      html += `<div class="row"><label>type</label>
+        <select onchange="onEnemyTypeChange(${sel.index}, this.value)">
+          ${ENEMY_TYPES.map((t, i) =>
+            `<option value="${i}" ${i === et ? 'selected' : ''}>${i} — ${t.name}</option>`).join('')}
+        </select></div>`;
+      html += `<div class="row"><label>x</label><input type="number" value="${ex}" onchange="onEnemyXChange(${sel.index}, this.value)"></div>`;
+      html += `<div class="row"><label>patrolL</label><input type="number" value="${eL}" onchange="onEnemyPLChange(${sel.index}, this.value)"></div>`;
+      html += `<div class="row"><label>patrolR</label><input type="number" value="${eR}" onchange="onEnemyPRChange(${sel.index}, this.value)"></div>`;
+      break;
+    }
+    case 'platform': {
+      const [tx, py, tw] = obj;
+      html += `<div class="row"><label>tile X</label><input type="number" value="${tx}" onchange="onPlatXChange(${sel.index}, this.value)"></div>`;
+      html += `<div class="row"><label>pixel Y</label><input type="number" value="${py}" onchange="onPlatYChange(${sel.index}, this.value)"></div>`;
+      html += `<div class="row"><label>width</label><input type="number" min="1" value="${tw}" onchange="onPlatWChange(${sel.index}, this.value)"></div>`;
+      break;
+    }
+    case 'ground': {
+      const [s, e] = obj;
+      html += `<div class="row"><label>start</label><input type="number" value="${s}" onchange="onGroundSChange(${sel.index}, this.value)"></div>`;
+      html += `<div class="row"><label>end</label><input type="number" value="${e}" onchange="onGroundEChange(${sel.index}, this.value)"></div>`;
+      break;
+    }
+  }
+  html += `<div class="row"><button class="btn danger" onclick="onDeleteSelected()">Delete (Del)</button></div>`;
+  el.innerHTML = html;
+}
+
+// Inspector edit handlers (each commits first, then mutates).
+window.onFoodTypeChange = function (i, val) {
+  commit(); currentLevel().food[i][2] = +val; refreshInspector(); updateCounts(); requestDraw();
+};
+window.onFoodXChange = function (i, val) { commit(); currentLevel().food[i][0] = +val; refreshInspector(); requestDraw(); };
+window.onFoodYChange = function (i, val) { commit(); currentLevel().food[i][1] = +val; refreshInspector(); requestDraw(); };
+window.onPowerTypeChange = function (i, val) { commit(); currentLevel().powerups[i][2] = +val; refreshInspector(); updateCounts(); requestDraw(); };
+window.onPowerXChange = function (i, val) { commit(); currentLevel().powerups[i][0] = +val; refreshInspector(); requestDraw(); };
+window.onPowerYChange = function (i, val) { commit(); currentLevel().powerups[i][1] = +val; refreshInspector(); requestDraw(); };
+window.onEnemyTypeChange = function (i, val) { commit(); currentLevel().enemies[i][3] = +val; refreshInspector(); updateCounts(); requestDraw(); };
+window.onEnemyXChange = function (i, val) { commit(); currentLevel().enemies[i][0] = +val; refreshInspector(); requestDraw(); };
+window.onEnemyPLChange = function (i, val) { commit(); currentLevel().enemies[i][1] = +val; refreshInspector(); requestDraw(); };
+window.onEnemyPRChange = function (i, val) { commit(); currentLevel().enemies[i][2] = +val; refreshInspector(); requestDraw(); };
+window.onPlatXChange = function (i, val) { commit(); currentLevel().platforms[i][0] = Math.max(0, +val | 0); refreshInspector(); requestDraw(); updateCounts(); };
+window.onPlatYChange = function (i, val) { commit(); currentLevel().platforms[i][1] = +val; refreshInspector(); requestDraw(); };
+window.onPlatWChange = function (i, val) { commit(); currentLevel().platforms[i][2] = Math.max(1, +val | 0); refreshInspector(); requestDraw(); updateCounts(); };
+window.onGroundSChange = function (i, val) { commit(); const L = currentLevel(); L.ground[i][0] = Math.max(0, +val | 0); refreshInspector(); requestDraw(); updateCounts(); };
+window.onGroundEChange = function (i, val) { commit(); const L = currentLevel(); L.ground[i][1] = Math.max(L.ground[i][0], +val | 0); refreshInspector(); requestDraw(); updateCounts(); };
+window.onDeleteSelected = function () { commit(); deleteSelected(); requestDraw(); };
+
+// ── Levels list UI ─────────────────────────────────────────
+function renderLevels() {
+  const wrap = document.getElementById('levels-list');
+  wrap.innerHTML = '';
+  state.levels.forEach((lvl, i) => {
+    const row = document.createElement('div');
+    row.className = 'lvl-row' + (i === state.levelIndex ? ' selected' : '');
+    row.dataset.index = i;
+    row.innerHTML = `
+      <span class="lvl-index">${i + 1}</span>
+      <input class="lvl-name" type="text" value="${escapeHtml(lvl.name)}" maxlength="32">
+      ${state.levels.length > 1 ? `<button class="lvl-del" title="delete this level">×</button>` : ''}
+    `;
+    const input = row.querySelector('.lvl-name');
+    input.addEventListener('change', () => {
+      const newName = input.value.trim() || 'Level ' + (i + 1);
+      if (newName !== state.levels[i].name) {
+        commit();
+        state.levels[i].name = newName;
+        setStatus('Renamed to "' + newName + '"');
+      }
+    });
+    input.addEventListener('click', (e) => e.stopPropagation());
+    input.addEventListener('dblclick', (e) => e.stopPropagation());
+    row.addEventListener('click', () => selectLevel(i));
+    row.querySelector('.lvl-del')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteLevel(i);
+    });
+    wrap.appendChild(row);
+  });
+  document.getElementById('level-pill').textContent =
+    'Level ' + (state.levelIndex + 1) + ' of ' + state.levels.length + ' — ' + currentLevel().name;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function selectLevel(i) {
+  if (i === state.levelIndex || i < 0 || i >= state.levels.length) return;
+  state.levelIndex = i;
+  state.selected = null;
+  renderLevels();
+  refreshInspector();
+  updateAll();
+  setStatus('Switched to level ' + (i + 1));
+}
+
+function addLevel() {
+  commit();
+  const newLevel = emptyLevel('Level ' + (state.levels.length + 1));
+  state.levels.splice(state.levelIndex + 1, 0, newLevel);
+  state.levelIndex += 1;
+  state.selected = null;
+  renderLevels();
+  refreshInspector();
+  updateAll();
+  setStatus('Added new level');
+}
+
+function deleteLevel(i) {
+  if (state.levels.length <= 1) {
+    setStatus('Cannot delete the last level');
+    return;
+  }
+  commit();
+  state.levels.splice(i, 1);
+  if (state.levelIndex >= state.levels.length) state.levelIndex = state.levels.length - 1;
+  if (state.levelIndex < 0) state.levelIndex = 0;
+  state.selected = null;
+  renderLevels();
+  refreshInspector();
+  updateAll();
+  setStatus('Deleted level');
 }
 
 // ── Pointer / wheel handlers ──────────────────────────────
 function onPointerDown(e) {
-  if (e.button === 2) { e.preventDefault(); startPan(e); return; } // pan
+  if (e.button === 2) { e.preventDefault(); startPan(e); return; }
   const [wx, wy] = clientToWorld(e.clientX, e.clientY);
   const t = state.tool;
-  if (e.shiftKey || t === 'erase') {
-    placeObject(wx, wy, { erase: true });
+
+  if (e.shiftKey) {
+    commit(); eraseAt(wx, wy);
+    requestDraw();
+    return;
+  }
+  if (t === 'erase') {
+    commit(); eraseAt(wx, wy);
+    requestDraw();
+    return;
+  }
+  if (t === 'select') {
+    selectAt(wx, wy);
     requestDraw();
     return;
   }
   if (t === 'flag') {
-    state.level.flagX = Math.round(wx / TILE) * TILE;
+    commit();
+    currentLevel().flagX = Math.max(0, Math.min(WORLD_W - TILE, Math.floor(wx / TILE) * TILE));
     updateCounts();
     requestDraw();
     return;
   }
   if (t === 'spawn') {
-    state.level.playerStart = [
-      Math.round(wx / TILE) * TILE + TILE / 2,
-      Math.round(wy / TILE) * TILE + TILE / 2,
-    ];
+    commit();
+    const [px, py] = snapOrigin(wx, wy);
+    currentLevel().playerStart = [px, py];
     updateCounts();
     requestDraw();
     return;
   }
-  // Drawing tools (ground, platform) start a drag.
   if (t === 'ground' || t === 'platform') {
-    state.drag = {
-      kind: 'paint', tool: t,
-      wx1: wx, wy1: wy, wx2: wx, wy2: wy,
-    };
+    state.drag = { kind: 'paint', tool: t, wx1: wx, wy1: wy, wx2: wx, wy2: wy };
     requestDraw();
     return;
   }
   // Single-click placement (food/enemy/powerup).
+  commit();
   placeObject(wx, wy);
   requestDraw();
 }
@@ -679,27 +1166,29 @@ function onPointerUp(e) {
   const d = state.drag;
   state.drag = null;
   if (d.kind === 'paint' && (d.tool === 'ground' || d.tool === 'platform')) {
+    commit();
     commitPaintDrag(d);
   }
   requestDraw();
 }
 
 function commitPaintDrag(d) {
-  const L = state.level;
+  const L = currentLevel();
   if (d.tool === 'ground') {
     const a = Math.min(d.wx1, d.wx2), b = Math.max(d.wx1, d.wx2);
     let s = Math.floor(a / TILE), e = Math.floor(b / TILE);
     if (e - s < 1) e = s + 1;
-    s = Math.max(0, s); e = Math.min(Math.floor(WORLD_W / TILE) - 1, e);
-    // Merge with existing segments (union).
+    const maxTile = Math.floor(WORLD_W / TILE) - 1;
+    s = Math.max(0, s); e = Math.min(maxTile, e);
     L.ground.push([s, e]);
     L.ground = mergeGroundSegments(L.ground);
   } else if (d.tool === 'platform') {
     const a = Math.min(d.wx1, d.wx2), b = Math.max(d.wx1, d.wx2);
     const c = Math.min(d.wy1, d.wy2), d2 = Math.max(d.wy1, d.wy2);
-    const tx = Math.floor(a / TILE), tx2 = Math.floor(b / TILE);
+    const tx = Math.max(0, Math.floor(a / TILE));
+    const tx2 = Math.max(tx + 1, Math.floor(b / TILE));
     const tw = Math.max(1, tx2 - tx + 1);
-    const py = Math.floor(c / TILE) * TILE;
+    const py = Math.max(0, Math.floor(c / TILE) * TILE);
     L.platforms.push([tx, py, tw]);
   }
   updateCounts();
@@ -718,11 +1207,8 @@ function mergeGroundSegments(segs) {
 }
 
 function startPan(e) {
-  state.drag = {
-    kind: 'pan',
-    startX: e.clientX, startY: e.clientY,
-    startViewX: state.view.x, startViewY: state.view.y,
-  };
+  state.drag = { kind: 'pan', startX: e.clientX, startY: e.clientY,
+    startViewX: state.view.x, startViewY: state.view.y };
 }
 
 function onWheel(e) {
@@ -730,12 +1216,10 @@ function onWheel(e) {
   const r = cv.getBoundingClientRect();
   const cx = e.clientX - r.left, cy = e.clientY - r.top;
   const [wx, wy] = clientToWorld(e.clientX, e.clientY);
-  // 1.15x per notch; clamp.
   const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
   const v = state.view;
   const newZoom = Math.max(0.1, Math.min(8, v.zoom * factor));
   v.zoom = newZoom;
-  // re-anchor so cursor stays under the same world point.
   v.x = wx - cx / newZoom;
   v.y = wy - cy / newZoom;
   clampView();
@@ -748,9 +1232,46 @@ function selectTool(t) {
   document.querySelectorAll('.tool').forEach(el => {
     el.classList.toggle('selected', el.dataset.tool === t);
   });
+  cv.classList.toggle('sel-cursor', t === 'select' || t === 'erase');
   updateSubtypeInfo();
   document.getElementById('tool-name').textContent = 'tool: ' + t;
-  cv.style.cursor = (t === 'erase') ? 'pointer' : 'crosshair';
+  requestDraw();
+}
+
+// ── Subtype swatches / info ────────────────────────────────
+function updateSubSwatches() {
+  const f = FOOD_TYPES[foodSub] || { color: '#888' };
+  const en = ENEMY_TYPES[enemySub] || { color: '#888' };
+  const p = POWERUP_TYPES[powerSub] || { color: '#888' };
+  document.getElementById('sw-food').style.background = f.color;
+  document.getElementById('sw-enemy').style.background = en.color;
+  document.getElementById('sw-power').style.background = p.color;
+}
+function updateSubtypeInfo() {
+  const map = { food: FOOD_TYPES, enemy: ENEMY_TYPES, powerup: POWERUP_TYPES };
+  const idx = { food: foodSub, enemy: enemySub, powerup: powerSub };
+  const t = state.tool;
+  const el = document.getElementById('subtype-info');
+  if (!map[t]) {
+    el.textContent = (t === 'ground' || t === 'platform') ? 'No sub-type.' :
+                     (t === 'flag' || t === 'spawn') ? 'Single target.' :
+                     (t === 'select') ? 'Click an object to inspect.' :
+                     'Click an existing object to remove it.';
+    return;
+  }
+  const e = map[t][idx[t]];
+  el.innerHTML = `<div class="row"><div class="swatch" style="background:${e.color};width:18px;height:18px;border:1px solid #555"></div>
+    <span style="margin-left:6px">${e.name}</span></div>
+    Press <kbd>${t === 'food' ? '1' : t === 'powerup' ? '1' : '0'}</kbd> or <kbd>3</kbd> to cycle.`;
+}
+
+// ── Single "updateAll" refresh helper ──────────────────────
+function updateAll() {
+  renderLevels();
+  updateCounts();
+  updateSelectionPill();
+  updateSubSwatches();
+  updateUndoRedoButtons();
   requestDraw();
 }
 
@@ -761,6 +1282,8 @@ function bindUI() {
   document.querySelectorAll('.tool').forEach(el => {
     el.addEventListener('click', () => selectTool(el.dataset.tool));
   });
+  document.getElementById('btn-undo').addEventListener('click', undo);
+  document.getElementById('btn-redo').addEventListener('click', redo);
   document.getElementById('btn-load').addEventListener('click', loadFromFile);
   document.getElementById('btn-download').addEventListener('click', downloadJson);
   document.getElementById('btn-showjson').addEventListener('click', showJson);
@@ -776,6 +1299,7 @@ function bindUI() {
     document.execCommand('copy');
     setStatus('JSON copied to clipboard');
   });
+  document.getElementById('btn-new-level').addEventListener('click', addLevel);
 
   cv.addEventListener('contextmenu', e => e.preventDefault());
   cv.addEventListener('pointerdown', onPointerDown);
@@ -785,22 +1309,37 @@ function bindUI() {
   cv.addEventListener('wheel', onWheel, { passive: false });
 
   window.addEventListener('keydown', (e) => {
-    if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+    const tag = e.target && e.target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    // Undo/Redo
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key === 'z') { e.preventDefault(); undo(); return; }
+    if ((e.ctrlKey || e.metaKey) && (e.shiftKey && e.key === 'Z' || e.key === 'y' || e.key === 'Y')) {
+      e.preventDefault(); redo(); return;
+    }
+    // Save
+    if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+      e.preventDefault(); downloadJson(); return;
+    }
+    // Delete selected
+    if ((e.key === 'Delete' || e.key === 'Backspace') && state.selected) {
+      e.preventDefault();
+      commit();
+      deleteSelected();
+      requestDraw();
+      return;
+    }
+    // Sub-type keys
     if (e.key >= '0' && e.key <= '9') {
-      // Sub-type keys.
       const n = +e.key;
       if (state.tool === 'food' && n < FOOD_TYPES.length) foodSub = n;
       else if (state.tool === 'enemy' && n < ENEMY_TYPES.length) enemySub = n;
       else if (state.tool === 'powerup' && n < POWERUP_TYPES.length) powerSub = n;
-      else if (state.tool === 'ground') foodSub = enemySub = powerSub = 0;
-      if (n < 4 || state.tool === 'ground') {
-        updateSubSwatches();
-        updateSubtypeInfo();
-      }
+      updateSubSwatches();
+      updateSubtypeInfo();
       return;
     }
+    // View reset
     if (e.key === 'Home') {
-      // Reset view to full-world.
       const r = cv.getBoundingClientRect();
       state.view.zoom = Math.min(r.width / WORLD_W, r.height / WORLD_H);
       state.view.x = (WORLD_W - r.width / state.view.zoom) / 2;
@@ -809,9 +1348,12 @@ function bindUI() {
       requestDraw();
       return;
     }
-    if (e.key === 's' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); downloadJson(); return; }
+    // Escape clears drag/selection
     if (e.key === 'Escape') {
       state.drag = null;
+      state.selected = null;
+      refreshInspector();
+      updateSelectionPill();
       requestDraw();
       return;
     }
@@ -820,23 +1362,18 @@ function bindUI() {
 
 // ── Boot ──────────────────────────────────────────────────
 async function init() {
-  state.level = emptyLevel();
   bindUI();
   resizeCanvas();
-  updateSubSwatches();
-  updateSubtypeInfo();
-  // Try to load the existing level.json from the same directory.
-  // If it fails (file:// or 404), keep an empty level — user can load via toolbar.
   await loadFromUrl('level.json');
   fitView();
-  updateCounts();
+  updateAll();
   requestDraw();
 }
 
 function fitView() {
   const r = cv.getBoundingClientRect();
   const fit = Math.min(r.width / WORLD_W, r.height / WORLD_H);
-  state.view.zoom = Math.min(0.5, fit);  // cap at 50% so the world fits visually.
+  state.view.zoom = Math.min(0.5, fit);
   state.view.x = (WORLD_W - r.width / state.view.zoom) / 2;
   state.view.y = (WORLD_H - r.height / state.view.zoom) / 2;
   clampView();

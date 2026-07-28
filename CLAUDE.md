@@ -119,23 +119,65 @@ Z = fire tweet-blast (Classified Docs power-up active) —
 ## Level Data — edit level.json, not game.js
 - The playable level is loaded at runtime from `level.json` (sibling to `index.html`).
   `GameScene.preload()` calls `this.load.json('level', 'level.json')`; `create()` assigns
-  `LEVEL = this.cache.json.get('level') || FALLBACK_LEVEL`.
-- `FALLBACK_LEVEL` in `game.js:508` is the original hardcoded data, kept verbatim so the
-  game still runs offline if `level.json` is missing or malformed.
+  `LEVEL` from the JSON, falling back to `FALLBACK_LEVEL` if the file is missing/malformed.
+- `FALLBACK_LEVEL` in `game.js` is the original hardcoded data, kept verbatim so the game
+  still runs offline. It is a single-level object — multi-level JSON overrides it cleanly.
 - **Editing a level:** use `editor.html` (sibling to `index.html`). Run a static server
   (`npx serve .` or `python3 -m http.server 8080`), open `http://localhost/editor.html`,
-  paint, click `Download level.json`, then place the file next to `index.html` and reload.
-- **Level schema** (one JSON object, all fields required — defaults applied by
-  `editor.html`'s `normaliseLevel()` if missing):
-  - `tile`, `worldW`, `worldH`, `groundY`, `playerStart: [x, y]`
-  - `ground`: `[[startTileX, endTileX], …]` (inclusive tile indices)
-  - `platforms`: `[[tileX, pixelY, widthInTiles], …]`
-  - `food`: `[[pixelX, pixelY, type], …]` (type 0 = Big Mac, 1 = Coke)
-  - `enemies`: `[[pixelX, patrolLeftPx, patrolRightPx, type], …]` (type 0-3)
-  - `powerups`: `[[pixelX, pixelY, type], …]` (type 0 = MAGA Hat, 1 = Censor Bar, 2 = Classified Docs)
-  - `flagX`: pixelX of the goal flag
+  paint, click `Download level.json`, drop the file next to `index.html`, reload the game.
+- **Multi-level JSON schema** (always-edited by the editor; single-level files auto-wrap):
+  ```json
+  {
+    "schemaVersion": 2,
+    "tile": 32, "worldW": 12800, "worldH": 600, "groundY": 468,
+    "currentLevel": 0,
+    "levels": [
+      {
+        "name": "MAGA Mayhem",
+        "playerStart": [80, 420],
+        "ground":       [[startTileX, endTileX], …],
+        "platforms":    [[tileX, pixelY, widthInTiles], …],
+        "food":         [[pixelX, pixelY, type], …],
+        "enemies":      [[pixelX, patrolLeftPx, patrolRightPx, type], …],
+        "powerups":     [[pixelX, pixelY, type], …],
+        "flagX":        12480
+      }
+    ]
+  }
+  ```
+- **Type ids** (must match `game.js`): food 0=Big Mac, 1=Coke; enemy 0=journalist,
+  1=scientist, 2=girl, 3=lobbyist; powerup 0=MAGA Hat, 1=Censor Bar, 2=Classified Docs.
+- **Snap conventions** (editor enforces these on placement; matching the original data
+  in the legacy single-level file): food/enemies/powerups/flag/spawn X and Y are all
+  multiples of 32 (tile grid). Open editor → save → reload → identical content.
+- **Backwards compat:** the legacy single-level file (no top-level `levels`) is accepted
+  by the editor (wrapped as `{ levels: [data] }`) and by the game (treated as one-element
+  array). New saves always use the multi-level schema.
+- **Game flow:**
+  - Starting level: `init({ currentLevel: n })` wins → JSON `currentLevel` →
+    `localStorage.smb_level` → 0.
+  - On `reachFlag()`: if `currentLevel < totalLevels - 1`, save next index to
+    `localStorage` and `scene.start('Game', { score, lives, cholesterol, currentLevel: next })`.
+    Otherwise show "ALL LEVELS COMPLETE!" and return to menu (clearing the saved index).
+  - Debug override: append `?reset=1` (or `?reset`) to the game URL to ignore saved
+    progress and start from the JSON `currentLevel` (or 0).
 - When updating dimensions, keep the editor and game.js constants in sync: editor hardcodes
   `TILE=32, WORLD_W=12800, WORLD_H=600, GROUND_Y=468` to match `game.js:7-9`.
-- The boot/config sprite generators and ProceduralSFX in `game.js` still work whether the
-  level came from JSON or `FALLBACK_LEVEL` — the JSON roundtrip is invisible to the rest
-  of the engine.
+
+## Editor features
+- **Tools**: ground (drag), platform (drag), food (click + 1/2), enemy (click + 0-3),
+  powerup (click + 1/2/3), flag (click), spawn (click), **select** (click an object to
+  edit), **erase** (click an object to remove).
+- **Inspector** (sidebar): click any object with the *Select* tool (or shift-click with
+  another tool, or press Enter on a row) to edit type / x / y / patrol bounds in-place.
+  Delete via inspector button or <kbd>Del</kbd> / <kbd>Backspace</kbd>.
+- **Levels** (sidebar top): click a name to switch; double-click to rename; × to delete
+  (can't delete the last level); + New Level adds a level after the current one (with
+  empty defaults).
+- **Undo / redo**: every place / erase / drag / inspector edit / level add/delete / rename
+  goes on the stack. <kbd>Cmd/Ctrl</kbd>+<kbd>Z</kbd> undo, <kbd>Cmd/Ctrl</kbd>+<kbd>⇧</kbd>+<kbd>Z</kbd>
+  (or <kbd>Y</kbd>) redo. Stack capped at 100 entries.
+- **Warnings**: red "NO GROUND" pill in the footer when the current level has zero
+  ground segments (player will fall).
+- **Pan / zoom**: right-mouse drag = pan; mouse wheel = zoom (cursor-anchored); <kbd>Home</kbd>
+  = reset view.
