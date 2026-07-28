@@ -500,7 +500,366 @@ function genTweet() {
     return cv;
 }
 
-// ── Level Data ───────────────────────────────────���──────────
+// ── Enemy Behaviour Modules ──────────────────────────────────────────
+//
+// Lobbyist deepening: each enemy has a behaviour that owns its lifecycle.
+// The lobbyist owns its briefcase sub-machine (~8.5s after being stomped).
+// All other enemy types (journalist, scientist, girl) use DefaultEnemyBehaviour.
+//
+// Uniform interface — see architecture-review-1785258530.html (Candidate 1)
+// and lobbyist-deepening-design.md for the design rationale.
+
+class EnemyBehaviour {
+    spawn(scene, x, patrolL, patrolR) { /* abstract */ }
+    patrolTick(enemy, dt) {}
+    tick(dt) {}
+    onStomp(scene, enemy) { /* default: stomp frame + delayed destroy */ }
+    onTweetHit(scene, enemy) { this._completeKill(scene, enemy); }
+    onCaseHit(scene, enemy, slidingCase) { this._completeKill(scene, enemy, { bonus: 300, popupText: '+0 CHAIN!', popupColor: '#FF6666' }); }
+    onPlayerHitCase(scene, player, sc) {}
+    onTweetHitCase(scene, tweet, sc) {}
+    onCollectCash(scene, cash) {}
+
+    _completeKill(scene, enemy, opts = {}) {
+        if (!enemy || !enemy.active) return;
+        const et = ENEMY_TYPES[enemy.enemyType] || ENEMY_TYPES[0];
+        const score = (opts.score !== undefined) ? opts.score : et.score;
+        scene.score += score;
+        if (!scene.invincible && !scene.shartFrozen) {
+            playSound(scene, 'snd-stomp', SFX.stomp);
+        }
+        const popupText = opts.popupText || ('+' + score);
+        const popupColor = opts.popupColor || '#FF6666';
+        const popup = scene.add.text(enemy.x, enemy.y, popupText, {
+            fontSize: '14px', fontFamily: 'Arial', fontStyle: 'bold',
+            color: popupColor, stroke: '#000', strokeThickness: 2,
+        }).setOrigin(0.5).setDepth(50);
+        scene.tweens.add({
+            targets: popup, y: popup.y - 30, alpha: 0, duration: 600,
+            onComplete: () => popup.destroy(),
+        });
+    }
+
+    _immediateDestroy(scene, enemy) {
+        if (enemy && enemy.active) enemy.destroy();
+    }
+}
+
+class DefaultEnemyBehaviour extends EnemyBehaviour {
+    spawn(scene, x, patrolL, patrolR) {
+        const T = window.TEX || {};
+        const ek = T.enemy || 'enemy';
+        const enemyExt = T.enemyExt;
+        let e;
+        if (enemyExt) {
+            e = scene.enemyGroup.create(x, GROUND_Y - 24, ek, 0);
+        } else {
+            e = scene.enemyGroup.create(x, GROUND_Y - 14, ek, 0);
+            const et = ENEMY_TYPES[0];
+            if (et.tint) e.setTint(et.tint);
+        }
+        return e;
+    }
+
+    patrolTick(enemy, dt) {
+        if (enemy.x <= enemy.patrolL || enemy.body.blocked.left) {
+            enemy.setVelocityX(enemy.patrolSpeed);
+        } else if (enemy.x >= enemy.patrolR || enemy.body.blocked.right) {
+            enemy.setVelocityX(-enemy.patrolSpeed);
+        }
+        enemy.setFlipX(enemy.body.velocity.x > 0);
+    }
+
+    onStomp(scene, enemy) {
+        this._completeKill(scene, enemy);
+        const T = window.TEX || {};
+        if (T.enemyExt) {
+            enemy.setFrame(enemy.enemyType * 4 + 2);
+            enemy.setVelocity(0, 0);
+            enemy.body.enable = false;
+            scene.time.delayedCall(100, () => {
+                if (enemy && enemy.active) {
+                    if (scene.anims.exists('enemy' + enemy.enemyType + 'Die')) {
+                        enemy.play('enemy' + enemy.enemyType + 'Die');
+                    }
+                    enemy.setVelocity(0, 0);
+                    enemy.body.enable = false;
+                    scene.time.delayedCall(400, () => {
+                        if (enemy && enemy.active) this._immediateDestroy(scene, enemy);
+                    });
+                }
+            });
+        } else {
+            enemy.setVelocity(0, 0);
+            enemy.body.enable = false;
+            scene.time.delayedCall(400, () => {
+                if (enemy && enemy.active) this._immediateDestroy(scene, enemy);
+            });
+        }
+    }
+
+    onTweetHit(scene, enemy) {
+        this._completeKill(scene, enemy);
+        this._immediateDestroy(scene, enemy);
+    }
+
+    onCaseHit(scene, enemy, slidingCase) {
+        const et = ENEMY_TYPES[enemy.enemyType] || ENEMY_TYPES[0];
+        this._completeKill(scene, enemy, {
+            score: et.score + 300,
+            popupText: '+' + (et.score + 300) + ' CHAIN!',
+        });
+        const T = window.TEX || {};
+        if (T.enemyExt && scene.anims.exists('enemy' + enemy.enemyType + 'Die')) {
+            enemy.play('enemy' + enemy.enemyType + 'Die');
+        }
+        enemy.setVelocity(0, 0);
+        enemy.body.enable = false;
+        scene.time.delayedCall(400, () => {
+            if (enemy && enemy.active) this._immediateDestroy(scene, enemy);
+        });
+    }
+}
+
+class LobbyistBehaviour extends EnemyBehaviour {
+    constructor(scene) {
+        super();
+        this.scene = scene;
+        this.activeCases = [];
+        this.activeCash = [];
+        this.lastVelX = undefined;
+    }
+
+    get caseGroup() { return this.scene.caseGroup; }
+    get foodGroup() { return this.scene.foodGroup; }
+    get sparkleEmitter() { return this.scene.sparkleEmitter; }
+
+    spawn(scene, x, patrolL, patrolR) {
+        const AL = window.ASSETS_LOADED || {};
+        let e;
+        if (AL.lobbyist) {
+            e = scene.enemyGroup.create(x, GROUND_Y - 24, 'lobbyist-ext', 0);
+            e.play('lobbyistWalk');
+        } else {
+            e = scene.enemyGroup.create(x, GROUND_Y - 14, 'enemy', 0);
+            e.setTint(0xFFAA00);
+        }
+        return e;
+    }
+
+    patrolTick(enemy, dt) {
+        if (enemy.x <= enemy.patrolL || enemy.body.blocked.left) {
+            enemy.setVelocityX(enemy.patrolSpeed);
+        } else if (enemy.x >= enemy.patrolR || enemy.body.blocked.right) {
+            enemy.setVelocityX(-enemy.patrolSpeed);
+        }
+        enemy.setFlipX(enemy.body.velocity.x > 0);
+        this.lastVelX = enemy.body.velocity.x;
+    }
+
+    onStomp(scene, enemy) {
+        this.onTweetHit(scene, enemy);
+    }
+
+    onTweetHit(scene, enemy) {
+        if (!enemy || !enemy.active) return;
+        const dir = (this.lastVelX !== undefined && this.lastVelX >= 0) ? 1 : -1;
+        const ex = enemy.x, ey = enemy.y;
+        this._completeKill(scene, enemy, {
+            score: 250,
+            popupText: '+250',
+            popupColor: '#FFAA00',
+        });
+        const AL = window.ASSETS_LOADED || {};
+        if (AL.lobbyist) enemy.play('lobbyistDead');
+        enemy.setVelocity(0, 0);
+        enemy.body.enable = false;
+        this.lastVelX = undefined;
+        scene.time.delayedCall(300, () => {
+            if (enemy && enemy.active) enemy.destroy();
+            this._spawnSlidingCase(ex, ey, dir);
+        });
+    }
+
+    onCaseHit(scene, enemy, slidingCase) {
+        this._completeKill(scene, enemy, {
+            score: 550,
+            popupText: '+550 CHAIN!',
+        });
+        const AL = window.ASSETS_LOADED || {};
+        if (AL.lobbyist) enemy.play('lobbyistDead');
+        enemy.setVelocity(0, 0);
+        enemy.body.enable = false;
+        scene.time.delayedCall(400, () => {
+            if (enemy && enemy.active) enemy.destroy();
+        });
+    }
+
+    onPlayerHitCase(scene, player, sc) {
+        if (!sc || !sc.active || scene.dead) return;
+        if (player.body.velocity.y > 0 &&
+            player.body.prev.y + player.body.height <=
+            sc.body.y + sc.body.height) {
+            player.setVelocityY(-280);
+            scene.score += 200;
+            const popup = scene.add.text(sc.x, sc.y, '+200 CAUGHT!', {
+                fontSize: '13px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
+                color: '#FFD700', stroke: '#000', strokeThickness: 2,
+            }).setOrigin(0.5).setDepth(50);
+            scene.tweens.add({
+                targets: popup, y: popup.y - 30, alpha: 0, duration: 600,
+                onComplete: () => popup.destroy(),
+            });
+            this._burstCase(sc);
+        } else {
+            if (!scene.invincible) {
+                scene.playerDie();
+            } else {
+                this._burstCase(sc);
+            }
+        }
+    }
+
+    onTweetHitCase(scene, tweet, sc) {
+        if (!tweet.active || !sc.active) return;
+        if (tweet && tweet.active) tweet.destroy();
+        scene.score += 500;
+        const popup = scene.add.text(sc.x, sc.y, '+500 BIGLY!', {
+            fontSize: '16px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
+            color: '#FFD700', stroke: '#000', strokeThickness: 2,
+        }).setOrigin(0.5).setDepth(50);
+        scene.tweens.add({
+            targets: popup, y: sc.y - 40, alpha: 0, duration: 800,
+            onComplete: () => popup.destroy(),
+        });
+        this._burstCase(sc);
+    }
+
+    onCollectCash(scene, cash) {
+        if (!cash || !cash.active) return;
+        if (this.sparkleEmitter) this.sparkleEmitter.emitParticleAt(cash.x, cash.y, 5);
+        cash.destroy();
+        scene.score += 50;
+        playSound(scene, 'snd-coin', SFX.coin);
+        const popup = scene.add.text(cash.x, cash.y, '+50', {
+            fontSize: '13px', fontFamily: 'Arial', fontStyle: 'bold',
+            color: '#FFD700', stroke: '#000', strokeThickness: 2,
+        }).setOrigin(0.5).setDepth(50);
+        scene.tweens.add({
+            targets: popup, y: popup.y - 25, alpha: 0, duration: 500,
+            onComplete: () => popup.destroy(),
+        });
+        const idx = this.activeCash.indexOf(cash);
+        if (idx >= 0) this.activeCash.splice(idx, 1);
+    }
+
+    tick(dt) {
+        for (let i = this.activeCases.length - 1; i >= 0; i--) {
+            const sc = this.activeCases[i];
+            if (!sc || !sc.active) {
+                this.activeCases.splice(i, 1);
+                continue;
+            }
+            if (Math.abs(sc.body.velocity.x) < 10) {
+                sc.isSliding = false;
+                this._burstCase(sc);
+                this.activeCases.splice(i, 1);
+            } else {
+                sc.setFlipX(sc.body.velocity.x < 0);
+            }
+        }
+        for (let i = this.activeCash.length - 1; i >= 0; i--) {
+            if (!this.activeCash[i] || !this.activeCash[i].active) {
+                this.activeCash.splice(i, 1);
+            }
+        }
+    }
+
+    _spawnSlidingCase(x, y, dir) {
+        const AL = window.ASSETS_LOADED || {};
+        const caseKey = AL.lobbyistCase ? 'lobbyist-case-ext' : 'dollar';
+        const sc = this.caseGroup.create(x, y, caseKey, 0);
+        sc.setSize(36, 32).setOffset(6, 8);
+        sc.setBounce(0);
+        sc.setVelocityX(dir * 200);
+        sc.setFlipX(dir < 0);
+        sc.setDepth(4);
+        sc.isSliding = true;
+        sc.behaviour = this;
+        if (AL.lobbyistCase) {
+            sc.play('caseSlide');
+        } else {
+            sc.setTint(0xFFAA00);
+        }
+        this.activeCases.push(sc);
+        this.scene.time.delayedCall(8000, () => {
+            if (sc && sc.active && sc.isSliding) {
+                sc.isSliding = false;
+                this._burstCase(sc);
+            }
+        });
+    }
+
+    _burstCase(sc) {
+        if (!sc || !sc.active) return;
+        const x = sc.x, y = sc.y;
+
+        const AL = window.ASSETS_LOADED || {};
+        if (AL.lobbyistCase) {
+            sc.play('caseBurst');
+            sc.setVelocity(0, 0);
+            sc.body.enable = false;
+            this.scene.time.delayedCall(400, () => {
+                if (sc && sc.active) sc.destroy();
+            });
+        } else {
+            sc.destroy();
+        }
+
+        const count = 4 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < count; i++) {
+            const angle = (Math.random() * 160 + 10) * Math.PI / 180;
+            const speed = 80 + Math.random() * 120;
+            const cash = this.foodGroup.create(
+                x + (Math.random() - 0.5) * 20,
+                y - 10,
+                'dollar'
+            );
+            cash.foodType = 2;
+            cash.setDisplaySize(24, 16);
+            cash.setCircle(8, 4, 0);
+            cash.body.setAllowGravity(true);
+            cash.setVelocity(
+                Math.cos(angle) * speed,
+                -Math.sin(angle) * speed
+            );
+            cash.behaviour = this;
+            this.activeCash.push(cash);
+            this.scene.time.delayedCall(4000, () => {
+                if (cash && cash.active) cash.destroy();
+                const idx = this.activeCash.indexOf(cash);
+                if (idx >= 0) this.activeCash.splice(idx, 1);
+            });
+        }
+
+        const popup = this.scene.add.text(x, y, '+CASH!', {
+            fontSize: '16px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
+            color: '#FFD700', stroke: '#000', strokeThickness: 2,
+        }).setOrigin(0.5).setDepth(50);
+        this.scene.tweens.add({
+            targets: popup, y: popup.y - 40, alpha: 0, duration: 800,
+            onComplete: () => popup.destroy(),
+        });
+
+        playSound(this.scene, 'snd-powerup', SFX.powerup);
+    }
+}
+
+function behaviourFor(type, scene) {
+    if (type === 3) return new LobbyistBehaviour(scene);
+    return new DefaultEnemyBehaviour();
+}
+
 const LEVEL = {
     // Ground segments [startTileX, endTileX]
     ground: [
@@ -1437,6 +1796,7 @@ class GameScene extends Phaser.Scene {
         this.cholesterol = data.cholesterol || 0;
         this.earthquakeReady = this.cholesterol >= 50;
         this.earthquakeCooldown = false;
+        this.activeBehaviours = new Set();
         // Power-up state resets on death (independent timers)
         this.playerPower = -1;   // kept for HUD display of most recent
         this.powerTimer = 0;     // kept for HUD display
@@ -1570,21 +1930,10 @@ class GameScene extends Phaser.Scene {
 
         LEVEL.enemies.forEach(([ex, eL, eR, type]) => {
             const et = ENEMY_TYPES[type] || ENEMY_TYPES[0];
-            let e;
-            if (type === 3) {
-                const AL2 = window.ASSETS_LOADED || {};
-                if (AL2.lobbyist) {
-                    e = this.enemyGroup.create(ex, GROUND_Y - 24, 'lobbyist-ext', 0);
-                    e.play('lobbyistWalk');
-                } else {
-                    e = this.enemyGroup.create(ex, GROUND_Y - 14, ek, 0);
-                    e.setTint(0xFFAA00);
-                }
-            } else if (enemyExt) {
-                e = this.enemyGroup.create(ex, GROUND_Y - 24, ek, type * 4);
-            } else {
-                e = this.enemyGroup.create(ex, GROUND_Y - 14, ek, 0);
-                if (et.tint) e.setTint(et.tint);
+            const behaviour = behaviourFor(type, this);
+            const e = behaviour.spawn(this, ex, eL, eR);
+            if (enemyExt && type !== 3) {
+                e.setFrame(type * 4);
             }
             e.setSize(28, 36).setOffset(10, 12);
             e.setBounce(0);
@@ -1595,6 +1944,8 @@ class GameScene extends Phaser.Scene {
             e.patrolSpeed = et.speed;
             e.enemyType = type;
             e.body.setAllowGravity(true);
+            e.behaviour = behaviour;
+            this.activeBehaviours.add(behaviour);
         });
 
         // ─ Power-ups
@@ -1976,30 +2327,15 @@ class GameScene extends Phaser.Scene {
 
         } // end shartFrozen else
 
-        // ─ Enemy patrol
+        // ─ Enemy patrol (delegated to each behaviour)
         this.enemyGroup.children.iterate(e => {
             if (!e || !e.active) return;
             if (e.y > this.scale.height + 100) { e.destroy(); return; }
-            // Reverse on patrol bounds OR when blocked by a wall/platform
-            if (e.x <= e.patrolL || e.body.blocked.left) {
-                e.setVelocityX(e.patrolSpeed);
-            } else if (e.x >= e.patrolR || e.body.blocked.right) {
-                e.setVelocityX(-e.patrolSpeed);
-            }
-            e.setFlipX(e.body.velocity.x > 0);
-            if (e.enemyType === 3) { e.lastVelX = e.body.velocity.x; }
+            if (e.behaviour) e.behaviour.patrolTick(e, dt);
         });
 
-        // ─ Sliding case wall-burst detection + flip direction
-        this.caseGroup.children.iterate(sc => {
-            if (!sc || !sc.active || !sc.isSliding) return;
-            if (Math.abs(sc.body.velocity.x) < 10) {
-                sc.isSliding = false;
-                this.burstCase(sc);
-            } else {
-                sc.setFlipX(sc.body.velocity.x < 0);
-            }
-        });
+        // ─ Behaviour tick (LobbyistBehaviour handles case/cash sub-machine)
+        this.activeBehaviours.forEach(b => b.tick(dt));
 
         // ─ Parallax (mobile only — disabled on desktop to prevent black bar)
         const camX = this.cameras.main.scrollX;
@@ -2093,19 +2429,8 @@ class GameScene extends Phaser.Scene {
 
     // ── Collectibles ────────────────────────────────────────
     collectFood(_player, food) {
-        if (food.foodType === 2) {
-            this.sparkleEmitter.emitParticleAt(food.x, food.y, 5);
-            food.destroy();
-            this.score += 50;
-            playSound(this, 'snd-coin', SFX.coin);
-            const popup = this.add.text(food.x, food.y, '+50', {
-                fontSize: '13px', fontFamily: 'Arial', fontStyle: 'bold',
-                color: '#FFD700', stroke: '#000', strokeThickness: 2,
-            }).setOrigin(0.5).setDepth(50);
-            this.tweens.add({
-                targets: popup, y: popup.y - 25, alpha: 0, duration: 500,
-                onComplete: () => popup.destroy(),
-            });
+        if (food && food.behaviour) {
+            food.behaviour.onCollectCash(this, food);
             return;
         }
         this.sparkleEmitter.emitParticleAt(food.x, food.y, 8);
@@ -2231,277 +2556,46 @@ class GameScene extends Phaser.Scene {
 
     tweetHitEnemy(tweet, enemy) {
         if (tweet && tweet.active) tweet.destroy();
-        if (enemy && enemy.active) this.destroyEnemy(enemy);
+        if (enemy && enemy.active && enemy.behaviour) {
+            enemy.behaviour.onTweetHit(this, enemy);
+        }
     }
 
     caseHitEnemy(slidingCase, enemy) {
         if (!slidingCase.active || !enemy.active) return;
-        const et = ENEMY_TYPES[enemy.enemyType] || ENEMY_TYPES[0];
-        const bonus = et.score + 300;
-        this.score += bonus;
-
-        const popup = this.add.text(enemy.x, enemy.y - 10,
-            '+' + bonus + ' CHAIN!', {
-            fontSize: '13px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
-            color: '#FF6666', stroke: '#000', strokeThickness: 2,
-        }).setOrigin(0.5).setDepth(50);
-        this.tweens.add({
-            targets: popup, y: popup.y - 30, alpha: 0, duration: 600,
-            onComplete: () => popup.destroy(),
-        });
-
-        // Play death animation then destroy
-        if (enemy && enemy.active) {
-            const T = window.TEX || {};
-            if (enemy.enemyType === 3) {
-                // Lobbyist — play dead frame, no sub-case spawn from chain kills
-                const AL3 = window.ASSETS_LOADED || {};
-                if (AL3.lobbyist) {
-                    enemy.play('lobbyistDead');
-                }
-                enemy.setVelocity(0, 0);
-                enemy.body.enable = false;
-                this.time.delayedCall(400, () => {
-                    if (enemy && enemy.active) enemy.destroy();
-                });
-            } else if (T.enemyExt && this.anims.exists('enemy' + enemy.enemyType + 'Die')) {
-                enemy.play('enemy' + enemy.enemyType + 'Die');
-                enemy.setVelocity(0, 0);
-                enemy.body.enable = false;
-                this.time.delayedCall(400, () => {
-                    if (enemy && enemy.active) enemy.destroy();
-                });
-            } else {
-                enemy.destroy();
-            }
-        }
+        if (enemy.behaviour) enemy.behaviour.onCaseHit(this, enemy, slidingCase);
         // Case keeps sliding — do NOT destroy it
     }
 
     playerHitCase(player, slidingCase) {
-        if (!slidingCase.active || this.dead) return;
-
-        if (slidingCase.isSliding) {
-            if (player.body.velocity.y > 0 &&
-                player.body.prev.y + player.body.height <=
-                slidingCase.body.y + slidingCase.body.height) {
-                // Stomp from above
-                player.setVelocityY(-280);
-                this.score += 200;
-                const popup = this.add.text(slidingCase.x, slidingCase.y,
-                    '+200 CAUGHT!', {
-                    fontSize: '13px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
-                    color: '#FFD700', stroke: '#000', strokeThickness: 2,
-                }).setOrigin(0.5).setDepth(50);
-                this.tweens.add({
-                    targets: popup, y: popup.y - 30, alpha: 0, duration: 600,
-                    onComplete: () => popup.destroy(),
-                });
-                this.burstCase(slidingCase);
-            } else {
-                // Side collision
-                if (!this.invincible) {
-                    this.playerDie();
-                } else {
-                    this.burstCase(slidingCase);
-                }
-            }
+        if (slidingCase && slidingCase.behaviour) {
+            slidingCase.behaviour.onPlayerHitCase(this, player, slidingCase);
         }
     }
 
     tweetHitCase(tweet, slidingCase) {
-        if (!tweet.active || !slidingCase.active) return;
-        if (tweet && tweet.active) tweet.destroy();
-        this.score += 500;
-
-        const popup = this.add.text(slidingCase.x, slidingCase.y,
-            '+500 BIGLY!', {
-            fontSize: '16px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
-            color: '#FFD700', stroke: '#000', strokeThickness: 2,
-        }).setOrigin(0.5).setDepth(50);
-        this.tweens.add({
-            targets: popup, y: popup.y - 40, alpha: 0, duration: 800,
-            onComplete: () => popup.destroy(),
-        });
-
-        this.burstCase(slidingCase);
-    }
-
-    // ── Enemy helpers ───────────────────────────────────────
-    destroyEnemy(enemy) {
-        if (enemy.enemyType === 3) {
-            this.destroyLobbyist(enemy);
-            return;
+        if (slidingCase && slidingCase.behaviour) {
+            slidingCase.behaviour.onTweetHitCase(this, tweet, slidingCase);
         }
-        const et = ENEMY_TYPES[enemy.enemyType] || ENEMY_TYPES[0];
-        this.score += et.score;
-        if (!this.invincible && !this.shartFrozen) {
-            playSound(this, 'snd-stomp', SFX.stomp);
-        }
-
-        const popup = this.add.text(enemy.x, enemy.y, '+' + et.score, {
-            fontSize: '14px', fontFamily: 'Arial', fontStyle: 'bold',
-            color: '#FF6666', stroke: '#000', strokeThickness: 2,
-        }).setOrigin(0.5).setDepth(50);
-        this.tweens.add({
-            targets: popup, y: popup.y - 30, alpha: 0, duration: 600,
-            onComplete: () => popup.destroy(),
-        });
-
-        // Play death animation if external spritesheet, then destroy
-        const T = window.TEX || {};
-        if (T.enemyExt && this.anims.exists('enemy' + enemy.enemyType + 'Die')) {
-            enemy.play('enemy' + enemy.enemyType + 'Die');
-            enemy.setVelocity(0, 0);
-            enemy.body.enable = false;
-            this.time.delayedCall(400, () => {
-                if (enemy && enemy.active) enemy.destroy();
-            });
-        } else {
-            enemy.destroy();
-        }
-    }
-
-    destroyLobbyist(enemy) {
-        this.score += 250;
-        if (!this.shartFrozen && !this.invincible) {
-            playSound(this, 'snd-stomp', SFX.stomp);
-        }
-
-        const popup = this.add.text(enemy.x, enemy.y, '+250', {
-            fontSize: '14px', fontFamily: 'Arial', fontStyle: 'bold',
-            color: '#FFAA00', stroke: '#000', strokeThickness: 2,
-        }).setOrigin(0.5).setDepth(50);
-        this.tweens.add({
-            targets: popup, y: popup.y - 30, alpha: 0, duration: 600,
-            onComplete: () => popup.destroy(),
-        });
-
-        const AL = window.ASSETS_LOADED || {};
-        if (AL.lobbyist) {
-            enemy.play('lobbyistDead');
-        }
-        enemy.setVelocity(0, 0);
-        enemy.body.enable = false;
-
-        const dir = (enemy.lastVelX !== undefined && enemy.lastVelX >= 0) ? 1 : -1;
-
-        this.time.delayedCall(300, () => {
-            const ex = enemy.x, ey = enemy.y;
-            if (enemy && enemy.active) enemy.destroy();
-            this.spawnSlidingCase(ex, ey, dir);
-        });
-    }
-
-    spawnSlidingCase(x, y, dir) {
-        const AL = window.ASSETS_LOADED || {};
-        const caseKey = AL.lobbyistCase ? 'lobbyist-case-ext' : 'dollar';
-        const sc = this.caseGroup.create(x, y, caseKey, 0);
-        sc.setSize(36, 32).setOffset(6, 8);
-        sc.setBounce(0);
-        sc.setVelocityX(dir * 200);
-        sc.setFlipX(dir < 0);
-        sc.setDepth(4);
-        sc.isSliding = true;
-
-        if (AL.lobbyistCase) {
-            sc.play('caseSlide');
-        } else {
-            sc.setTint(0xFFAA00);
-        }
-
-        // Auto-burst after 8 seconds if still alive
-        this.time.delayedCall(8000, () => {
-            if (sc && sc.active) this.burstCase(sc);
-        });
-    }
-
-    burstCase(sc) {
-        if (!sc || !sc.active) return;
-        const x = sc.x, y = sc.y;
-
-        const AL = window.ASSETS_LOADED || {};
-        if (AL.lobbyistCase) {
-            sc.play('caseBurst');
-            sc.setVelocity(0, 0);
-            sc.body.enable = false;
-            // Show opened frame briefly then destroy
-            this.time.delayedCall(400, () => {
-                if (sc && sc.active) sc.destroy();
-            });
-        } else {
-            sc.destroy();
-        }
-
-        // Scatter cash coins using foodGroup
-        const count = 4 + Math.floor(Math.random() * 3); // 4–6 coins
-        for (let i = 0; i < count; i++) {
-            const angle = (Math.random() * 160 + 10) * Math.PI / 180;
-            const speed = 80 + Math.random() * 120;
-            const cash = this.foodGroup.create(
-                x + (Math.random() - 0.5) * 20,
-                y - 10,
-                'dollar'
-            );
-            cash.foodType = 2;
-            cash.setDisplaySize(24, 16);
-            cash.setCircle(8, 4, 0);
-            cash.body.setAllowGravity(true);
-            cash.setVelocity(
-                Math.cos(angle) * speed,
-                -Math.sin(angle) * speed
-            );
-            this.time.delayedCall(4000, () => {
-                if (cash && cash.active) cash.destroy();
-            });
-        }
-
-        const cashPopup = this.add.text(x, y, '+CASH!', {
-            fontSize: '16px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
-            color: '#FFD700', stroke: '#000', strokeThickness: 2,
-        }).setOrigin(0.5).setDepth(50);
-        this.tweens.add({
-            targets: cashPopup, y: cashPopup.y - 40, alpha: 0, duration: 800,
-            onComplete: () => cashPopup.destroy(),
-        });
-
-        playSound(this, 'snd-powerup', SFX.powerup);
     }
 
     hitEnemy(player, enemy) {
         if (this.dead || this.won) return;
 
-        // Invincible: destroy on contact
         if (this.invincible) {
-            this.destroyEnemy(enemy);
+            if (enemy && enemy.behaviour) enemy.behaviour.onTweetHit(this, enemy);
             return;
         }
 
-        // Stomp check: use previous-frame body position so fast falls
-        // still register, and disable the enemy body immediately so the
-        // overlap can't re-fire during the stomp animation.
         const prevFeet = player.body.prev.y + player.body.height;
         const enemyMid = enemy.body.y + enemy.body.halfHeight;
         if (player.body.velocity.y > 0 && prevFeet <= enemyMid) {
-            enemy.body.enable = false;          // prevent repeat overlap
+            enemy.body.enable = false;
             player.setVelocityY(-280);
-            // Show stomp frame briefly before death animation
-            const T = window.TEX || {};
-            if (enemy.enemyType === 3) {
-                // Lobbyist uses its own spritesheet — skip enemies-ext frame logic
-                this.destroyEnemy(enemy);
-            } else if (T.enemyExt) {
-                enemy.setFrame(enemy.enemyType * 4 + 2);
-                this.time.delayedCall(100, () => {
-                    if (enemy && enemy.active) this.destroyEnemy(enemy);
-                });
-            } else {
-                this.destroyEnemy(enemy);
-            }
+            if (enemy && enemy.behaviour) enemy.behaviour.onStomp(this, enemy);
             return;
         }
 
-        // Player dies
         this.playerDie();
     }
 
@@ -2591,8 +2685,8 @@ class GameScene extends Phaser.Scene {
         const enemies = this.enemyGroup.getChildren().filter(e => e && e.active);
         enemies.forEach(enemy => {
             const dist = Phaser.Math.Distance.Between(p.x, p.y, enemy.x, enemy.y);
-            if (dist <= RADIUS) {
-                this.destroyEnemy(enemy);
+            if (dist <= RADIUS && enemy.behaviour) {
+                enemy.behaviour.onTweetHit(this, enemy);
             }
         });
 
