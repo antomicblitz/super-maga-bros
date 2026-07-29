@@ -55,6 +55,26 @@
   section#canvas-wrap { position: relative; background: #0a0a18; overflow: hidden; }
   canvas#cv { display: block; width: 100%; height: 100%; cursor: crosshair; }
   canvas#cv.sel-cursor { cursor: pointer; }
+  /* Minimap overlay: click to jump, drag to pan continuously. */
+  #minimap-wrap {
+    position: absolute; right: 8px; bottom: 8px;
+    width: 220px; height: 36px;
+    background: rgba(10,10,30,0.85);
+    border: 1px solid var(--accent);
+    border-radius: 3px;
+    padding: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    user-select: none;
+  }
+  #minimap-wrap canvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+  #minimap-label {
+    position: absolute; right: 12px; bottom: 48px;
+    font: 10px ui-monospace, monospace;
+    color: var(--accent);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+    pointer-events: none;
+    letter-spacing: 0.05em;
+  }
   footer { display: flex; align-items: center; padding: 0 12px; background: var(--panel);
     border-top: 1px solid var(--line); gap: 8px; font-size: 11px; color: var(--muted); }
   footer .pill { background: var(--bg); padding: 2px 8px; border-radius: 9px; border: 1px solid var(--line); }
@@ -96,6 +116,11 @@
     <div class="undo-redo-btns">
       <button class="btn" id="btn-undo" title="Undo (Cmd/Ctrl+Z)">↶ Undo</button>
       <button class="btn" id="btn-redo" title="Redo (Cmd/Ctrl+Shift+Z)">↷ Redo</button>
+    </div>
+    <div class="undo-redo-btns">
+      <button class="btn" id="btn-fit" title="Fit world in viewport (Home)">⊡ Fit</button>
+      <button class="btn" id="btn-goto-spawn" title="Jump to player spawn (Cmd/Ctrl+Home)">▶ Spawn</button>
+      <button class="btn" id="btn-goto-flag" title="Jump to flag (Cmd/Ctrl+End)">⚑ Flag</button>
     </div>
     <button class="btn" id="btn-load" title="Load from file">Load…</button>
     <button class="btn" id="btn-download">Download level.json</button>
@@ -146,13 +171,18 @@
         <div><kbd>0</kbd>-<kbd>3</kbd> cycle sub-type</div>
         <div><kbd>Shift</kbd>+click = erase</div>
         <div><kbd>RMB</kbd> drag = pan, <kbd>wheel</kbd> = zoom</div>
-        <div><kbd>Home</kbd> = reset view</div>
+        <div><kbd>Home</kbd> = fit, <kbd>Ctrl</kbd>+<kbd>Home</kbd> = spawn</div>
+        <div><kbd>Ctrl</kbd>+<kbd>End</kbd> = flag, arrow keys pan</div>
         <div><kbd>Cmd/Ctrl</kbd>+<kbd>Z</kbd> undo, <kbd>⇧Z</kbd> redo</div>
         <div><kbd>Del</kbd> deletes selection</div>
       </div>
     </aside>
     <section id="canvas-wrap">
       <canvas id="cv"></canvas>
+      <div id="minimap-label">MAP · click/drag to jump</div>
+      <div id="minimap-wrap">
+        <canvas id="minimap"></canvas>
+      </div>
     </section>
   </main>
   <footer>
@@ -219,7 +249,10 @@
           <li><b>Shift</b>+click = erase (any tool).</li>
           <li><b>Right-mouse drag</b> = pan.</li>
           <li><b>Mouse wheel</b> = zoom (centered on cursor).</li>
-          <li><b>Home</b> = reset view.</li>
+          <li><b>Home</b> = fit world in view; <b>Ctrl</b>+<b>Home</b> = jump to spawn; <b>Ctrl</b>+<b>End</b> = jump to flag.</li>
+          <li><b>Arrow keys</b> = pan by 100 world px; <b>Page Up/Down</b> = zoom by 1.15x.</li>
+          <li><b>Minimap</b> (bottom-right) click or drag to jump the view.</li>
+          <li><b>⊡ Fit / ▶ Spawn / ⚑ Flag</b> buttons in the toolbar.</li>
           <li>The game reads the same JSON via <code>GameScene.preload()</code>; missing <code>level.json</code> falls back to a hardcoded <code>FALLBACK_LEVEL</code> in <code>game.js</code>.</li>
         </ul>
       </p>
@@ -449,6 +482,8 @@ function updateUndoRedoButtons() {
 // ── Canvas / rendering ────────────────────────────────────
 const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
+const mm = document.getElementById('minimap');
+const mmCtx = mm.getContext('2d');
 
 function resizeCanvas() {
   const r = cv.getBoundingClientRect();
@@ -456,6 +491,13 @@ function resizeCanvas() {
   cv.width = Math.max(1, Math.floor(r.width * dpr));
   cv.height = Math.max(1, Math.floor(r.height * dpr));
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // Minimap backing store.
+  if (mm) {
+    const mr = mm.getBoundingClientRect();
+    mm.width = Math.max(1, Math.floor(mr.width * dpr));
+    mm.height = Math.max(1, Math.floor(mr.height * dpr));
+    mmCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
   requestDraw();
 }
 window.addEventListener('resize', resizeCanvas);
@@ -492,6 +534,43 @@ function clampView() {
   if (visH < WORLD_H) {
     v.y = Math.max(0, Math.min(v.y, WORLD_H - visH));
   }
+}
+
+// Pan the main canvas view by (dx, dy) world units. Doesn't touch zoom.
+function panBy(dx, dy) {
+  state.view.x += dx;
+  state.view.y += dy;
+  clampView();
+  requestDraw();
+}
+
+// Center the main canvas view on a world point. Keeps the user's current zoom.
+function jumpTo(wx, wy) {
+  const r = cv.getBoundingClientRect();
+  state.view.x = wx - r.width / 2 / state.view.zoom;
+  state.view.y = wy - r.height / 2 / state.view.zoom;
+  clampView();
+  requestDraw();
+}
+function jumpToSpawn() {
+  const [sx, sy] = currentLevel().playerStart;
+  jumpTo(sx, sy);
+  setStatus('Jumped to spawn');
+}
+function jumpToFlag() {
+  jumpTo(currentLevel().flagX, GROUND_Y - 32);
+  setStatus('Jumped to flag');
+}
+function fitViewToAll() {
+  // Reset to fit-to-world, like Home but keeps the world centered on both axes.
+  const r = cv.getBoundingClientRect();
+  const fit = Math.min(r.width / WORLD_W, r.height / WORLD_H);
+  state.view.zoom = Math.max(0.02, Math.min(8, fit));
+  state.view.x = (WORLD_W - r.width / state.view.zoom) / 2;
+  state.view.y = (WORLD_H - r.height / state.view.zoom) / 2;
+  clampView();
+  requestDraw();
+  setStatus('Fitted to world');
 }
 
 function draw() {
@@ -688,6 +767,77 @@ function draw() {
   // HUD pills
   document.getElementById('zoom-lvl').textContent = 'zoom: ' + Math.round(v.zoom * 100) + '%';
   document.getElementById('tool-name').textContent = 'tool: ' + state.tool;
+
+  // Mini-map (drawn after main so it stays in sync with each animation frame).
+  drawMinimap();
+}
+
+function drawMinimap() {
+  if (!mm || !mmCtx) return;
+  const r = mm.getBoundingClientRect();
+  const W = r.width, H = r.height;
+  mmCtx.clearRect(0, 0, W, H);
+
+  // Background subtle gradient.
+  mmCtx.fillStyle = 'rgba(255,255,255,0.04)';
+  mmCtx.fillRect(0, 0, W, H);
+
+  const L = currentLevel();
+  const sx = W / WORLD_W;   // world X -> minimap px
+  const sy = H / WORLD_H;   // world Y -> minimap px
+
+  // Ground segments.
+  mmCtx.fillStyle = '#8B6914';
+  for (const [s, e] of L.ground) {
+    mmCtx.fillRect(s * TILE * sx, GROUND_Y * sy, (e - s + 1) * TILE * sx, TILE * sy);
+  }
+  // Platforms.
+  mmCtx.fillStyle = '#B84A28';
+  for (const [tx, py, tw] of L.platforms) {
+    mmCtx.fillRect(tx * TILE * sx, py * sy, tw * TILE * sx, TILE * sy);
+  }
+  // Food.
+  mmCtx.fillStyle = '#CC0000';
+  for (const [fx, fy] of L.food) {
+    mmCtx.beginPath();
+    mmCtx.arc(fx * sx, fy * sy, 1.5, 0, Math.PI * 2);
+    mmCtx.fill();
+  }
+  // Power-ups.
+  for (const [px, py] of L.powerups) {
+    mmCtx.fillStyle = '#FFD700';
+    mmCtx.fillRect(px * sx - 1.5, py * sy - 1.5, 3, 3);
+  }
+  // Enemies.
+  for (const [ex] of L.enemies) {
+    mmCtx.fillStyle = '#FF6666';
+    mmCtx.beginPath();
+    mmCtx.arc(ex * sx, (GROUND_Y - 18) * sy, 1.5, 0, Math.PI * 2);
+    mmCtx.fill();
+  }
+  // Flag pole.
+  mmCtx.strokeStyle = '#FFD700';
+  mmCtx.lineWidth = 1;
+  mmCtx.beginPath();
+  mmCtx.moveTo(L.flagX * sx, Math.max(0, (GROUND_Y - 80) * sy));
+  mmCtx.lineTo(L.flagX * sx, GROUND_Y * sy);
+  mmCtx.stroke();
+  // Player spawn.
+  mmCtx.fillStyle = '#4CAF50';
+  mmCtx.beginPath();
+  mmCtx.arc(L.playerStart[0] * sx, L.playerStart[1] * sy, 2, 0, Math.PI * 2);
+  mmCtx.fill();
+
+  // Viewport rectangle.
+  const v = state.view;
+  const cvRect = cv.getBoundingClientRect();
+  const visW = cvRect.width / v.zoom;
+  const visH = cvRect.height / v.zoom;
+  mmCtx.strokeStyle = '#FFD700';
+  mmCtx.lineWidth = 1.5;
+  mmCtx.strokeRect(v.x * sx, v.y * sy, visW * sx, visH * sy);
+  mmCtx.fillStyle = 'rgba(255, 215, 0, 0.1)';
+  mmCtx.fillRect(v.x * sx, v.y * sy, visW * sx, visH * sy);
 }
 
 function selectionBounds(L, sel) {
@@ -1261,6 +1411,32 @@ function onWheel(e) {
   requestDraw();
 }
 
+// ── Minimap navigation ──────────────────────────────────────
+let _minimapDrag = null;  // { startX, startY, startView } | null
+function minimapPointToWorld(e) {
+  const r = mm.getBoundingClientRect();
+  const mx = (e.clientX - r.left) / r.width;   // 0..1
+  const my = (e.clientY - r.top)  / r.height;  // 0..1
+  return [mx * WORLD_W, my * WORLD_H];
+}
+function onMinimapPointerDown(e) {
+  if (e.button !== 0 && e.button !== 2) return;
+  e.preventDefault();
+  mm.setPointerCapture(e.pointerId);
+  const [wx, wy] = minimapPointToWorld(e);
+  jumpTo(wx, wy);
+  _minimapDrag = { wx, wy };
+  setStatus('Minimap jump → ' + Math.round(wx) + ', ' + Math.round(wy));
+}
+function onMinimapPointerMove(e) {
+  if (!_minimapDrag) return;
+  const [wx, wy] = minimapPointToWorld(e);
+  jumpTo(wx, wy);
+}
+function onMinimapPointerUp(e) {
+  _minimapDrag = null;
+}
+
 // ── Tool / subtype selection ──────────────────────────────
 function selectTool(t) {
   state.tool = t;
@@ -1322,6 +1498,9 @@ function bindUI() {
   document.getElementById('btn-load').addEventListener('click', loadFromFile);
   document.getElementById('btn-download').addEventListener('click', downloadJson);
   document.getElementById('btn-showjson').addEventListener('click', showJson);
+  document.getElementById('btn-fit').addEventListener('click', fitViewToAll);
+  document.getElementById('btn-goto-spawn').addEventListener('click', jumpToSpawn);
+  document.getElementById('btn-goto-flag').addEventListener('click', jumpToFlag);
   document.getElementById('btn-help').addEventListener('click', () =>
     document.getElementById('help-modal').classList.remove('hidden'));
   document.getElementById('btn-close-help').addEventListener('click', () =>
@@ -1342,6 +1521,15 @@ function bindUI() {
   cv.addEventListener('pointerup', onPointerUp);
   cv.addEventListener('pointerleave', onPointerUp);
   cv.addEventListener('wheel', onWheel, { passive: false });
+
+  // Minimap: click/drag to jump the main view.
+  if (mm) {
+    mm.addEventListener('pointerdown', onMinimapPointerDown);
+    mm.addEventListener('pointermove', onMinimapPointerMove);
+    mm.addEventListener('pointerup', onMinimapPointerUp);
+    mm.addEventListener('pointerleave', onMinimapPointerUp);
+    mm.addEventListener('contextmenu', e => e.preventDefault());
+  }
 
   window.addEventListener('keydown', (e) => {
     const tag = e.target && e.target.tagName;
@@ -1373,16 +1561,21 @@ function bindUI() {
       updateSubtypeInfo();
       return;
     }
-    // View reset
-    if (e.key === 'Home') {
-      const r = cv.getBoundingClientRect();
-      state.view.zoom = Math.min(r.width / WORLD_W, r.height / WORLD_H);
-      state.view.x = (WORLD_W - r.width / state.view.zoom) / 2;
-      state.view.y = (WORLD_H - r.height / state.view.zoom) / 2;
-      clampView();
-      requestDraw();
-      return;
+    // View reset / navigation
+    if (e.key === 'Home' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault(); jumpToSpawn(); return;
     }
+    if (e.key === 'End' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault(); jumpToFlag(); return;
+    }
+    if (e.key === 'Home') {
+      e.preventDefault(); fitViewToAll(); return;
+    }
+    // Arrow keys: pan in world units (browser scroll prevented).
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); panBy(-100,  0); return; }
+    if (e.key === 'ArrowRight') { e.preventDefault(); panBy(+100,  0); return; }
+    if (e.key === 'ArrowUp')    { e.preventDefault(); panBy(  0, -100); return; }
+    if (e.key === 'ArrowDown')  { e.preventDefault(); panBy(  0, +100); return; }
     // Escape clears drag/selection
     if (e.key === 'Escape') {
       state.drag = null;
