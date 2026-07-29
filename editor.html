@@ -181,7 +181,7 @@
       <canvas id="cv"></canvas>
       <div id="minimap-label">MAP · click/drag to jump</div>
       <div id="minimap-wrap">
-        <canvas id="minimap"></canvas>
+        <canvas id="minimap" role="img" aria-label="Level minimap — click or drag to jump the main view"></canvas>
       </div>
     </section>
   </main>
@@ -540,6 +540,25 @@ function clampView() {
 function panBy(dx, dy) {
   state.view.x += dx;
   state.view.y += dy;
+  clampView();
+  requestDraw();
+}
+
+// Canvas-local centre, used as zoom anchor for keyboard PageUp/PageDown.
+function canvasCenterX() { return cv.getBoundingClientRect().width / 2; }
+function canvasCenterY() { return cv.getBoundingClientRect().height / 2; }
+
+// Zoom by a factor, anchored on a canvas-local pixel (cx, cy). The world
+// point under that canvas pixel stays fixed. PageUp/PageDown use canvas
+// centre; the wheel handler uses the cursor position.
+function zoomAtCanvasPoint(cx, cy, factor) {
+  const v = state.view;
+  const wx = v.x + cx / v.zoom;
+  const wy = v.y + cy / v.zoom;
+  const newZoom = Math.max(0.02, Math.min(8, v.zoom * factor));
+  v.zoom = newZoom;
+  v.x = wx - cx / newZoom;
+  v.y = wy - cy / newZoom;
   clampView();
   requestDraw();
 }
@@ -1398,21 +1417,12 @@ function onWheel(e) {
   e.preventDefault();
   const r = cv.getBoundingClientRect();
   const cx = e.clientX - r.left, cy = e.clientY - r.top;
-  const [wx, wy] = clientToWorld(e.clientX, e.clientY);
   const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
-  const v = state.view;
-  // 2% minimum allows zooming out beyond the world's fit-to-viewport ratio (so a wide canvas
-  // doesn't trap the zoom at 10% when the actual fit is 6%). 800% is a sane max for pixel-level editing.
-  const newZoom = Math.max(0.02, Math.min(8, v.zoom * factor));
-  v.zoom = newZoom;
-  v.x = wx - cx / newZoom;
-  v.y = wy - cy / newZoom;
-  clampView();
-  requestDraw();
+  zoomAtCanvasPoint(cx, cy, factor);
 }
 
 // ── Minimap navigation ──────────────────────────────────────
-let _minimapDrag = null;  // { startX, startY, startView } | null
+let _minimapDrag = null;  // { wx, wy } | null — tracks an ongoing drag for drag-to-pan
 function minimapPointToWorld(e) {
   const r = mm.getBoundingClientRect();
   const mx = (e.clientX - r.left) / r.width;   // 0..1
@@ -1572,10 +1582,14 @@ function bindUI() {
       e.preventDefault(); fitViewToAll(); return;
     }
     // Arrow keys: pan in world units (browser scroll prevented).
-    if (e.key === 'ArrowLeft')  { e.preventDefault(); panBy(-100,  0); return; }
-    if (e.key === 'ArrowRight') { e.preventDefault(); panBy(+100,  0); return; }
-    if (e.key === 'ArrowUp')    { e.preventDefault(); panBy(  0, -100); return; }
-    if (e.key === 'ArrowDown')  { e.preventDefault(); panBy(  0, +100); return; }
+    // 320 world px ≈ 10 tiles at TILE=32 — a meaningful jump, not too coarse.
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); panBy(-320,    0); return; }
+    if (e.key === 'ArrowRight') { e.preventDefault(); panBy(+320,    0); return; }
+    if (e.key === 'ArrowUp')    { e.preventDefault(); panBy(  0, -320); return; }
+    if (e.key === 'ArrowDown')  { e.preventDefault(); panBy(  0, +320); return; }
+    // PageUp / PageDown: zoom around canvas centre.
+    if (e.key === 'PageUp')   { e.preventDefault(); zoomAtCanvasPoint(canvasCenterX(), canvasCenterY(), 1.15); return; }
+    if (e.key === 'PageDown') { e.preventDefault(); zoomAtCanvasPoint(canvasCenterX(), canvasCenterY(), 1 / 1.15); return; }
     // Escape clears drag/selection
     if (e.key === 'Escape') {
       state.drag = null;
@@ -1599,12 +1613,9 @@ async function init() {
 }
 
 function fitView() {
-  const r = cv.getBoundingClientRect();
-  const fit = Math.min(r.width / WORLD_W, r.height / WORLD_H);
-  state.view.zoom = Math.min(0.5, fit);
-  state.view.x = (WORLD_W - r.width / state.view.zoom) / 2;
-  state.view.y = (WORLD_H - r.height / state.view.zoom) / 2;
-  clampView();
+  // Boot-time fit-to-world. Use the same zoom range as fitViewToAll() so the
+  // initial view and the Home-key view don't disagree on zoom limits.
+  fitViewToAll();
 }
 
 window.addEventListener('load', init);
