@@ -516,9 +516,11 @@ function clientToWorld(px, py) {
   return [v.x + cx / v.zoom, v.y + cy / v.zoom];
 }
 function worldToClient(wx, wy) {
-  const r = cv.getBoundingClientRect();
+  // Canvas-LOCAL coordinates (origin = canvas top-left). The browser renders the canvas
+  // starting at getBoundingClientRect().left/.top on the page; that's a viewport-space offset
+  // we don't add here because ctx.arc/lineTo already operate in canvas-local space.
   const v = state.view;
-  return [r.left + (wx - v.x) * v.zoom, r.top + (wy - v.y) * v.zoom];
+  return [(wx - v.x) * v.zoom, (wy - v.y) * v.zoom];
 }
 function clampView() {
   const v = state.view;
@@ -897,9 +899,10 @@ function selectionBounds(L, sel) {
 // ── Object operations ────────────────────────────────────
 function snapOrigin(wx, wy) {
   // Tile-grid snap: top-left corner of a tile. Matches the original level.json convention.
-  const x = Math.max(0, Math.min(WORLD_W - TILE, Math.floor(wx / TILE) * TILE));
-  const y = Math.max(0, Math.min(WORLD_H - TILE, Math.floor(wy / TILE) * TILE));
-  return [x, y];
+  // No clamping — if the user clicks outside the world (sky / below ground), the food
+  // should still appear at the click position. Clamping would yank the placement to
+  // y=0 / y=WORLD_H and the user would see their click "snap" to the wrong tile row.
+  return [Math.floor(wx / TILE) * TILE, Math.floor(wy / TILE) * TILE];
 }
 
 function placeObject(wx, wy) {
