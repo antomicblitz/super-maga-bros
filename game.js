@@ -500,10 +500,14 @@ function genTweet() {
     return cv;
 }
 
-// ── Level Data ───────────────────────────────────���──────────
-const LEVEL = {
+// ── Level Data ───────────────────────────────────────────────
+// LEVEL is loaded at runtime from level.json (see GameScene.preload).
+// FALLBACK_LEVEL preserves the original hardcoded data so the game still runs
+// if level.json is missing or malformed — useful for offline play and tests.
+let LEVEL = null;
+const FALLBACK_LEVEL = {
     // Ground segments [startTileX, endTileX]
-    ground: [
+ground: [
         // Zone 1 — Intro (flat, easy, learn controls) — tiles 0-68
         [0, 68],
         // Zone 2 — First Gaps (2-tile gaps) — tiles 71-128
@@ -1431,10 +1435,26 @@ class SpeechScene extends Phaser.Scene {
 class GameScene extends Phaser.Scene {
     constructor() { super('Game'); }
 
+    preload() {
+        // External level data (default: from level.json; falls back to FALLBACK_LEVEL).
+        // Silently ignore missing-file errors — FALLBACK_LEVEL keeps the game playable offline.
+        try { this.load.json('level', 'level.json'); } catch (e) {}
+        // ?reset=1 — debug aid: restart from the JSON's currentLevel (or 0), ignore saved progress.
+        try {
+            if (/[?&]reset(?:=1)?\b/.test(window.location.search)) {
+                localStorage.removeItem('smb_level');
+            }
+        } catch (_) {}
+    }
+
     init(data) {
         this.score = data.score || 0;
         this.lives = data.lives !== undefined ? data.lives : 3;
         this.cholesterol = data.cholesterol || 0;
+        // Optional target level from scene.start('Game', { currentLevel: n }).
+        // null = fall through to JSON currentLevel, then localStorage, then 0.
+        this.wantsLevel = (typeof data.currentLevel === 'number'
+            && data.currentLevel >= 0) ? data.currentLevel : null;
         this.earthquakeReady = this.cholesterol >= 50;
         this.earthquakeCooldown = false;
         // Power-up state resets on death (independent timers)
@@ -1451,6 +1471,39 @@ class GameScene extends Phaser.Scene {
     }
 
     create() {
+        // Resolve LEVEL: prefer the level.json loaded in preload() (designer-edited),
+        // fall back to FALLBACK_LEVEL (kept inline for offline play and tests).
+        const json = this.cache.json.get('level');
+        const root = (json && typeof json === 'object') ? json : FALLBACK_LEVEL;
+
+        // Multi-level schema: { levels: [...], currentLevel? }.  Single-level shape is
+        // still accepted (treated as a one-element array) for backwards compatibility
+        // with the level.json shipped before multi-level support.
+        let allLevels, cl;
+        if (root && Array.isArray(root.levels) && root.levels.length > 0) {
+            allLevels = root.levels;
+        } else if (root === FALLBACK_LEVEL) {
+            allLevels = [FALLBACK_LEVEL];
+        } else {
+            allLevels = [root];
+        }
+        const max = allLevels.length - 1;
+        if (this.wantsLevel !== null && this.wantsLevel <= max) {
+            cl = this.wantsLevel;
+        } else if (typeof root.currentLevel === 'number' && root.currentLevel <= max) {
+            cl = root.currentLevel;
+        } else {
+            try {
+                const stored = parseInt(localStorage.getItem('smb_level') || '', 10);
+                cl = (!isNaN(stored) && stored >= 0 && stored <= max) ? stored : 0;
+            } catch (_) { cl = 0; }
+        }
+        cl = Math.max(0, Math.min(max, cl));
+        LEVEL = allLevels[cl];
+        this.allLevels = allLevels;
+        this.currentLevel = cl;
+        this.totalLevels = allLevels.length;
+        // Persistent resume hint (only set on win, see showVictory()).
         this.totalFood = LEVEL.food.length;
         this.dead = false;
         this.won = false;
@@ -1653,7 +1706,8 @@ class GameScene extends Phaser.Scene {
 
         // ─ Player
         const pk = T.player || 'player';
-        this.player = this.physics.add.sprite(80, GROUND_Y - 48, pk, 0);
+        const [pStartX, pStartY] = LEVEL.playerStart || [80, GROUND_Y - 48];
+        this.player = this.physics.add.sprite(pStartX, pStartY, pk, 0);
         this.player.setSize(20, 40).setOffset(6, 8);
         this.player.setCollideWorldBounds(false);
         this.player.setBounce(0);
@@ -2835,8 +2889,14 @@ class GameScene extends Phaser.Scene {
         overlay.setAlpha(0);
         this.tweens.add({ targets: overlay, alpha: 1, duration: 500 });
 
+        const hasMore = this.currentLevel < this.totalLevels - 1;
+        const levelName = (LEVEL && typeof LEVEL.name === 'string' && LEVEL.name)
+            ? LEVEL.name
+            : ('Level ' + (this.currentLevel + 1));
+
         this.time.delayedCall(400, () => {
-            this.add.text(ow/2, oh/2 - 85, 'LEVEL COMPLETE!', {
+            this.add.text(ow/2, oh/2 - 85,
+                hasMore ? (levelName + ' — COMPLETE!') : 'ALL LEVELS COMPLETE!', {
                 fontSize: '42px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                 color: C.gold, stroke: C.capRed, strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
@@ -2851,7 +2911,10 @@ class GameScene extends Phaser.Scene {
                 color: C.gold, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
-            const cont = this.add.text(ow/2, oh/2 + 55, _isTouchDevice ? 'TAP JUMP FOR MENU' : 'PRESS SPACE FOR MENU', {
+            const prompt = hasMore
+                ? (_isTouchDevice ? 'TAP JUMP FOR NEXT LEVEL' : 'PRESS SPACE FOR NEXT LEVEL')
+                : (_isTouchDevice ? 'TAP JUMP FOR MENU' : 'PRESS SPACE FOR MENU');
+            const cont = this.add.text(ow/2, oh/2 + 55, prompt, {
                 fontSize: '20px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                 color: C.white, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
@@ -2859,16 +2922,30 @@ class GameScene extends Phaser.Scene {
 
             const flag = this._addDonateButtons(ow/2, oh/2 + 150, '16px');
 
-            const goMenu = () => { this.scene.start('Menu', { reset: true }); };
-            this.input.keyboard.once('keydown-SPACE', goMenu);
+            const advance = () => {
+                if (hasMore) {
+                    const next = this.currentLevel + 1;
+                    try { localStorage.setItem('smb_level', next); } catch (_) {}
+                    this.scene.start('Game', {
+                        score: this.score,
+                        lives: this.lives,
+                        cholesterol: this.cholesterol,
+                        currentLevel: next,
+                    });
+                } else {
+                    try { localStorage.removeItem('smb_level'); } catch (_) {}
+                    this.scene.start('Menu', { reset: true });
+                }
+            };
+            this.input.keyboard.once('keydown-SPACE', advance);
             this.input.once('pointerdown', () => {
                 if (flag.clicked) return;
-                goMenu();
+                advance();
             });
             this._victorySkipTimer = this.time.addEvent({
                 delay: 100, loop: true,
                 callback: () => {
-                    if (window.TOUCH && window.TOUCH.jump) goMenu();
+                    if (window.TOUCH && window.TOUCH.jump) advance();
                 },
             });
         });
