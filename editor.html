@@ -419,6 +419,7 @@ function commit(label) {
   state.undoStack.push(snapshot());
   if (state.undoStack.length > MAX_UNDO) state.undoStack.shift();
   state.redoStack = [];
+  updateUndoRedoButtons();
 }
 
 function undo() {
@@ -481,8 +482,16 @@ function clampView() {
   const v = state.view;
   const r = cv.getBoundingClientRect();
   const visW = r.width / v.zoom, visH = r.height / v.zoom;
-  v.x = Math.max(0, Math.min(v.x, Math.max(0, WORLD_W - visW)));
-  v.y = Math.max(0, Math.min(v.y, Math.max(0, WORLD_H - visH)));
+  // When the viewport is smaller than the world on an axis, clamp to world bounds.
+  // When the viewport is bigger, leave the view alone — the user / Home key / zoom anchor
+  // is responsible for placing the world. Forcing a centered view here would override the
+  // cursor-anchored zoom math and make zoom-in feel broken.
+  if (visW < WORLD_W) {
+    v.x = Math.max(0, Math.min(v.x, WORLD_W - visW));
+  }
+  if (visH < WORLD_H) {
+    v.y = Math.max(0, Math.min(v.y, WORLD_H - visH));
+  }
 }
 
 function draw() {
@@ -768,8 +777,11 @@ function placeObject(wx, wy) {
 
 function selectAt(wx, wy) {
   const L = currentLevel();
-  // Priority: top-most (last drawn first), hit-test by proximity.
-  const RADIUS = 18;
+  // Hit-test radius: target a comfortable canvas-pixel radius so click accuracy stays
+  // consistent regardless of zoom. Convert to world units by dividing by current zoom.
+  const HIT_RADIUS_PX = 16;
+  const zoom = state.view.zoom;
+  const radius = HIT_RADIUS_PX / zoom;
 
   // ground segments (lower priority)
   for (let i = L.ground.length - 1; i >= 0; i--) {
@@ -797,7 +809,7 @@ function selectAt(wx, wy) {
   for (let i = L.enemies.length - 1; i >= 0; i--) {
     const [ex] = L.enemies[i];
     const cy = GROUND_Y - 18;
-    if (Math.abs(ex - wx) <= RADIUS && Math.abs(cy - wy) <= RADIUS) {
+    if (Math.abs(ex - wx) <= radius && Math.abs(cy - wy) <= radius) {
       state.selected = { kind: 'enemy', index: i };
       refreshInspector();
       updateSelectionPill();
@@ -807,7 +819,7 @@ function selectAt(wx, wy) {
   // powerups
   for (let i = L.powerups.length - 1; i >= 0; i--) {
     const [px, py] = L.powerups[i];
-    if (Math.hypot(px - wx, py - wy) <= RADIUS) {
+    if (Math.hypot(px - wx, py - wy) <= radius) {
       state.selected = { kind: 'powerup', index: i };
       refreshInspector();
       updateSelectionPill();
@@ -817,7 +829,7 @@ function selectAt(wx, wy) {
   // food
   for (let i = L.food.length - 1; i >= 0; i--) {
     const [fx, fy] = L.food[i];
-    if (Math.hypot(fx - wx, fy - wy) <= RADIUS) {
+    if (Math.hypot(fx - wx, fy - wy) <= radius) {
       state.selected = { kind: 'food', index: i };
       refreshInspector();
       updateSelectionPill();
@@ -832,13 +844,30 @@ function selectAt(wx, wy) {
 
 function eraseAt(wx, wy) {
   const L = currentLevel();
-  const RADIUS = 18;
+  const HIT_RADIUS_PX = 16;
+  const zoom = state.view.zoom;
+  const RADIUS = HIT_RADIUS_PX / zoom;
+
+  // Helper: if state.selected points to (kind, index), clear it (and refresh the inspector)
+  // so a stale reference doesn't survive the erase.
+  const clearSelectedIf = (kind, index) => {
+    if (state.selected && state.selected.kind === kind && state.selected.index === index) {
+      state.selected = null;
+      refreshInspector();
+      updateSelectionPill();
+    } else if (state.selected && state.selected.kind === kind && state.selected.index > index) {
+      // Indices shift when we splice above the selected one.
+      state.selected.index -= 1;
+      refreshInspector();
+    }
+  };
 
   // top-most first
   for (let i = L.powerups.length - 1; i >= 0; i--) {
     const [px, py] = L.powerups[i];
     if (Math.hypot(px - wx, py - wy) <= RADIUS) {
       L.powerups.splice(i, 1);
+      clearSelectedIf('powerup', i);
       updateCounts();
       return;
     }
@@ -847,6 +876,7 @@ function eraseAt(wx, wy) {
     const [fx, fy] = L.food[i];
     if (Math.hypot(fx - wx, fy - wy) <= RADIUS) {
       L.food.splice(i, 1);
+      clearSelectedIf('food', i);
       updateCounts();
       return;
     }
@@ -856,6 +886,7 @@ function eraseAt(wx, wy) {
     const cy = GROUND_Y - 18;
     if (Math.abs(ex - wx) <= RADIUS && Math.abs(cy - wy) <= RADIUS) {
       L.enemies.splice(i, 1);
+      clearSelectedIf('enemy', i);
       updateCounts();
       return;
     }
@@ -865,6 +896,7 @@ function eraseAt(wx, wy) {
     const x1 = tx * TILE, x2 = (tx + tw) * TILE;
     if (wx >= x1 - RADIUS && wx <= x2 + RADIUS && Math.abs(wy - (groundTopAt(L, wx))) <= TILE) {
       L.platforms.splice(i, 1);
+      clearSelectedIf('platform', i);
       updateCounts();
       return;
     }
@@ -874,6 +906,7 @@ function eraseAt(wx, wy) {
     const [s, e] = L.ground[i];
     if (tileX >= s && tileX <= e) {
       L.ground.splice(i, 1);
+      clearSelectedIf('ground', i);
       updateCounts();
       return;
     }
@@ -1218,7 +1251,9 @@ function onWheel(e) {
   const [wx, wy] = clientToWorld(e.clientX, e.clientY);
   const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
   const v = state.view;
-  const newZoom = Math.max(0.1, Math.min(8, v.zoom * factor));
+  // 2% minimum allows zooming out beyond the world's fit-to-viewport ratio (so a wide canvas
+  // doesn't trap the zoom at 10% when the actual fit is 6%). 800% is a sane max for pixel-level editing.
+  const newZoom = Math.max(0.02, Math.min(8, v.zoom * factor));
   v.zoom = newZoom;
   v.x = wx - cx / newZoom;
   v.y = wy - cy / newZoom;
