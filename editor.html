@@ -1390,10 +1390,10 @@ function commitPaintDrag(d) {
   } else if (d.tool === 'platform') {
     const a = Math.min(d.wx1, d.wx2), b = Math.max(d.wx1, d.wx2);
     const c = Math.min(d.wy1, d.wy2), d2 = Math.max(d.wy1, d.wy2);
-    const tx = Math.max(0, Math.floor(a / TILE));
+    const tx = Math.max(0, Math.min(Math.floor(WORLD_W / TILE) - 1, Math.floor(a / TILE)));
     const tx2 = Math.max(tx + 1, Math.floor(b / TILE));
     const tw = Math.max(1, tx2 - tx + 1);
-    const py = Math.max(0, Math.floor(c / TILE) * TILE);
+    const py = Math.floor(c / TILE) * TILE;
     L.platforms.push([tx, py, tw]);
   }
   updateCounts();
