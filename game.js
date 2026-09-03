@@ -44,6 +44,49 @@ const POWER_TYPES = [
     { name: 'Classified Docs', duration: 15 },
 ];
 
+// ── HF IL3 controller ────────────────────────────────────────
+// The workshop controller exposes X/Y axes and HID buttons 1 and 2. In the
+// browser's zero-based Gamepad API those action buttons are indices 0 and 1.
+class HfController {
+    constructor() {
+        this.lastUp = false;
+        this.lastActionA = false;
+        this.lastActionB = false;
+    }
+
+    poll() {
+        const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+        const gamepad = Array.from(gamepads).find(pad => pad && pad.connected);
+        const state = {
+            left: false, right: false, up: false, down: false,
+            actionA: false, actionB: false,
+        };
+
+        if (gamepad) {
+            const [x = 0, y = 0] = gamepad.axes;
+            const pressed = index => {
+                const button = gamepad.buttons[index];
+                return !!button && (button.pressed || button.value > 0.5);
+            };
+            state.left = x < -0.5;
+            state.right = x > 0.5;
+            state.up = y < -0.5;
+            state.down = y > 0.5;
+            state.actionA = pressed(0);
+            state.actionB = pressed(1);
+        }
+
+        state.upJustPressed = state.up && !this.lastUp;
+        state.actionAJustPressed = state.actionA && !this.lastActionA;
+        state.actionBJustPressed = state.actionB && !this.lastActionB;
+        this.lastUp = state.up;
+        this.lastActionA = state.actionA;
+        this.lastActionB = state.actionB;
+        return state;
+    }
+}
+const HF_CONTROLLER = new HfController();
+
 // ── Tiny SFX via Web Audio ──────────────────────────────────
 let audioCtx;
 function sfx(freq, freq2, dur, type, vol) {
@@ -1007,7 +1050,9 @@ class DisclaimerScene extends Phaser.Scene {
         this.input.on('pointerdown', advance);
         this.time.addEvent({
             delay: 100, loop: true,
-            callback: () => { if (window.TOUCH && window.TOUCH.jump) advance(); },
+            callback: () => {
+                if ((window.TOUCH && window.TOUCH.jump) || HF_CONTROLLER.poll().actionA) advance();
+            },
         });
     }
 }
@@ -1153,13 +1198,20 @@ class MenuScene extends Phaser.Scene {
 
         // Also detect touch-button presses (HTML overlay buttons don't reach Phaser input)
         this._menuHandler = handler;
-        this._touchWasDown = false;
+        // Do not reuse the press that entered this scene as a new menu press.
+        const touch = window.TOUCH;
+        const controller = HF_CONTROLLER.poll();
+        this._touchWasDown = !!((touch && (touch.left || touch.right || touch.jump || touch.tweet)) ||
+            controller.left || controller.right || controller.up || controller.down ||
+            controller.actionA || controller.actionB);
     }
 
     update() {
         const T = window.TOUCH;
-        if (!T || !this._menuHandler) return;
-        const down = T.left || T.right || T.jump || T.tweet;
+        if (!this._menuHandler) return;
+        const H = HF_CONTROLLER.poll();
+        const down = (T && (T.left || T.right || T.jump || T.tweet)) ||
+            H.left || H.right || H.up || H.down || H.actionA || H.actionB;
         if (down && !this._touchWasDown) {
             this._menuHandler();
         }
@@ -1393,7 +1445,7 @@ class SpeechScene extends Phaser.Scene {
         this._skipCheckTimer = this.time.addEvent({
             delay: 100, loop: true,
             callback: () => {
-                if (this._canSkip && window.TOUCH && window.TOUCH.jump) this._goToGame();
+                if (this._canSkip && ((window.TOUCH && window.TOUCH.jump) || HF_CONTROLLER.poll().actionA)) this._goToGame();
             },
         });
     }
@@ -1418,8 +1470,9 @@ class SpeechScene extends Phaser.Scene {
         // Detect touch-button presses (HTML overlay buttons don't reach Phaser input)
         if (!this._canSkip) return;
         const T = window.TOUCH;
-        if (!T) return;
-        const down = T.left || T.right || T.jump || T.tweet;
+        const H = HF_CONTROLLER.poll();
+        const down = (T && (T.left || T.right || T.jump || T.tweet)) ||
+            H.left || H.right || H.up || H.down || H.actionA || H.actionB;
         if (down && !this._touchWasDown) {
             this._goToGame();
         }
@@ -1759,7 +1812,7 @@ class GameScene extends Phaser.Scene {
         var isMobile = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
         if (!isMobile) {
             var ctrlHint = this.add.text(sw / 2, sh - 16,
-                'ARROWS/WASD: Move   SPACE: Jump   Z: Tweet   X: Shart', {
+                'ARROWS/WASD: Move   SPACE: Jump   Z: Tweet   X: Shart   |   CONTROLLER: A Jump, B Tweet', {
                 fontSize: '12px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                 color: '#ffffff', stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(100).setAlpha(0.8);
@@ -1813,7 +1866,7 @@ class GameScene extends Phaser.Scene {
             // Power-up entries with actual sprites
             const AL = window.ASSETS_LOADED || {};
             const powerExt = T.powerExt;
-            const tweetCtrl = _isTouchDevice ? 'Tap TWEET button' : 'Press Z';
+            const tweetCtrl = _isTouchDevice ? 'Tap TWEET button' : 'Press Z / controller B';
             const shartCtrl = _isTouchDevice ? 'Tap SHART button' : 'Press X';
             const entries = [
                 { texKey: AL.hat ? 'hat-ext' : (powerExt ? 'powerups-ext' : 'powerup0'), frame: powerExt ? 0 : undefined,
@@ -1869,10 +1922,11 @@ class GameScene extends Phaser.Scene {
     }
 
     update(_time, delta) {
+        const H_CTRL = HF_CONTROLLER.poll();
         if (this.tutorialShowing) {
             // Allow touch-button dismiss
             const T = window.TOUCH;
-            if (T && (T.left || T.right || T.jump || T.tweet) && this._tutorialDismiss) {
+            if (((T && (T.left || T.right || T.jump || T.tweet)) || H_CTRL.actionAJustPressed || H_CTRL.actionBJustPressed) && this._tutorialDismiss) {
                 this._tutorialDismiss();
             }
             return;
@@ -1917,7 +1971,7 @@ class GameScene extends Phaser.Scene {
         const jumpPressed = Phaser.Input.Keyboard.JustDown(this.spaceKey) ||
                            Phaser.Input.Keyboard.JustDown(this.cursors.up) ||
                            Phaser.Input.Keyboard.JustDown(this.wasd.up) ||
-                           T_CTRL.jumpJustPressed;
+                           T_CTRL.jumpJustPressed || H_CTRL.upJustPressed || H_CTRL.actionAJustPressed;
         if (jumpPressed) this.jumpBufferTimer = 0.1;
         else this.jumpBufferTimer -= dt;
 
@@ -1928,8 +1982,8 @@ class GameScene extends Phaser.Scene {
 
         // ─ Horizontal movement
         const speed = 220;
-        const leftDown  = this.cursors.left.isDown  || this.wasd.left.isDown  || T_CTRL.left;
-        const rightDown = this.cursors.right.isDown || this.wasd.right.isDown || T_CTRL.right;
+        const leftDown  = this.cursors.left.isDown  || this.wasd.left.isDown  || T_CTRL.left || H_CTRL.left;
+        const rightDown = this.cursors.right.isDown || this.wasd.right.isDown || T_CTRL.right || H_CTRL.right;
 
         if (leftDown) {
             p.setVelocityX(-speed);
@@ -1960,7 +2014,7 @@ class GameScene extends Phaser.Scene {
         }
 
         // Variable jump height
-        const jumpHeld = this.spaceKey.isDown || this.cursors.up.isDown || this.wasd.up.isDown || T_CTRL.jump;
+        const jumpHeld = this.spaceKey.isDown || this.cursors.up.isDown || this.wasd.up.isDown || T_CTRL.jump || H_CTRL.up || H_CTRL.actionA;
         if (!jumpHeld && p.body.velocity.y < -150) {
             p.setVelocityY(p.body.velocity.y * 0.6);
         }
@@ -2059,7 +2113,7 @@ class GameScene extends Phaser.Scene {
         }
 
         // ─ Z key / touch: fire tweet-blast
-        if ((Phaser.Input.Keyboard.JustDown(this.zKey) || T_CTRL.tweetJustPressed) && this.hasTweetBlast) {
+        if ((Phaser.Input.Keyboard.JustDown(this.zKey) || T_CTRL.tweetJustPressed || H_CTRL.actionBJustPressed) && this.hasTweetBlast) {
             this.fireTweetBlast();
         }
 
@@ -2717,7 +2771,7 @@ class GameScene extends Phaser.Scene {
                 color: C.white, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
-            const cont = this.add.text(ow/2, oh/2 + 10, _isTouchDevice ? 'TAP JUMP TO CONTINUE' : 'PRESS SPACE TO CONTINUE', {
+            const cont = this.add.text(ow/2, oh/2 + 10, _isTouchDevice ? 'TAP JUMP TO CONTINUE' : 'PRESS SPACE / CONTROLLER A TO CONTINUE', {
                 fontSize: '20px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                 color: C.white, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
@@ -2736,7 +2790,7 @@ class GameScene extends Phaser.Scene {
             this._deathSkipTimer = this.time.addEvent({
                 delay: 100, loop: true,
                 callback: () => {
-                    if (window.TOUCH && window.TOUCH.jump) doRestart();
+                    if ((window.TOUCH && window.TOUCH.jump) || HF_CONTROLLER.poll().actionA) doRestart();
                 },
             });
         });
@@ -2769,7 +2823,7 @@ class GameScene extends Phaser.Scene {
                 color: C.gold, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
-            const restart = this.add.text(ow/2, oh/2 + 60, _isTouchDevice ? 'TAP JUMP TO TRY AGAIN' : 'PRESS SPACE TO TRY AGAIN', {
+            const restart = this.add.text(ow/2, oh/2 + 60, _isTouchDevice ? 'TAP JUMP TO TRY AGAIN' : 'PRESS SPACE / CONTROLLER A TO TRY AGAIN', {
                 fontSize: '20px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                 color: C.white, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
@@ -2790,7 +2844,7 @@ class GameScene extends Phaser.Scene {
             this._gameOverSkipTimer = this.time.addEvent({
                 delay: 100, loop: true,
                 callback: () => {
-                    if (window.TOUCH && window.TOUCH.jump) goMenu();
+                    if ((window.TOUCH && window.TOUCH.jump) || HF_CONTROLLER.poll().actionA) goMenu();
                 },
             });
         });
@@ -2851,7 +2905,7 @@ class GameScene extends Phaser.Scene {
                 color: C.gold, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
 
-            const cont = this.add.text(ow/2, oh/2 + 55, _isTouchDevice ? 'TAP JUMP FOR MENU' : 'PRESS SPACE FOR MENU', {
+            const cont = this.add.text(ow/2, oh/2 + 55, _isTouchDevice ? 'TAP JUMP FOR MENU' : 'PRESS SPACE / CONTROLLER A FOR MENU', {
                 fontSize: '20px', fontFamily: 'Arial, Helvetica, sans-serif', fontStyle: 'bold',
                 color: C.white, stroke: '#000', strokeThickness: 2,
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201);
@@ -2868,7 +2922,7 @@ class GameScene extends Phaser.Scene {
             this._victorySkipTimer = this.time.addEvent({
                 delay: 100, loop: true,
                 callback: () => {
-                    if (window.TOUCH && window.TOUCH.jump) goMenu();
+                    if ((window.TOUCH && window.TOUCH.jump) || HF_CONTROLLER.poll().actionA) goMenu();
                 },
             });
         });
