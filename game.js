@@ -1198,7 +1198,12 @@ class MenuScene extends Phaser.Scene {
 
         // Also detect touch-button presses (HTML overlay buttons don't reach Phaser input)
         this._menuHandler = handler;
-        this._touchWasDown = false;
+        // Do not reuse the press that entered this scene as a new menu press.
+        const touch = window.TOUCH;
+        const controller = HF_CONTROLLER.poll();
+        this._touchWasDown = !!((touch && (touch.left || touch.right || touch.jump || touch.tweet)) ||
+            controller.left || controller.right || controller.up || controller.down ||
+            controller.actionA || controller.actionB);
     }
 
     update() {
