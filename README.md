@@ -37,6 +37,9 @@ Then open your browser at `http://localhost:3000` (or `http://localhost:8080`).
 | `←` `→` / `A` `D` | Move left / right |
 | `Space` / `W` / `↑` | Jump |
 | `Z` | Fire tweet-blast *(requires Classified Docs power-up)* |
+| HF IL3 controller `←` / `→` | Move left / right |
+| HF IL3 controller `↑` / action A | Jump |
+| HF IL3 controller action B | Fire tweet-blast *(requires Classified Docs power-up)* |
 
 **Mobile:** SNES-themed on-screen controller with D-pad and action buttons (Jump, Tweet, Shart).
 
