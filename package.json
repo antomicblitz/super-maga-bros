@@ -1,0 +1,18 @@
+{
+  "name": "super-maga-bros",
+  "version": "1.0.0",
+  "description": "Satirical browser platformer (Phaser 3) with a self-contained level editor.",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "lint": "eslint .",
+    "fix": "eslint . --fix",
+    "check:level": "node scripts/check-level.mjs level.json",
+    "test": "node scripts/check-level.mjs level.json && node tests/validate-level.test.mjs",
+    "validate": "npm run lint && npm test"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0",
+    "eslint-plugin-html": "^8.1.4"
+  }
+}
