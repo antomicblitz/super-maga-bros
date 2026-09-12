@@ -3018,10 +3018,9 @@ const config = {
 const game = new Phaser.Game(config);
 
 // ── Wake Lock — prevent mobile screen from sleeping during gameplay ──
-let _wakeLock = null;
 async function requestWakeLock() {
     if ('wakeLock' in navigator) {
-        try { _wakeLock = await navigator.wakeLock.request('screen'); }
+        try { await navigator.wakeLock.request('screen'); }
         catch (e) { /* Wake Lock denied or unsupported — ignore */ }
     }
 }
