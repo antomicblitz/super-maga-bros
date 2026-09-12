@@ -2729,7 +2729,7 @@ class GameScene extends Phaser.Scene {
             this.tweens.add({ targets: bg1, scaleX: 1.06, scaleY: 1.06, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
             bg1.on('pointerdown', () => {
                 flag.clicked = true;
-                window.open(DONATE_URL, '_blank');
+                window.open(DONATE_URL, '_blank', 'noopener');
                 this.time.delayedCall(500, () => { flag.clicked = false; });
             });
         }
@@ -2748,7 +2748,7 @@ class GameScene extends Phaser.Scene {
             this.tweens.add({ targets: bg2, scaleX: 1.06, scaleY: 1.06, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 250 });
             bg2.on('pointerdown', () => {
                 flag.clicked = true;
-                window.open(CRYPTO_URL, '_blank');
+                window.open(CRYPTO_URL, '_blank', 'noopener');
                 this.time.delayedCall(500, () => { flag.clicked = false; });
             });
         }
