@@ -14,7 +14,7 @@ A satirical 2D pixel-art platformer built with Phaser 3. Run, jump, and stomp yo
 
 **[Play Super MAGA Bros online](https://super-maga-bros.surge.sh)**
 
-Or serve the project locally — no build tools or installation required:
+Or serve the project locally — no build step required to play:
 
 ```bash
 # Option 1
@@ -35,8 +35,9 @@ Then open your browser at `http://localhost:3000` (or `http://localhost:8080`).
 | Key | Action |
 |-----|--------|
 | `←` `→` / `A` `D` | Move left / right |
-| `Space` / `W` / `↑` | Jump |
+| `Space` / `W` / `↑` | Jump (double-jump with the MAGA Hat) |
 | `Z` | Fire tweet-blast *(requires Classified Docs power-up)* |
+| `X` | SHART — shockwave that kills nearby enemies *(requires cholesterol ≥ 50)* |
 
 **Mobile:** SNES-themed on-screen controller with D-pad and action buttons (Jump, Tweet, Shart).
 
@@ -72,7 +73,7 @@ All enemies can be defeated by **jumping on them** or by a **tweet-blast** proje
 
 | Power-Up | Effect | Duration |
 |----------|--------|----------|
-| 🧢 MAGA Hat | Absorbs one hit — lose the hat instead of a life | Until hit |
+| 🧢 MAGA Hat | Unlocks double-jump and styles the player with a hat tint | Permanent (until death) |
 | ⬛ Censor Bar | Full invincibility — destroys enemies on contact | 10 seconds |
 | 📁 Classified Docs | Enables Z-key tweet-blast projectile attack | 15 seconds |
 
@@ -84,7 +85,6 @@ Power-ups appear as floating, bobbing items throughout the level. Active power-u
 
 | Action | Points |
 |--------|--------|
-| Collect a gold star | +100 |
 | Stomp a journalist | +200 |
 | Stomp a scientist | +300 |
 | Stomp a nervous girl | +150 |
@@ -95,7 +95,9 @@ Power-ups appear as floating, bobbing items throughout the level. Active power-u
 | Briefcase chain kill | +300 |
 | Collect dollar coin | +50 |
 | Reach the finish flag | +1000 |
-| Each star collected at finish | +50 bonus |
+| Cholesterol bonus at finish | +50 each |
+
+Food scoring: bigmacs add +2 cholesterol, cokes +1 — and whatever cholesterol you're carrying at the flag pays out as a finish bonus.
 
 ---
 
@@ -103,8 +105,14 @@ Power-ups appear as floating, bobbing items throughout the level. Active power-u
 
 ```
 super-maga-bros/
-├── index.html              # Entry point (loads Phaser 3 via CDN)
-├── game.js                 # All game logic (~1100 lines, single file)
+├── index.html              # Entry point (loads Phaser 3 via CDN with SRI)
+├── game.js                 # All game logic (~3,000 lines, single file)
+├── editor.html             # Self-contained level editor (no external deps)
+├── level.json              # Multi-level data written by the editor (schemaVersion 2)
+├── package.json            # Dev-only tooling: lint + level-schema checks
+├── eslint.config.mjs       # ESLint flat config (recommended level)
+├── scripts/check-level.mjs # level.json schema validator (npm run check:level)
+├── tests/                  # Behavioral tests for the level-data contract
 ├── CLAUDE.md               # AI assistant project guide
 ├── Images/                 # Original concept art and reference images
 └── assets/
@@ -179,22 +187,31 @@ Row 2: Girl        → [walk1] [walk2] [stomp] [dead]
 
 ## 🔧 Tech Stack
 
-- **[Phaser 3.60](https://phaser.io)** — HTML5 game framework (loaded via CDN)
+- **[Phaser 3.60](https://phaser.io)** — HTML5 game framework (loaded via CDN with Subresource Integrity)
 - **Vanilla JavaScript** — ES6 classes, no TypeScript
 - **Web Audio API** — procedural SFX fallback when audio files are missing
-- **No build tools** — no npm, no webpack, no bundler
+- **No build step for the game itself** — dev tooling (ESLint, level-schema checks) runs separately via `npm run validate`
+
+### Development checks
+
+```bash
+npm install        # dev tooling only; the game needs nothing
+npm run lint       # ESLint over game.js + inline scripts in the HTML files
+npm test           # level.json schema validation + behavioral tests
+npm run validate   # both
+```
 
 ---
 
 ## 🧠 Scene Flow
 
 ```
-PreloadScene  →  BootScene  →  MenuScene  →  SpeechScene  →  GameScene
-(load assets)    (fallback      (title        (Trump speech    (gameplay,
-                  textures)      screen)       intro)           HUD, logic)
+PreloadScene → BootScene → DisclaimerScene → MenuScene → SpeechScene → GameScene
+(load assets)   (fallback    (satire notice,   (title       (Trump speech  (gameplay,
+                textures)     space to skip)    screen)       intro)         HUD, logic)
 ```
 
-The game uses a **graceful fallback system**: if any external asset file is missing or empty (e.g. placeholder), the engine automatically falls back to procedurally generated pixel art. This means the game is always playable, even without final artwork.
+The game uses a **graceful fallback system**: if any external asset file is missing or empty (e.g. placeholder), the engine automatically falls back to procedurally generated pixel art. This means the game is always playable, even without final artwork. The same applies to `level.json`: missing, invalid, or schema-drifted level files fall back to the built-in level instead of crashing.
 
 ---
 
@@ -206,6 +223,7 @@ The game uses a **graceful fallback system**: if any external asset file is miss
 - [x] Lobbyist enemy with briefcase mechanic
 - [x] Stackable power-up system
 - [x] Speech intro scene
+- [x] Multi-level support + JSON level editor (`editor.html`)
 - [ ] Additional level worlds (Washington DC, Trump Tower)
 - [ ] High score leaderboard
 - [ ] Boss fight: The Deep State

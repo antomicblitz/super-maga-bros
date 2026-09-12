@@ -313,16 +313,45 @@ function emptyLevel(name) {
   };
 }
 
+// Numeric tuple coercion for loaded level data. The inspector interpolates
+// these values into innerHTML attributes; a crafted level.json with strings or
+// objects in numeric slots would otherwise be an injection / NaN-CSS sink.
+// Flipping the array in place keeps reference-identity (undo snapshots share it).
+function num(v, def) { const n = +v; return Number.isFinite(n) ? n : def; }
+
+function coerceTuple(arr, len, defaults) {
+  if (!Array.isArray(arr)) { arr.length = 0; return; }
+  if (arr.length > len) arr.length = len;
+  for (let i = 0; i < len; i++) arr[i] = num(arr[i], defaults ? defaults[i] : 0);
+}
+
 function normaliseLevel(l, fallbackName) {
   const e = emptyLevel(fallbackName);
   if (!l || typeof l !== 'object') return e;
   if (typeof l.name === 'string') e.name = l.name;
-  if (Array.isArray(l.playerStart) && l.playerStart.length === 2) e.playerStart = l.playerStart;
-  if (Array.isArray(l.ground)) e.ground = l.ground.slice();
-  if (Array.isArray(l.platforms)) e.platforms = l.platforms.slice();
-  if (Array.isArray(l.food)) e.food = l.food.slice();
-  if (Array.isArray(l.enemies)) e.enemies = l.enemies.slice();
-  if (Array.isArray(l.powerups)) e.powerups = l.powerups.slice();
+  if (Array.isArray(l.playerStart) && l.playerStart.length === 2) {
+    e.playerStart = [num(l.playerStart[0], 80), num(l.playerStart[1], 0)];
+  }
+  if (Array.isArray(l.ground)) {
+    e.ground = l.ground.filter((t) => Array.isArray(t));
+    e.ground.forEach((t) => coerceTuple(t, 2, [0, 0]));
+  }
+  if (Array.isArray(l.platforms)) {
+    e.platforms = l.platforms.filter((t) => Array.isArray(t));
+    e.platforms.forEach((t) => coerceTuple(t, 3, [0, 0, 1]));
+  }
+  if (Array.isArray(l.food)) {
+    e.food = l.food.filter((t) => Array.isArray(t));
+    e.food.forEach((t) => coerceTuple(t, 3, [0, 0, 0]));
+  }
+  if (Array.isArray(l.enemies)) {
+    e.enemies = l.enemies.filter((t) => Array.isArray(t));
+    e.enemies.forEach((t) => coerceTuple(t, 4, [0, 0, 0, 0]));
+  }
+  if (Array.isArray(l.powerups)) {
+    e.powerups = l.powerups.filter((t) => Array.isArray(t));
+    e.powerups.forEach((t) => coerceTuple(t, 3, [0, 0, 0]));
+  }
   if (typeof l.flagX === 'number') e.flagX = l.flagX;
   return e;
 }
@@ -385,11 +414,11 @@ function serializeRoot() {
     levels: state.levels.map(l => ({
       name: l.name,
       playerStart: l.playerStart.slice(),
-      ground: l.ground.slice(),
-      platforms: l.platforms.slice(),
-      food: l.food.slice(),
-      enemies: l.enemies.slice(),
-      powerups: l.powerups.slice(),
+      ground: l.ground.map((t) => t.slice()),
+      platforms: l.platforms.map((t) => t.slice()),
+      food: l.food.map((t) => t.slice()),
+      enemies: l.enemies.map((t) => t.slice()),
+      powerups: l.powerups.map((t) => t.slice()),
       flagX: l.flagX,
     })),
   };
@@ -755,7 +784,7 @@ function draw() {
   // selection ring
   if (state.selected) {
     const sel = state.selected;
-    const [x, y, w, h, draw] = selectionBounds(L, sel);
+    const [x, y, w, h] = selectionBounds(L, sel);
     if (x !== null) {
       const [cx, cy] = worldToClient(x, y);
       const [cx2, cy2] = worldToClient(x + w, y + h);
@@ -868,7 +897,6 @@ function selectionBounds(L, sel) {
       const arr = sel.kind === 'food' ? L.food : L.powerups;
       const obj = arr[sel.index];
       if (!obj) return [null, null, null, null, false];
-      const [, , r = 12] = ENEMY_TYPES; // unused
       const pad = 16;
       return [obj[0] - pad, obj[1] - pad, 2 * pad, 2 * pad, true];
     }
@@ -912,7 +940,8 @@ function placeObject(wx, wy) {
     case 'select': return selectAt(wx, wy);  // handled in onPointerDown
     case 'platform': {
       const tx = Math.max(0, Math.min(Math.floor(WORLD_W / TILE) - 1, Math.floor(wx / TILE)));
-      const [px, py] = snapOrigin(wx, wy);
+      // X comes from the tile clamp (matches the paint-drag path); Y from snap.
+      const [, py] = snapOrigin(wx, wy);
       L.platforms.push([tx, py, 1]);
       break;
     }
@@ -922,7 +951,7 @@ function placeObject(wx, wy) {
       break;
     }
     case 'enemy': {
-      const [px, py] = snapOrigin(wx, wy);
+      const [px] = snapOrigin(wx, wy);
       const halfPatrol = 2 * TILE;
       L.enemies.push([px + TILE / 2, px - halfPatrol, px + TILE + halfPatrol, enemySub]);
       break;
@@ -1389,7 +1418,7 @@ function commitPaintDrag(d) {
     L.ground = mergeGroundSegments(L.ground);
   } else if (d.tool === 'platform') {
     const a = Math.min(d.wx1, d.wx2), b = Math.max(d.wx1, d.wx2);
-    const c = Math.min(d.wy1, d.wy2), d2 = Math.max(d.wy1, d.wy2);
+    const c = Math.min(d.wy1, d.wy2);
     const tx = Math.max(0, Math.min(Math.floor(WORLD_W / TILE) - 1, Math.floor(a / TILE)));
     const tx2 = Math.max(tx + 1, Math.floor(b / TILE));
     const tw = Math.max(1, tx2 - tx + 1);

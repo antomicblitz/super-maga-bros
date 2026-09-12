@@ -4,16 +4,17 @@
 A satirical, parody 2D platformer built with Phaser 3.60 (CDN).
 Trump-themed Mario Bros. clone. Island setting (Mar-a-Lago).
 Single file architecture: all game logic lives in game.js.
-No build tools. Run with: npx serve . or python3 -m http.server 8080
+No build step for the game itself. Run with: npx serve . or python3 -m http.server 8080
+Dev checks (optional tooling): npm install && npm run validate
 
 ## Tech Stack
-- Phaser 3.60.0 via CDN (https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js)
+- Phaser 3.60.0 via CDN with SRI integrity hash (https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js)
 - Vanilla JavaScript (ES6 classes)
 - Web Audio API (fallback SFX when audio files are missing)
-- No npm, no bundler, no TypeScript
+- No bundler, no TypeScript; ESLint + level-schema tests run via npm scripts only
 
 ## Scene Flow
-PreloadScene → BootScene → MenuScene → GameScene
+PreloadScene → BootScene → DisclaimerScene → MenuScene → SpeechScene → GameScene
 
 ## Asset Specifications — DO NOT CHANGE THESE DIMENSIONS
 
@@ -60,7 +61,7 @@ assets/ui/hud-icons.png — 96×32px, 3 icons at 32×32: life, star, power-up sl
 | bgm-menu.mp3 | MP3 128kbps stereo | 30s loop |
 
 ## Game Constants (do not change)
-GW=800, GH=500, TILE=32, WORLD_W=12800, WORLD_H=600, GROUND_Y=468
+GW=800, GH=500, TILE=32, WORLD_W=12800, GROUND_Y=468
 
 ## Enemy Types
 0 = journalist  (speed: 60px/s, score: 200)
@@ -69,7 +70,7 @@ GW=800, GH=500, TILE=32, WORLD_W=12800, WORLD_H=600, GROUND_Y=468
 3 = lobbyist    (speed: 55px/s, score: 250)
 
 ## Power-Up Types
-0 = MAGA Hat      — absorbs 1 hit, duration: permanent until hit
+0 = MAGA Hat      — unlocks double-jump + hat tint, duration: permanent (until death)
 1 = Censor Bar    — full invincibility, duration: 10 seconds,
                      visual: black rectangle overlays player entirely,
                      audio: pauses bgm, plays bgm-censor.mp3 if available,
@@ -82,6 +83,7 @@ Space / W / Up = jump
 Z = fire tweet-blast (Classified Docs power-up active) —
     player switches to phone-raise pose for 600ms,
     white screen flash, 700ms cooldown between blasts
+X = SHART (cholesterol >= 50 only) — shockwave kills nearby enemies, freezes gameplay briefly
 
 ## Key Design Rules
 - ALWAYS keep Web Audio API SFX functions as fallback (never delete SFX object)
@@ -111,15 +113,19 @@ Z = fire tweet-blast (Classified Docs power-up active) —
 - caseGroup is a separate physics group with gravity, own colliders
 
 ## File Editing Rules for Claude Code
-- Only edit game.js and CLAUDE.md unless explicitly told otherwise
+- Only edit game.js, editor.html, level.json, and CLAUDE.md unless explicitly told otherwise
 - Never delete existing level data (LEVEL object) without instruction
-- Always test that scene transitions work: PreloadScene→BootScene→MenuScene→GameScene
+- Always test that scene transitions work: Preload→Boot→Disclaimer→Menu→Speech→Game
 - When adding new features, add them to the appropriate scene only
+- If you change the level schema, update all three readers/writers together:
+  editor.html serializeRoot/normaliseLevel, game.js isValidLevel/resolveLevelRoot,
+  and scripts/check-level.mjs — then run npm test
 
 ## Level Data — edit level.json, not game.js
 - The playable level is loaded at runtime from `level.json` (sibling to `index.html`).
   `GameScene.preload()` calls `this.load.json('level', 'level.json')`; `create()` assigns
-  `LEVEL` from the JSON, falling back to `FALLBACK_LEVEL` if the file is missing/malformed.
+  `LEVEL` via `resolveLevelRoot()`, which validates every level (`isValidLevel`) and falls
+  back to `FALLBACK_LEVEL` when the file is missing, malformed, or schema-drifted.
 - `FALLBACK_LEVEL` in `game.js` is the original hardcoded data, kept verbatim so the game
   still runs offline. It is a single-level object — multi-level JSON overrides it cleanly.
 - **Editing a level:** use `editor.html` (sibling to `index.html`). Run a static server
@@ -162,7 +168,7 @@ Z = fire tweet-blast (Classified Docs power-up active) —
   - Debug override: append `?reset=1` (or `?reset`) to the game URL to ignore saved
     progress and start from the JSON `currentLevel` (or 0).
 - When updating dimensions, keep the editor and game.js constants in sync: editor hardcodes
-  `TILE=32, WORLD_W=12800, WORLD_H=600, GROUND_Y=468` to match `game.js:7-9`.
+  `TILE=32, WORLD_W=12800, GROUND_Y=468` to match the top of `game.js`.
 
 ## Editor features
 - **Tools**: ground (drag), platform (drag), food (click + 1/2), enemy (click + 0-3),

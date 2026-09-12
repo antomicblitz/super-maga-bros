@@ -5,7 +5,7 @@
 // ── Constants ────────────────────────────────────────────────
 const GW = 800, GH = 500;
 const TILE = 32;
-const WORLD_W = 12800, WORLD_H = 600;
+const WORLD_W = 12800; // WORLD_H is intentionally absent: the game surface is groundY-relative, height comes from Phaser's scale.
 const GROUND_Y = GH - TILE;          // 468
 const PX = 2;                         // pixel‑art scale (each art‑pixel = 2×2)
 const DONATE_URL = 'https://buy.stripe.com/3cI28q0Ds61569wcB71gs0C';
@@ -786,6 +786,46 @@ ground: [
     flagX: 12480,
 };
 
+// ── Level validation ─────────────────────────────────────────
+// Tolerant normaliser for level data from level.json (or localStorage-saved
+// roots). A structurally-invalid file must fall back to FALLBACK_LEVEL rather
+// than crash GameScene.create() mid-construction. Mirrors scripts/check-level.mjs;
+// keep both in sync when the schema changes (editor serializeRoot is the writer).
+function isValidLevel(lv) {
+    if (!lv || typeof lv !== 'object' || Array.isArray(lv)) return false;
+    const isNum = (v) => Number.isFinite(v);
+    const tuples = (a, len, check) =>
+        Array.isArray(a) && a.every((t) => Array.isArray(t) && t.length >= len && check(t));
+    return (
+        (lv.name === undefined || typeof lv.name === 'string') &&
+        tuples(lv.ground, 2, (t) => Number.isInteger(t[0]) && Number.isInteger(t[1]) && t[0] <= t[1]) &&
+        tuples(lv.platforms, 3, (t) => Number.isInteger(t[0]) && isNum(t[1]) && Number.isInteger(t[2]) && t[2] >= 1) &&
+        tuples(lv.food, 3, (t) => isNum(t[0]) && isNum(t[1]) && [0, 1].includes(t[2])) &&
+        tuples(lv.enemies, 4, (t) => isNum(t[0]) && isNum(t[1]) && isNum(t[2]) && [0, 1, 2, 3].includes(t[3])) &&
+        tuples(lv.powerups, 3, (t) => isNum(t[0]) && isNum(t[1]) && [0, 1, 2].includes(t[2])) &&
+        (lv.playerStart === undefined ||
+            (Array.isArray(lv.playerStart) && lv.playerStart.length >= 2 &&
+                isNum(lv.playerStart[0]) && isNum(lv.playerStart[1]))) &&
+        (lv.flagX === undefined || isNum(lv.flagX))
+    );
+}
+
+function resolveLevelRoot(json) {
+    // Returns a validated { levels: [...] } root, or FALLBACK_LEVEL on any drift.
+    try {
+        if (!json || typeof json !== 'object') return { levels: [FALLBACK_LEVEL] };
+        const raw = Array.isArray(json.levels) && json.levels.length > 0 ? json.levels : [json];
+        const clean = raw.filter(isValidLevel);
+        if (clean.length === 0) return { levels: [FALLBACK_LEVEL] };
+        if (clean.length !== raw.length) {
+            console.warn('level.json: dropped', raw.length - clean.length, 'invalid level(s)');
+        }
+        return { levels: clean, currentLevel: json.currentLevel };
+    } catch (_e) {
+        return { levels: [FALLBACK_LEVEL] };
+    }
+}
+
 // ── PRELOAD SCENE ────────────────────────────────────────────
 class PreloadScene extends Phaser.Scene {
     constructor() { super('Preload'); }
@@ -1473,21 +1513,16 @@ class GameScene extends Phaser.Scene {
     create() {
         // Resolve LEVEL: prefer the level.json loaded in preload() (designer-edited),
         // fall back to FALLBACK_LEVEL (kept inline for offline play and tests).
-        const json = this.cache.json.get('level');
-        const root = (json && typeof json === 'object') ? json : FALLBACK_LEVEL;
+        // resolveLevelRoot() drops structurally-invalid levels so a malformed or
+        // schema-drifted file can never crash scene construction mid-way.
+        const root = resolveLevelRoot(this.cache.json.get('level'));
 
         // Multi-level schema: { levels: [...], currentLevel? }.  Single-level shape is
         // still accepted (treated as a one-element array) for backwards compatibility
         // with the level.json shipped before multi-level support.
-        let allLevels, cl;
-        if (root && Array.isArray(root.levels) && root.levels.length > 0) {
-            allLevels = root.levels;
-        } else if (root === FALLBACK_LEVEL) {
-            allLevels = [FALLBACK_LEVEL];
-        } else {
-            allLevels = [root];
-        }
+        const allLevels = root.levels;
         const max = allLevels.length - 1;
+        let cl;
         if (this.wantsLevel !== null && this.wantsLevel <= max) {
             cl = this.wantsLevel;
         } else if (typeof root.currentLevel === 'number' && root.currentLevel <= max) {
@@ -1544,6 +1579,7 @@ class GameScene extends Phaser.Scene {
         this.groundGroup = this.physics.add.staticGroup();
         this.platformGroup = this.physics.add.staticGroup();
 
+        // isValidLevel() already guarantees these arrays exist with finite tuples.
         LEVEL.ground.forEach(([s, e]) => {
             for (let tx = s; tx <= e; tx++) {
                 this.groundGroup.create(tx * TILE + TILE/2, GROUND_Y + TILE/2, gndKey);
@@ -1561,8 +1597,7 @@ class GameScene extends Phaser.Scene {
         const bmKey = T.bigmac || 'bigmac';
         const ckKey = T.coke || 'coke';
         this.foodGroup = this.physics.add.group({ allowGravity: false });
-        LEVEL.food.forEach(([fx, fy, ftype], idx) => {
-            const key = ftype === 0 ? bmKey : ckKey;
+        LEVEL.food.forEach(([fx, fy, ftype], idx) => {            const key = ftype === 0 ? bmKey : ckKey;
             const food = this.foodGroup.create(fx, fy, key);
             food.foodType = ftype;
             food.setDisplaySize(24, 24);
@@ -1698,8 +1733,8 @@ class GameScene extends Phaser.Scene {
         this.tweetGroup = this.physics.add.group({ allowGravity: false });
         this.caseGroup = this.physics.add.group({ allowGravity: true });
 
-        // ─ Flag
-        this.flag = this.physics.add.sprite(LEVEL.flagX, GROUND_Y - 80, 'flag');
+        // ─ Flag / Player (isValidLevel guarantees flagX/playerStart, when present, are numbers)
+        this.flag = this.physics.add.sprite(LEVEL.flagX ?? (WORLD_W - 320), GROUND_Y - 80, 'flag');
         this.flag.body.setAllowGravity(false);
         this.flag.setImmovable(true);
         this.flag.setSize(48, 140).setOffset(0, 10);
@@ -1707,6 +1742,7 @@ class GameScene extends Phaser.Scene {
         // ─ Player
         const pk = T.player || 'player';
         const [pStartX, pStartY] = LEVEL.playerStart || [80, GROUND_Y - 48];
+
         this.player = this.physics.add.sprite(pStartX, pStartY, pk, 0);
         this.player.setSize(20, 40).setOffset(6, 8);
         this.player.setCollideWorldBounds(false);
@@ -2729,7 +2765,7 @@ class GameScene extends Phaser.Scene {
             this.tweens.add({ targets: bg1, scaleX: 1.06, scaleY: 1.06, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
             bg1.on('pointerdown', () => {
                 flag.clicked = true;
-                window.open(DONATE_URL, '_blank');
+                window.open(DONATE_URL, '_blank', 'noopener');
                 this.time.delayedCall(500, () => { flag.clicked = false; });
             });
         }
@@ -2748,7 +2784,7 @@ class GameScene extends Phaser.Scene {
             this.tweens.add({ targets: bg2, scaleX: 1.06, scaleY: 1.06, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: 250 });
             bg2.on('pointerdown', () => {
                 flag.clicked = true;
-                window.open(CRYPTO_URL, '_blank');
+                window.open(CRYPTO_URL, '_blank', 'noopener');
                 this.time.delayedCall(500, () => { flag.clicked = false; });
             });
         }
@@ -2985,10 +3021,9 @@ const config = {
 const game = new Phaser.Game(config);
 
 // ── Wake Lock — prevent mobile screen from sleeping during gameplay ──
-let _wakeLock = null;
 async function requestWakeLock() {
     if ('wakeLock' in navigator) {
-        try { _wakeLock = await navigator.wakeLock.request('screen'); }
+        try { await navigator.wakeLock.request('screen'); }
         catch (e) { /* Wake Lock denied or unsupported — ignore */ }
     }
 }
