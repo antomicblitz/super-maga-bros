@@ -793,17 +793,20 @@ ground: [
 // keep both in sync when the schema changes (editor serializeRoot is the writer).
 function isValidLevel(lv) {
     if (!lv || typeof lv !== 'object' || Array.isArray(lv)) return false;
-    const nums = (a, len) => Array.isArray(a) && a.length >= len && a.every(Number.isFinite);
+    const isNum = (v) => Number.isFinite(v);
     const tuples = (a, len, check) =>
         Array.isArray(a) && a.every((t) => Array.isArray(t) && t.length >= len && check(t));
     return (
-        tuples(lv.ground, 2, (t) => t[0] <= t[1]) &&
-        tuples(lv.platforms, 3, (t) => Number.isInteger(t[0]) && t[2] >= 1) &&
-        tuples(lv.food, 3, () => true) &&
-        tuples(lv.enemies, 4, () => true) &&
-        tuples(lv.powerups, 3, () => true) &&
-        (lv.playerStart === undefined || nums(lv.playerStart, 2)) &&
-        (lv.flagX === undefined || Number.isFinite(lv.flagX))
+        (lv.name === undefined || typeof lv.name === 'string') &&
+        tuples(lv.ground, 2, (t) => Number.isInteger(t[0]) && Number.isInteger(t[1]) && t[0] <= t[1]) &&
+        tuples(lv.platforms, 3, (t) => Number.isInteger(t[0]) && isNum(t[1]) && Number.isInteger(t[2]) && t[2] >= 1) &&
+        tuples(lv.food, 3, (t) => isNum(t[0]) && isNum(t[1]) && [0, 1].includes(t[2])) &&
+        tuples(lv.enemies, 4, (t) => isNum(t[0]) && isNum(t[1]) && isNum(t[2]) && [0, 1, 2, 3].includes(t[3])) &&
+        tuples(lv.powerups, 3, (t) => isNum(t[0]) && isNum(t[1]) && [0, 1, 2].includes(t[2])) &&
+        (lv.playerStart === undefined ||
+            (Array.isArray(lv.playerStart) && lv.playerStart.length >= 2 &&
+                isNum(lv.playerStart[0]) && isNum(lv.playerStart[1]))) &&
+        (lv.flagX === undefined || isNum(lv.flagX))
     );
 }
 
